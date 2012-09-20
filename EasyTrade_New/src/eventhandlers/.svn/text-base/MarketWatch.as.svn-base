@@ -1,0 +1,1252 @@
+import businessobjects.BestMarketAndSymbolSummaryBO;
+import businessobjects.BondBO;
+import businessobjects.ExchangeBO;
+import businessobjects.MarketWatchBO;
+import businessobjects.OrderBO;
+import businessobjects.SymbolBO;
+import businessobjects.SymbolBrowserBO;
+
+import com.lightstreamer.as_client.ConnectionInfo;
+import com.lightstreamer.as_client.LSClient;
+import com.lightstreamer.as_client.NonVisualTable;
+import com.lightstreamer.as_client.VisualTable;
+import com.yahoo.astra.utils.StringUtil;
+
+import common.Constants;
+import common.Messages;
+import common.ReasonMessages;
+
+import components.ComboBoxContent;
+import components.ComboBoxItem;
+import components.EZCurrencyFormatter;
+import components.EZNumberFormatter;
+
+import controller.ModelManager;
+import controller.ProfileManager;
+import controller.SoundManager;
+import controller.ViewManager;
+import controller.WindowManager;
+
+import flash.events.ContextMenuEvent;
+import flash.events.Event;
+import flash.events.FocusEvent;
+import flash.events.KeyboardEvent;
+import flash.events.MouseEvent;
+import flash.geom.Rectangle;
+import flash.text.TextLineMetrics;
+import flash.ui.ContextMenu;
+import flash.ui.ContextMenuItem;
+import flash.utils.describeType;
+
+import flexlib.mdi.containers.MDIWindow;
+import flexlib.scheduling.scheduleClasses.schedule_internal;
+
+import mx.collections.ArrayCollection;
+import mx.collections.ArrayList;
+import mx.controls.Alert;
+import mx.controls.Label;
+import mx.controls.Text;
+import mx.controls.TextInput;
+import mx.controls.advancedDataGridClasses.AdvancedDataGridColumn;
+import mx.controls.textClasses.TextRange;
+import mx.effects.AddItemAction;
+import mx.events.DataGridEvent;
+import mx.events.FlexEvent;
+import mx.events.ItemClickEvent;
+import mx.events.ListEvent;
+import mx.managers.PopUpManager;
+import mx.states.AddChild;
+import mx.utils.ObjectUtil;
+import mx.utils.StringUtil;
+
+import renderer.ComboboxRenderer;
+
+import services.LSListener;
+
+import spark.components.ButtonBarButton;
+
+import view.Order;
+import view.SelectionMenu;
+
+[Bindable]
+private var exchangeList:ArrayList = new ArrayList();
+
+[Bindable]
+private var marketList:ArrayList = new ArrayList ();
+
+[Bindable]
+public var selectedIndex:Number = 0;
+
+[Bindable]
+private var modelManager:ModelManager = ModelManager.getInstance();
+
+[Bindable]
+private var windowManager:WindowManager = WindowManager.getInstance();
+
+private var isInvalidSymbol:Boolean = false;
+
+private var sortColumn:String = "";
+private var sortDescending:Boolean = false;
+
+[Bindable]
+private var ctMenu:flash.ui.ContextMenu;
+private var lastRollOverIndex:int = 0;
+
+protected function group1_initializeHandler(event:FlexEvent):void
+{
+	var cmi:ContextMenuItem = new ContextMenuItem("View Details...", true);
+	cmi.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, contextMenuItem_menuItemSelect);
+	
+	ctMenu = new ContextMenu();
+	ctMenu.hideBuiltInItems();
+	ctMenu.customItems = [cmi];
+	ctMenu.addEventListener(ContextMenuEvent.MENU_SELECT, contextMenu_menuSelect);
+
+}
+
+private function contextMenu_menuSelect(evt:ContextMenuEvent):void {
+	adgMarketWatch.selectedIndex = lastRollOverIndex;
+}
+
+private function contextMenuItem_menuItemSelect(event:ContextMenuEvent):void {
+	var obj:MarketWatchBO = adgMarketWatch.selectedItem as MarketWatchBO;
+	if(obj.SYMBOL != "")
+	{
+		if (obj && 
+			(obj.internalExchangeID < 0 || 
+				obj.internalMarketID < 0)
+		)
+		{
+			return;
+		}
+		
+		windowManager.initSymbolSummWindow();
+		windowManager.viewManager.symbolSumm.txtExchange.text = obj.EXCHANGE;
+		windowManager.viewManager.symbolSumm.internalExchangeID = obj.internalExchangeID;
+		windowManager.viewManager.symbolSumm.txtMarket.text = obj.MARKET;
+		windowManager.viewManager.symbolSumm.internalMarketID = obj.internalMarketID;
+		windowManager.viewManager.symbolSumm.txtSymbol.text = obj.SYMBOL;
+		windowManager.viewManager.symbolSumm.symbolID = obj.symbolID;
+		windowManager.viewManager.symbolSumm.loadSymbolData();
+		
+		if (windowManager.symbolSummWindow && windowManager.canvas.windowManager.container.contains(windowManager.symbolSummWindow))
+		{
+			windowManager.canvas.windowManager.bringToFront(windowManager.symbolSummWindow);
+			return;
+		}
+		
+		windowManager.canvas.windowManager.add(windowManager.symbolSummWindow);
+	}	
+}
+
+protected function adgMarketWatch_creationCompleteHandler(event:FlexEvent):void
+{
+	(event.target as DataGrid).dataProvider = modelManager.marketWatchModel.marketWatch[selectedIndex];
+	for (var i:int = 0; i < modelManager.exchangeModel.exchanges.length; ++i)
+	{
+		var obj:Object = modelManager.exchangeModel.exchanges.getItemAt(i);
+		//var cbi:ComboBoxItem = new ComboBoxItem(obj.EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		var cbi:ComboBoxItem = new ComboBoxItem(obj.INTERNAL_EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		exchangeList.addItem(cbi);
+	}
+	showHideColumns(false);
+}
+
+protected function adgMarketWatch_itemClickHandler(event:ListEvent):void
+{
+	var menu:SelectionMenu;
+	if ( event.columnIndex == 0 )
+	{
+		menu = PopUpManager.createPopUp(this, SelectionMenu) as SelectionMenu;
+		menu.lstList.dataProvider = exchangeList;
+		positionMenu(event, menu);
+		menu.addEventListener(Constants.EVENT_MENU_CLOSE, exchangeSelectionMenuClosed);
+	}
+	else if ( event.columnIndex == 1 )
+	{
+		if ( this.adgMarketWatch.selectedItem.internalExchangeID < 0 )
+		{
+			Alert.show(Messages.SELECT_EXCHANGE, Messages.TITLE_ERROR);
+			return;
+		}
+		menu = PopUpManager.createPopUp(this, SelectionMenu) as SelectionMenu;
+		marketList = modelManager.exchangeModel.getexchangeMarkets(this.adgMarketWatch.selectedItem.internalExchangeID);
+		menu.lstList.dataProvider = marketList;
+		positionMenu(event, menu);
+		menu.addEventListener(Constants.EVENT_MENU_CLOSE, marketSelectionMenuClosed);
+	}
+}
+
+private function positionMenu(event:ListEvent, menu:SelectionMenu):void
+{
+	var ptCell:Point = new Point(event.itemRenderer.x + event.currentTarget.x, event.itemRenderer.y + event.currentTarget.y + event.currentTarget.headerHeight);
+	var ptMenu:Point  = this.contentToGlobal(ptCell);
+	if (menu.height + ptMenu.y > event.currentTarget.parent.height)
+	{
+		ptCell = new Point(event.itemRenderer.x + event.currentTarget.x, event.itemRenderer.y + event.currentTarget.y + event.currentTarget.headerHeight - menu.height + event.currentTarget.rowHeight);
+		ptMenu = this.contentToGlobal(ptCell);
+	}
+	menu.lstList.width = event.currentTarget.columns[event.currentTarget.selectedIndex].width;
+	menu.move(ptMenu.x, ptMenu.y);
+}
+
+protected function exchangeSelectionMenuClosed(event:Event):void
+{
+	if (!event.currentTarget.lstList.selectedItem)
+	{
+		return;
+	}
+	// modified on 31/3/2011
+//	this.adgMarketWatch.selectedItem.init();
+//	this.adgMarketWatch.selectedItem.EXCHANGE = event.currentTarget.lstList.selectedItem.label;
+//	this.adgMarketWatch.selectedItem.internalExchangeID = event.currentTarget.lstList.selectedItem.value;
+//	this.adgMarketWatch.selectedItem.exchangeID = ModelManager.getInstance().exchangeModel.getExchangeID(this.adgMarketWatch.selectedItem.internalExchangeID);
+	
+	if(this.adgMarketWatch.selectedItem.internalExchangeID != event.currentTarget.lstList.selectedItem.value )
+	{
+		this.adgMarketWatch.selectedItem.init();
+		this.adgMarketWatch.selectedItem.EXCHANGE = event.currentTarget.lstList.selectedItem.label;
+		this.adgMarketWatch.selectedItem.internalExchangeID = event.currentTarget.lstList.selectedItem.value;
+		this.adgMarketWatch.selectedItem.exchangeID = ModelManager.getInstance().exchangeModel.getExchangeID(this.adgMarketWatch.selectedItem.internalExchangeID);
+		this.adgMarketWatch.selectedItem.internalMarketID = -1;
+		this.adgMarketWatch.selectedItem.marketID = -1;
+		this.adgMarketWatch.selectedItem.MARKET = "";
+		this.adgMarketWatch.selectedItem.symbolID = -1;
+		this.adgMarketWatch.selectedItem.SYMBOL = "";
+	}
+}
+
+protected function marketSelectionMenuClosed(event:Event):void
+{
+	if (!event.currentTarget.lstList.selectedItem)
+	{
+		return;
+	}
+	// modified on 31/3/2011
+//	this.adgMarketWatch.selectedItem.init();
+//	this.adgMarketWatch.selectedItem.MARKET = event.currentTarget.lstList.selectedItem.label;
+//	this.adgMarketWatch.selectedItem.internalMarketID = event.currentTarget.lstList.selectedItem.value;
+//	this.adgMarketWatch.selectedItem.marketID = ModelManager.getInstance().exchangeModel.getMarketID(this.adgMarketWatch.selectedItem.internalExchangeID, this.adgMarketWatch.selectedItem.internalMarketID);
+	
+	if(this.adgMarketWatch.selectedItem.internalMarketID != event.currentTarget.lstList.selectedItem.value)
+	{
+		this.adgMarketWatch.selectedItem.init();
+		this.adgMarketWatch.selectedItem.MARKET = event.currentTarget.lstList.selectedItem.label;
+		this.adgMarketWatch.selectedItem.internalMarketID = event.currentTarget.lstList.selectedItem.value;
+		this.adgMarketWatch.selectedItem.marketID = ModelManager.getInstance().exchangeModel.getMarketID(this.adgMarketWatch.selectedItem.internalExchangeID, this.adgMarketWatch.selectedItem.internalMarketID);
+		this.adgMarketWatch.selectedItem.symbolID = -1;
+		this.adgMarketWatch.selectedItem.SYMBOL = "";
+	}
+}
+
+protected function adgMarketWatch_doubleClickHandler(event:MouseEvent):void
+{
+	if (event.currentTarget.selectedItem && 
+		(event.currentTarget.selectedItem.internalExchangeID < 0 || 
+		event.currentTarget.selectedItem.internalMarketID < 0)
+		)
+	{
+		return;
+	}
+	
+	//var windowManager:WindowManager = WindowManager.getInstance();
+	if (windowManager.bestOrdersWindow && windowManager.canvas.windowManager.container.contains(windowManager.bestOrdersWindow))
+	{
+		windowManager.canvas.windowManager.bringToFront(windowManager.bestOrdersWindow);
+		return;
+	}
+	windowManager.initBestOrdersWindow();
+	windowManager.viewManager.bestOrders.txtExchange.text = event.currentTarget.selectedItem.EXCHANGE;
+	windowManager.viewManager.bestOrders.internalExchangeID = event.currentTarget.selectedItem.internalExchangeID;
+	windowManager.viewManager.bestOrders.txtMarket.text = event.currentTarget.selectedItem.MARKET;
+	windowManager.viewManager.bestOrders.internalMarketID = event.currentTarget.selectedItem.internalMarketID;
+	windowManager.viewManager.bestOrders.txtSymbol.text = event.currentTarget.selectedItem.SYMBOL;
+	windowManager.viewManager.bestOrders.symbolID = event.currentTarget.selectedItem.symbolID;
+	windowManager.viewManager.bestOrders.updateBestOrders();
+	windowManager.canvas.windowManager.add(windowManager.bestOrdersWindow);
+}
+
+protected function toolbar_clickHandler(event:MouseEvent):void
+{
+	if (event.currentTarget.selectedIndex > -1)
+	{
+		selectedIndex = event.currentTarget.selectedIndex;
+		adgMarketWatch.dataProvider = modelManager.marketWatchModel.marketWatch[selectedIndex];
+	}
+	else 
+	{
+		event.currentTarget.selectedIndex = selectedIndex;
+	}
+	if (event.currentTarget.selectedIndex == 1) // Bonds
+	{
+		showHideColumns(true);	
+	}
+	else
+	{
+		showHideColumns(false);	
+	}
+}
+
+private function disable_toolbar_tabs():void
+{
+	// temporarily added to disable last three tabs
+	
+	
+	var btn1:ButtonBarButton = this.toolbar.dataGroup.getElementAt(2) as ButtonBarButton;
+	btn1.enabled = false;
+	
+	var btn2:ButtonBarButton = this.toolbar.dataGroup.getElementAt(3) as ButtonBarButton;
+	btn2.enabled = false;
+	
+	var btn3:ButtonBarButton = this.toolbar.dataGroup.getElementAt(4) as ButtonBarButton;
+	btn3.enabled = false;
+	
+}
+private function showHideColumns(toShow:Boolean):void
+{
+	//colIssueName.visible = toShow;
+	if(modelManager.marketWatchModel.marketWatchCols.dispIRRCol)
+		colIRR.visible = toShow;
+	if(modelManager.marketWatchModel.marketWatchCols.dispAIRRCol)
+		colAIRR.visible = toShow;
+	if(modelManager.marketWatchModel.marketWatchCols.dispBaseRateCol)
+		colBaseRate.visible = toShow;
+	if(modelManager.marketWatchModel.marketWatchCols.dispSpreadRateCol)
+		colSpreadRate.visible = toShow;
+	if(modelManager.marketWatchModel.marketWatchCols.dispCouponRateCol)
+		colCouponRate.visible = toShow;
+	if(modelManager.marketWatchModel.marketWatchCols.dispNextCouponCol)
+		colNextCoupon.visible = toShow;
+	if(modelManager.marketWatchModel.marketWatchCols.dispMaturityDateCol)
+		colMaturityDate.visible = toShow;
+	
+	if(modelManager.marketWatchModel.marketWatchCols.dispBuyYield)
+		colBuyYield.visible = toShow;	
+	if(modelManager.marketWatchModel.marketWatchCols.dispSellYield)
+		colSellYield.visible = toShow;
+	//colFloor.visible = toShow;
+	//colCap.visible = toShow;
+	//colMTM.visible = toShow;
+}
+/**
+ * Focus out Handler
+ * 
+ */
+
+protected function adgMarketWatch_FocusOutHandler(event:DataGridEvent):void 
+{
+	
+	isInvalidSymbol = false;
+	// Get the cell editor and cast it to TextInput.
+	var cellEditor:TextInput = 
+		mx.controls.TextInput(event.currentTarget.itemEditorInstance);
+	
+	// Get the new value from the editor.
+	var newVal:String = cellEditor.text;
+	//cellEditor.text = cellEditor.text.toUpperCase();
+	// Get the old value.
+	var oldVal:String = 
+		event.currentTarget.editedItemRenderer.data[event.dataField]; 
+	
+	if(oldVal)
+		oldVal = oldVal.toUpperCase();
+	if(newVal)
+		newVal = newVal.toUpperCase();
+	
+	cellEditor.text = newVal;
+		
+	if(newVal != oldVal )
+	{
+		var mwbo:MarketWatchBO = event.currentTarget.selectedItem as MarketWatchBO;
+		
+		if(mwbo.internalExchangeID < 0 || mwbo.internalMarketID < 0){
+			cellEditor.text = "";
+			return;
+		}
+//		event.stopImmediatePropagation();
+//		event.preventDefault();
+		mwbo.SYMBOL = newVal.toUpperCase();
+		addSymbolToWatch(event.currentTarget.selectedIndex);
+		if(isInvalidSymbol)
+		{
+			cellEditor.text = "";
+			isInvalidSymbol = false;
+		}
+	}
+	
+//	
+//	event.stopImmediatePropagation();
+//	event.preventDefault();	
+	
+}
+
+
+/**
+ * KeyUp handler
+ */
+
+// Modified on 14/1/2011 : This method is no more called as new implentation uses item edit end event 
+protected function adgMarketWatch_keyUpHandler(event:KeyboardEvent):void
+{
+	// modified on 21/12/2010
+	//if ( event.keyCode != 13 )
+	if ( !(event.keyCode == 13 || event.keyCode ==9 ))
+	{
+		return;
+	}
+	
+	//get symbol data
+	event.stopImmediatePropagation();
+	event.preventDefault();
+	/*modelManager.marketWatchModel.marketWatch[selectedIndex][event.currentTarget.selectedIndex].SYMBOL = 
+		modelManager.marketWatchModel.marketWatch[selectedIndex][event.currentTarget.selectedIndex].SYMBOL.toUpperCase();
+	if ( modelManager.marketWatchModel.marketWatch[selectedIndex][event.currentTarget.selectedIndex].internalMarketID < 0 ||
+		modelManager.marketWatchModel.marketWatch[selectedIndex][event.currentTarget.selectedIndex].SYMBOL.length <= 0)
+	{
+		return;
+	}
+	modelManager.marketWatchModel.marketWatch[selectedIndex][event.currentTarget.selectedIndex].init();
+	var internalExchangeID:Number = modelManager.marketWatchModel.marketWatch[selectedIndex][event.currentTarget.selectedIndex].internalExchangeID;
+	var internalMarketID:Number = modelManager.marketWatchModel.marketWatch[selectedIndex][event.currentTarget.selectedIndex].internalMarketID;
+
+
+	/*var internalSymbolID:Number = modelManager.exchangeModel.getInternalSymbolIDByCode(
+		internalExchangeID,
+		internalMarketID,
+		modelManager.marketWatchModel.marketWatch[selectedIndex][event.currentTarget.selectedIndex].SYMBOL
+	);* /
+	var obj:Object = modelManager.exchangeModel.getSymbolByCode(
+		internalExchangeID,
+		internalMarketID,
+		modelManager.marketWatchModel.marketWatch[selectedIndex][event.currentTarget.selectedIndex].SYMBOL
+	);
+
+	if (!obj)
+	{
+		return;
+	}*/
+	
+	addSymbolToWatch(/*obj, */event.currentTarget.selectedIndex);
+}
+
+public function addSymbolToWatch(/*obj:Object, */index:Number):void
+{
+	/***/
+	
+	modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL = 
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL.toUpperCase();
+	if ( modelManager.marketWatchModel.marketWatch[selectedIndex][index].internalMarketID < 0 ||
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL.length <= 0)
+	{
+		// added on 10/1/2011
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL = "";
+		// added on 2/2/2011
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID = -1;
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].init();
+		return;
+	}
+	modelManager.marketWatchModel.marketWatch[selectedIndex][index].init();
+	var internalExchangeID:Number =
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].internalExchangeID;
+	var internalMarketID:Number =
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].internalMarketID;
+
+	var obj:Object =
+		modelManager.exchangeModel.getSymbolByCode(
+		internalExchangeID,
+		internalMarketID,
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL
+	);
+	
+	if (!obj)
+	{
+		// added on 10/1/2011
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL = "";
+		// added on 2/2/2011
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID = -1;
+		isInvalidSymbol = true;
+		return;
+	}
+	// added on 27/1/2011 to fix feed update issue
+	modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID = obj.SYMBOL_ID;
+	
+	// added on 10/12/2010
+	if(modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID < 0)
+	{
+		
+		var symbolId:Number = modelManager.exchangeModel.getSymbolID(internalExchangeID,internalMarketID,obj.INTERNAL_SYMBOL_ID);
+		
+		if(symbolId < 0)
+		{
+			Alert.show(Messages.ERROR_INVALID_SYMBOL, Messages.TITLE_ERROR);
+			modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL = "";
+			// added on 2/2/2011
+			modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID = -1;
+			isInvalidSymbol = true;
+			return;
+		}
+		else
+		{
+			modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID = symbolId;
+		}
+	}
+	
+	
+	/***/
+	var internalSymbolID:Number = obj.INTERNAL_SYMBOL_ID;
+
+	if (obj.hasOwnProperty("SYMBOL_TYPE") && obj.SYMBOL_TYPE == "Bond")
+	{
+		if (selectedIndex != 1)
+		{
+			Alert.show(Messages.ERROR_NO_BOND_SYMBOL, Messages.TITLE_ERROR);
+			modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL = "";
+			// added on 2/2/2011
+			modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID = -1;
+			isInvalidSymbol = true;
+			return;
+		}
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].IRR =
+			(obj as BondBO).IRR.toString();
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].AIRR =
+			(obj as BondBO).AIRR.toString();
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].BASE_RATE =
+			(obj as BondBO).baseRate.toString();
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SPREAD_RATE =
+			(obj as BondBO).spreadRate.toString();
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].COUPON_RATE =
+			(obj as BondBO).couponRate.toString();
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].DISCOUNT_RATE =
+			(obj as BondBO).discountRate.toString();
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].NEXT_COUPON =
+			(obj as BondBO).nextCouponDate.toString();
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].MATURITY_DATE =
+			(obj as BondBO).maturityDate.toString();
+		
+	}
+	else if (selectedIndex == 1)
+	{
+		Alert.show(Messages.ERROR_NON_BOND_SYMBOL, Messages.TITLE_ERROR);
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL = "";
+		// added on 2/2/2011
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID = -1;
+		isInvalidSymbol = true;
+		return;
+	}
+
+	if (internalSymbolID < 0)
+	{
+		Alert.show(Messages.ERROR_INVALID_SYMBOL, Messages.TITLE_ERROR);
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL = "";
+		isInvalidSymbol = true;
+		return;
+	}
+
+	ModelManager.getInstance().symbolTickerFeedModel.addFeedItem(
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL, 0, 0, 0
+	);
+
+	/*var internalExchangeID:Number =
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].internalExchangeID;
+	var internalMarketID:Number =
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].internalMarketID;*/
+
+//	ModelManager.getInstance().getBestMarketAndSymbolSummaryByName(
+//		internalExchangeID,
+//		internalMarketID,
+//		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL
+		
+	ModelManager.getInstance().getBestMarketAndSymbolSummary(
+		internalExchangeID,
+		internalMarketID,
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID,
+		modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL
+	);
+	
+	var key:String = modelManager.exchangeModel.getExchangeID(internalExchangeID) + "_" + modelManager.exchangeModel.getMarketID(internalExchangeID, internalMarketID) + "_" + modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID;
+	var itemName:String = "BMEMS_" + key;
+	// End : modified on 4/4/2011 after discussion with usman
+	if (!ModelManager.getInstance().subscribedItems.hasKey(itemName))
+	{
+		ModelManager.getInstance().subscribedItems.put(itemName, itemName);
+		ExternalInterface.call("subscribeItem", Constants.BEST_MARKET_DATA_ADAPTER, "tblBestMarket_" + itemName, itemName, "fieldSchemaBestMarket", "updateBestMarketOrderFields", ProfileManager.getInstance().userName, ProfileManager.getInstance().password);
+		itemName = "STEMS_" + key;
+		ExternalInterface.call("subscribeItem", Constants.SYMBOL_STAT_DATA_ADAPTER, "tblSymbolStat_" + itemName, itemName, "fieldSchemaSymbolStat", "updateSymbolStatsOrderFields", ProfileManager.getInstance().userName, ProfileManager.getInstance().password);
+	}
+}
+
+//public function handleOrderConfirmation(event:NonVisualItemUpdateEvent):void
+public function handleOrderConfirmation(itemName:String, itemPos:Number, updatedFields:Array):void
+{
+	var index:Number = LSListener.getActualUpdateCount(updatedFields, 0);
+	handleOrderConfirmation1(itemName, itemPos, updatedFields, index - 1);
+}
+public function handleOrderConfirmation1(itemName:String, itemPos:Number, updatedFields:Array, index:Number):void
+{
+	if (index < 0)
+	{
+		return;
+	}
+	//var event:NonVisualItemUpdateEvent = new NonVisualItemUpdateEvent(null, null, null, null);
+	//var windowManager:WindowManager = WindowManager.getInstance();
+	var strMsg:String = "<font color='";
+	
+	if (windowManager.marketWatchWindow)
+	{
+		
+		if (LSListener.extractFieldData(updatedFields, 0, index) == "0") // sub
+		{
+			if (LSListener.extractFieldData(updatedFields, 23, index) == "1")
+			{
+				if (LSListener.extractFieldData(updatedFields, 9, index) == "0")
+				{
+					strMsg += Constants.BUY_COLOR;
+					strMsg += "'>";
+					strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+					strMsg += " Negotiated, buy ";
+				}
+				else
+				{
+					strMsg += Constants.SELL_COLOR;
+					strMsg += "'>";
+					strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+					strMsg += " Negotiated, sell ";
+				}
+			}
+			else
+			{
+				if (LSListener.extractFieldData(updatedFields, 9, index) == "0")
+				{
+					strMsg += Constants.BUY_COLOR;
+					strMsg += "'>";
+					strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+					strMsg += " Buy ";
+				}
+				else
+				{
+					strMsg += Constants.SELL_COLOR;
+					strMsg += "'>";
+					strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+					strMsg += " Sell ";
+				}
+			}
+			strMsg = formatOrderQueuedMessage(itemName, itemPos, updatedFields, strMsg, index);
+			SoundManager.getInstance().playBuySound();
+		}
+		else if (LSListener.extractFieldData(updatedFields, 0, index) == "1") // can
+		{
+			strMsg += "#FC0606";
+			strMsg += "'>";
+			strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+			strMsg += " Cancelled, ";
+			if (LSListener.extractFieldData(updatedFields, 9, index) == "0")
+			{
+				strMsg += " buy ";
+			}
+			else
+			{
+				strMsg += " sell ";
+			}
+			strMsg = formatOrderQueuedMessage(itemName, itemPos, updatedFields, strMsg, index);
+//			if (windowManager.cancelOrderWindow)
+			if (windowManager.cancelOrderWindow && windowManager.canvas.windowManager.container.contains(windowManager.cancelOrderWindow))
+			{
+				var tempOrder:Order = new Order();
+				windowManager.viewManager.cancelOrder.reset();
+				windowManager.cancelOrderWindow.close();
+			}
+		}
+		else if (LSListener.extractFieldData(updatedFields, 0, index) == "2") // cha
+		{
+			if (LSListener.extractFieldData(updatedFields, 9, index) == "0")
+			{
+				strMsg += Constants.BUY_COLOR;
+				strMsg += "'>";
+				strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+				strMsg += " Changed, buy ";
+			}
+			else
+			{
+				strMsg += Constants.SELL_COLOR;
+				strMsg += "'>";
+				strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+				strMsg += " Changed, sell ";
+			}
+			strMsg = formatOrderQueuedMessage(itemName, itemPos, updatedFields, strMsg, index);
+			if (windowManager.changeOrderWindow)
+			{
+				windowManager.viewManager.changeOrder.reset();
+				windowManager.changeOrderWindow.close();
+			}
+		}
+		else if (LSListener.extractFieldData(updatedFields, 0, index) == "3") // exe
+		{
+			if (LSListener.extractFieldData(updatedFields, 9, index) == "0")
+			{
+				strMsg += Constants.BUY_COLOR;
+				strMsg += "'>";
+				strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+				strMsg += " Trade ";
+				strMsg += LSListener.extractFieldData(updatedFields, 17, index);
+				strMsg += " bought ";
+			}
+			else
+			{
+				strMsg += Constants.SELL_COLOR;
+				strMsg += "'>";
+				strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+				strMsg += " Trade ";
+				strMsg += LSListener.extractFieldData(updatedFields, 17, index);
+				strMsg += " sold ";
+			}
+			strMsg = formatOrderQueuedMessage(itemName, itemPos, updatedFields, strMsg, index);
+			SoundManager.getInstance().playTradeSound();
+			//ModelManager.getInstance().userTradeHistoryModel.isDirty = true;
+			//ModelManager.getInstance().updateUserTradeHistory();
+		}
+		// usman majeed - for RSS
+		else if (LSListener.extractFieldData(updatedFields, 0, index) == "4") // rejected
+		{
+			if (LSListener.extractFieldData(updatedFields, 9, index) == "0")
+			{
+				strMsg += Constants.REJ_COLOR;
+				strMsg += "'>";
+				strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+				strMsg += " Rejected:  Buy in ";
+			}
+			else
+			{
+				strMsg += Constants.REJ_COLOR;
+				strMsg += "'>";
+				strMsg += LSListener.extractFieldData(updatedFields, 12, index).replace("T", " ");
+				strMsg += " Rejected:  Sell in ";
+			}
+			// modified on 24/2/2011
+			var strExchangeCode:String = modelManager.exchangeModel.getExchangeCode( new Number (LSListener.extractFieldData(updatedFields, 18, index)));
+			var strMarketCode:String = modelManager.exchangeModel.getMarketCode( new Number (LSListener.extractFieldData(updatedFields, 18, index)),
+				new Number (LSListener.extractFieldData(updatedFields, 5, index)) );
+			
+			//var symbolDetail:SymbolBO = modelManager.exchangeModel
+			
+			strMsg += strMarketCode + " market in "+ strExchangeCode + " exchange. ";
+			
+			if(LSListener.extractFieldData(updatedFields, 20, index) == "0")
+			{
+				strMsg += LSListener.extractFieldData(updatedFields, 19, index); // external rejection
+			}
+			else
+			{
+				strMsg += 
+					getReasonMessage(
+						new Number(
+									LSListener.extractFieldData(updatedFields, 20, index)),
+									itemName,
+									itemPos,
+									updatedFields,
+									strExchangeCode,
+									strMarketCode,
+									index);
+			}
+			//strMsg += LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[19]);
+		}
+		// usman majeed - for RSS
+		strMsg +="";
+		strMsg += "</font><br />";
+		windowManager.viewManager.marketWatch.txaMessages.htmlText += strMsg;
+		
+		callLater(focusNewRow);
+	}
+	updateReports();
+	
+	windowManager.viewManager.marketWatch.txaMessages.validateNow();
+	windowManager.viewManager.marketWatch.txaMessages.verticalScrollPosition = windowManager.viewManager.marketWatch.txaMessages.maxVerticalScrollPosition ; // added on 2/12/2010
+	handleOrderConfirmation1(itemName, itemPos, updatedFields, index - 1);
+}
+
+private function getReasonMessage(index:Number, itemName:String, itemPos:Number, updatedFields:Array, strExchangeCode:String,strMarketCode:String, index2:Number):String
+{
+	// added on 24/2/2011
+	var internalExchangeID:Number = new Number (LSListener.extractFieldData(updatedFields, 18, index2));
+	var exchangeID:Number = ModelManager.getInstance().exchangeModel.getExchangeID(internalExchangeID);
+	var internalMarketID:Number = new Number (LSListener.extractFieldData(updatedFields, 5, index2));
+	var marketID:Number = ModelManager.getInstance().exchangeModel.getMarketID(internalExchangeID,internalMarketID);
+	var internalSymbolID:Number = new Number (LSListener.extractFieldData(updatedFields, 10, index2));
+	var symbolID:Number = modelManager.exchangeModel.getSymbolID(internalExchangeID,internalMarketID,internalSymbolID);
+	var strSymbolCode :String = modelManager.exchangeModel.getSymbolCode(internalExchangeID,internalMarketID,internalSymbolID);
+	var strOrderVolume:String = LSListener.extractFieldData(updatedFields, 16, index2);
+	
+	var key:String = exchangeID+
+		"_" + marketID+
+		"_" + symbolID;
+	var browser:SymbolBrowserBO = new SymbolBrowserBO();
+	
+	var bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO = ModelManager.getInstance().bestMarketAndSymbolSummaryModel.bestMarketAndSymbolSummaryMap.getItem(key) as BestMarketAndSymbolSummaryBO;
+	if(bestMarketAndSymbolSummary && bestMarketAndSymbolSummary.symbolSummary && bestMarketAndSymbolSummary.symbolSummary.browser )
+	{
+		browser = bestMarketAndSymbolSummary.symbolSummary.browser;	
+	}
+	
+	
+	var message:String = "";
+	switch (index)
+	{
+		case 1:
+			message = ReasonMessages.INVALID_CLIENT + " "+ LSListener.extractFieldData(updatedFields, 21, index2) + ".";
+			break;
+		case 2:
+			message = ReasonMessages.INVALID_EXCHANGE + " "+ strExchangeCode  + ".";
+			break;
+		case 3:
+			message = ReasonMessages.INVALID_MARKET  + " "+ strMarketCode  + ".";
+			break;	
+		case 4:
+			message = ReasonMessages.INVALID_SYMBOL + " " + strSymbolCode;
+			break;
+		case 5:
+			message = "Market "+strMarketCode +" Not Allowed. ";
+			break;
+		case 6:
+			message = ReasonMessages.INVALID_MARKET_STATE + " "+strMarketCode;
+			break;
+		case 7:
+			message = ReasonMessages.CLEARINGID_NOT_DEFINED;
+			break;
+		case 8:
+			message = strSymbolCode + " "+ReasonMessages.SYMBOL_SUSPENDED;
+			break;
+		case 9:
+			message = ReasonMessages.USER_SUSPENDED;
+			break;
+		case 10:
+			message = "Volume lot size for "+strSymbolCode+" is  "+browser.lotSize; //ReasonMessages.VOL_NOT_MTPLE_OF_BLOT;
+			break;
+		case 11:
+			message = "Price tick size for "+strSymbolCode+" is  "+browser.tickSize;//ReasonMessages.PRICE_NOT_MTPLE_OF_TICK_SIZE;
+			break;
+		case 12:
+			message = "Circuit breaker limits for "+strSymbolCode+" are "+browser.circuitBreakerDown + " - "+browser.circuitBreakerUp;//ReasonMessages.INVALID_PRICE;
+			break;
+		case 13:
+			message = "Volume limits for "+strSymbolCode+" are "+browser.lowerVolumeLimit + " - "+browser.upperVolumeLimit;//ReasonMessages.VOL_UPPER_LIM_EXCEEDED;
+			break;
+		case 14:
+			message = "Volume limits for "+strSymbolCode+" are "+browser.lowerVolumeLimit + " - "+browser.upperVolumeLimit;//ReasonMessages.VOL_LOWER_LIM_EXCEEDED;
+			break;
+		case 15:
+			message = "Value limits for "+strSymbolCode+" are "+browser.lowerValueLimit + " - "+browser.upperValueLimit;//ReasonMessages.VAL_UPPER_LIM_EXCEEDED;
+			break;
+		case 16:
+			message = "Value limits for "+strSymbolCode+" are "+browser.lowerValueLimit + " - "+browser.upperValueLimit;//ReasonMessages.VAL_LOWER_LIM_EXCEEDED;
+			break;
+		case 17:
+			message = ReasonMessages.INVALID_TERMINAL;
+			break;
+		case 18:
+			message = ReasonMessages.NO_OPPOSITE_SIDE;
+			break;
+		case 19:
+			message = ReasonMessages.GRANTS_NOT_AVAILABLE;
+			break;
+		case 20:
+			message = ReasonMessages.CREDIT_LINE_LIMIT_EXCEEDED;
+			break;
+		case 21:
+			message = ReasonMessages.SHORT_SELL + strSymbolCode + ". Volume: " + strOrderVolume + ".";
+			break;
+		case 22:
+			message = ReasonMessages.NOT_AFFIRMED;
+			break;
+		case 23:
+			message = ReasonMessages.CHANGE_NOT_ALLAOWED_NEGOTIATED_ORDER;
+			break;
+		case 24:
+			message = ReasonMessages.INVALID_ORDER;
+			break;
+		case 25:
+			message = ReasonMessages.DISCLOSED_VOLUME_LESS_THAN_VOLUME;
+			break;
+		case 26:
+			message = ReasonMessages.VOLUME_NOT_MULTIPLE_OF_DISCLOSED_VOLUME;
+			break;
+		default : 
+			message = "";
+	}
+	return message;
+}
+
+public function updateStatus(statusMsg:String):void
+{
+	windowManager.viewManager.marketWatch.txaMessages.htmlText += statusMsg + "<br />";
+}
+
+public function updateBulletin(statusMsg:String):void
+{
+	windowManager.viewManager.marketWatch.txaBulletins.htmlText += statusMsg + "<br />";
+	messagesBar.selectedIndex = 2;
+	txaMessages.visible = false;
+	txaCorporateAnnouncements.visible = false;
+	txaBulletins.visible = true;
+}
+
+public function updateAnnouncement(statusMsg:String):void
+{
+	windowManager.viewManager.marketWatch.txaCorporateAnnouncements.htmlText += statusMsg + "<br />";
+}
+
+public function focusNewRow():void
+{
+	
+	windowManager.viewManager.marketWatch.txaMessages.verticalScrollPosition =
+		windowManager.viewManager.marketWatch.txaMessages.maxVerticalScrollPosition;	
+	
+}
+
+private function formatOrderQueuedMessage(itemName:String, itemPos:Number, updatedFields:Array, strMsg:String, index:Number):String
+{
+	var ezNumberFormatter:EZNumberFormatter = new EZNumberFormatter();
+	var str:String = LSListener.extractFieldData(updatedFields, 16, index);
+	strMsg += ezNumberFormatter.format(str) + " ";
+	var strSymbolCode:String = modelManager.exchangeModel.getSymbolCode( new Number (LSListener.extractFieldData(updatedFields, 18, index)),
+		new Number (LSListener.extractFieldData(updatedFields, 5, index)),
+		new Number (LSListener.extractFieldData(updatedFields, 10, index)) );
+	strMsg += strSymbolCode + " @ ";
+	var ezCurrencyFormatter:EZCurrencyFormatter = new EZCurrencyFormatter();
+	str = LSListener.extractFieldData(updatedFields, 7, index);
+	strMsg += ezCurrencyFormatter.format( str ) + " for ";
+	strMsg += LSListener.extractFieldData(updatedFields, 21, index) + " order number ";
+	strMsg += LSListener.extractFieldData(updatedFields, 6, index) + " in ";
+	var strMarketCode:String = modelManager.exchangeModel.getMarketCode( new Number (LSListener.extractFieldData(updatedFields, 18, index)),
+		new Number (LSListener.extractFieldData(updatedFields, 5, index)) );
+	strMsg += strMarketCode + " market.";
+	// added on 14/1/2011
+	if (LSListener.extractFieldData(updatedFields, 0, index) == "3") // exe
+	{
+		var remaining_volume:Number =  new Number(LSListener.extractFieldData(updatedFields, 25, index));
+			strMsg += " Remaining Volume : " + remaining_volume;	
+	}
+	return strMsg;
+}
+
+private function updateReports():void
+{
+	//ModelManager.getInstance().bestOrdersModel.isDirty = true;
+	//ModelManager.getInstance().remainingOrdersModel.isDirty = true;
+	//ModelManager.getInstance().updateRemainingOrders();
+	//ModelManager.getInstance().updateBestOrders();
+}
+
+public function updateMarketWatchView(bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO):void
+{
+	for (var i:int = 0; i < Constants.PAGE_COUNT_MARKET_WATCH; ++i)
+	{
+		for (var j:int = 0; j < Constants.ROW_COUNT_MARKET_WATCH; ++j)
+		{
+			if ( bestMarketAndSymbolSummary.symbolName == modelManager.marketWatchModel.marketWatch[i][j].SYMBOL &&
+				bestMarketAndSymbolSummary.exchangeId == modelManager.marketWatchModel.marketWatch[i][j].exchangeID &&
+				bestMarketAndSymbolSummary.marketId == modelManager.marketWatchModel.marketWatch[i][j].marketID )
+			{
+				if (bestMarketAndSymbolSummary.symbolSummary && bestMarketAndSymbolSummary.symbolSummary.browser)
+				{
+					// modified on 6/1/2011
+					//modelManager.marketWatchModel.marketWatch[i][j].symbolID =
+					//	bestMarketAndSymbolSummary.symbolSummary.browser.symbolID
+					modelManager.marketWatchModel.marketWatch[i][j].symbolID =
+						bestMarketAndSymbolSummary.symbolID;
+					
+					// added on 22/2/2011
+					modelManager.marketWatchModel.marketWatch[i][j].SECTOR = bestMarketAndSymbolSummary.symbolSummary.browser.sector;
+				}
+				if (bestMarketAndSymbolSummary.symbolSummary && bestMarketAndSymbolSummary.symbolSummary.stats)
+				{
+					modelManager.marketWatchModel.marketWatch[i][j].LAST =
+						bestMarketAndSymbolSummary.symbolSummary.stats.lastTradePrice.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].CHANGE =
+						bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].TURN_OVER =
+						bestMarketAndSymbolSummary.symbolSummary.stats.turnover.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].LAST_VOLUME = 
+						bestMarketAndSymbolSummary.symbolSummary.stats.lastTradeSize.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].LAST = 
+						bestMarketAndSymbolSummary.symbolSummary.stats.lastTradePrice.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].TURN_OVER = 
+						bestMarketAndSymbolSummary.symbolSummary.stats.turnover.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].TRADES = 
+						bestMarketAndSymbolSummary.symbolSummary.stats.totalNoOfTrades.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].OPEN = 
+						bestMarketAndSymbolSummary.symbolSummary.stats.open.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].AVERAGE = 
+						bestMarketAndSymbolSummary.symbolSummary.stats.averagePrice.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].HIGH = 
+						bestMarketAndSymbolSummary.symbolSummary.stats.high.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].LOW = 
+						bestMarketAndSymbolSummary.symbolSummary.stats.low.toString();
+					modelManager.marketWatchModel.marketWatch[i][j].CHANGE = 
+						bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+				}
+				if (bestMarketAndSymbolSummary.bestMarket)
+				{
+					if (bestMarketAndSymbolSummary.bestMarket.buyOrderBO)
+					{
+						if (bestMarketAndSymbolSummary.bestMarket.buyOrderBO.PRICE > 0 &&
+							bestMarketAndSymbolSummary.bestMarket.buyOrderBO.VOLUME > 0
+						)
+						{
+							modelManager.marketWatchModel.marketWatch[i][j].BUY = bestMarketAndSymbolSummary.bestMarket.buyOrderBO.PRICE.toString();
+							modelManager.marketWatchModel.marketWatch[i][j].BUY_VOLUME = bestMarketAndSymbolSummary.bestMarket.buyOrderBO.VOLUME.toString();
+						}
+					}
+					if (bestMarketAndSymbolSummary.bestMarket.sellOrderBO)
+					{
+						if (bestMarketAndSymbolSummary.bestMarket.sellOrderBO.PRICE > 0 &&
+							bestMarketAndSymbolSummary.bestMarket.sellOrderBO.VOLUME > 0
+						)
+						{
+							modelManager.marketWatchModel.marketWatch[i][j].SELL = bestMarketAndSymbolSummary.bestMarket.sellOrderBO.PRICE.toString();
+							modelManager.marketWatchModel.marketWatch[i][j].SELL_VOLUME = bestMarketAndSymbolSummary.bestMarket.sellOrderBO.VOLUME.toString();
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+//public function updateBestMarketOrderFields(event:NonVisualItemUpdateEvent):void
+public function updateBestMarketOrderFields(itemName:String, itemPos:Number, updatedFields:Array):void
+{
+	var index:Number = LSListener.getActualUpdateCount(updatedFields, 0);
+	updateBestMarketOrderFields1(itemName, itemPos, updatedFields, 0);
+}
+
+public function updateBestMarketOrderFields1(itemName:String, itemPos:Number, updatedFields:Array, index:Number):void
+{
+	if (index < 0)
+	{
+		return;
+	}
+	var itemID:Array = itemName.split("_");
+	var ezNumberFormatter:EZNumberFormatter = new EZNumberFormatter();
+	var ezCurrencyFormatter:EZCurrencyFormatter = new EZCurrencyFormatter();
+	for (var i:int = 0; i < Constants.PAGE_COUNT_MARKET_WATCH; ++i)
+	{
+		for (var j:int = 0; j < Constants.ROW_COUNT_MARKET_WATCH; ++j)
+		{
+			if (
+				// modified on 4/4/2011
+				modelManager.marketWatchModel.marketWatch[i][j].symbolID == itemID[3] &&
+				modelManager.marketWatchModel.marketWatch[i][j].marketID == itemID[2]&&
+				modelManager.marketWatchModel.marketWatch[i][j].exchangeID == itemID[1]
+			)
+			{
+				modelManager.marketWatchModel.marketWatch[i][j].BUY = 
+					ezCurrencyFormatter.format(LSListener.extractFieldData(updatedFields, 1, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].BUY_OLD =
+					ezCurrencyFormatter.format(LSListener.getOldFieldData(updatedFields, 1, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].BUY_VOLUME = 
+					ezNumberFormatter.format(LSListener.extractFieldData(updatedFields, 3, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].BUY_VOLUME_OLD = 
+					ezNumberFormatter.format(LSListener.getOldFieldData(updatedFields, 3, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].SELL = 
+					ezCurrencyFormatter.format(LSListener.extractFieldData(updatedFields, 5, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].SELL_OLD = 
+					ezCurrencyFormatter.format(LSListener.getOldFieldData(updatedFields, 5, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].SELL_VOLUME = 
+					ezNumberFormatter.format(LSListener.extractFieldData(updatedFields, 7, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].SELL_VOLUME_OLD = 
+					ezNumberFormatter.format(LSListener.getOldFieldData(updatedFields, 7, index));
+				
+				if (modelManager.marketWatchModel.marketWatch[i][j].BUY_VOLUME == "0")
+				{
+					modelManager.marketWatchModel.marketWatch[i][j].BUY_VOLUME = "";
+					modelManager.marketWatchModel.marketWatch[i][j].BUY = "";
+				}
+				
+				if (modelManager.marketWatchModel.marketWatch[i][j].SELL_VOLUME == "0")
+				{
+					modelManager.marketWatchModel.marketWatch[i][j].SELL_VOLUME = "";
+					modelManager.marketWatchModel.marketWatch[i][j].SELL = "";
+				}
+			}
+		}
+	}
+	windowManager.viewManager.buyOrder.updateBestMarketOrderFields(itemName, itemPos, updatedFields, index);
+	windowManager.viewManager.sellOrder.updateBestMarketOrderFields(itemName, itemPos, updatedFields, index);
+	// added on 23/2/2011
+	windowManager.viewManager.symbolSumm.updateBestMarketSymbolSummFields(itemName, itemPos, updatedFields, index);
+	// added on 1/4/2011
+	updateBestMarketOrderFields1(itemName, itemPos, updatedFields, index - 1);
+}
+
+//private function updateBestMarket(event:NonVisualItemUpdateEvent):void
+//{
+//	var itemID:Array = event.currentTarget.groupString.split("_");
+//	
+//	if (symbol.SYMBOL == itemID[0] && itemID[1] == modelManager.exchangeModel.getMarketID(internalExchangeID,internalMarketID))
+//	{
+//		symbol.BUY = moneyFormatter.format(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[1]));
+//		
+//		symbol.BUY_VOLUME = numberFormatter.format(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[3]));
+//		
+//		symbol.SELL = moneyFormatter.format(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[5]));
+//		
+//		symbol.SELL_VOLUME = numberFormatter.format(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[7]));
+//	}	
+
+//}
+
+//public function updateSymbolStatsOrderFields(event:NonVisualItemUpdateEvent):void
+public function updateSymbolStatsOrderFields(itemName:String, itemPos:Number, updatedFields:Array):void
+{
+	var index:Number = LSListener.getActualUpdateCount(updatedFields, 0);
+	updateSymbolStatsOrderFields1(itemName, itemPos, updatedFields, index - 1);
+}
+public function updateSymbolStatsOrderFields1(itemName:String, itemPos:Number, updatedFields:Array, index:Number):void
+{
+	if (index < 0)
+	{
+		return;
+	}
+	//var event:NonVisualItemUpdateEvent = new NonVisualItemUpdateEvent(null, null, null, null);
+	//var itemID:Array = event.currentTarget.groupString.split("_");
+	var itemID:Array = itemName.split("_");
+	var ezNumberFormatter:EZNumberFormatter = new EZNumberFormatter();
+	var ezCurrencyFormatter:EZCurrencyFormatter = new EZCurrencyFormatter();
+	
+	for (var i:int = 0; i < Constants.PAGE_COUNT_MARKET_WATCH; ++i)
+	{
+		for (var j:int = 0; j < Constants.ROW_COUNT_MARKET_WATCH; ++j)
+		{
+			if (
+				// Modified on 03/01/2011
+				//modelManager.marketWatchModel.marketWatch[i][j].symbolID == itemID[1]
+				modelManager.marketWatchModel.marketWatch[i][j].exchangeID == itemID[1]
+				&& modelManager.marketWatchModel.marketWatch[i][j].marketID == itemID[2]
+				&& modelManager.marketWatchModel.marketWatch[i][j].symbolID == itemID[3]
+			)
+			{
+				modelManager.marketWatchModel.marketWatch[i][j].LAST_VOLUME = 
+					ezNumberFormatter.format(LSListener.extractFieldData(updatedFields, 0, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].LAST = 
+					ezCurrencyFormatter.format(LSListener.extractFieldData(updatedFields, 1, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].LAST_OLD = 
+					ezCurrencyFormatter.format(LSListener.getOldFieldData(updatedFields, 1, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].LAST_FEED_UPDATED = true;
+				
+				modelManager.marketWatchModel.marketWatch[i][j].TURN_OVER = 
+					ezNumberFormatter.format(LSListener.extractFieldData(updatedFields, 2, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].TRADES = 
+					ezNumberFormatter.format(LSListener.extractFieldData(updatedFields, 3, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].OPEN = 
+					ezCurrencyFormatter.format(LSListener.extractFieldData(updatedFields, 4, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].AVERAGE = 
+					ezCurrencyFormatter.format(LSListener.extractFieldData(updatedFields, 5, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].HIGH = 
+					ezCurrencyFormatter.format(LSListener.extractFieldData(updatedFields, 6, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].LOW = 
+					ezCurrencyFormatter.format(LSListener.extractFieldData(updatedFields, 7, index));
+				
+				modelManager.marketWatchModel.marketWatch[i][j].CHANGE = 
+					ezNumberFormatter.format(LSListener.extractFieldData(updatedFields, 8, index));
+				
+				ModelManager.getInstance().symbolTickerFeedModel.addFeedItem(
+					modelManager.marketWatchModel.marketWatch[i][j].SYMBOL,
+					modelManager.marketWatchModel.marketWatch[i][j].CHANGE.replace(",", ""),
+					modelManager.marketWatchModel.marketWatch[i][j].LAST.replace(",", ""),
+					modelManager.marketWatchModel.marketWatch[i][j].LAST_VOLUME.replace(",", "")
+				);
+			}
+		}
+	}
+	windowManager.viewManager.buyOrder.updateSymbolStatsOrderFields(itemName, itemPos, updatedFields, index);
+	windowManager.viewManager.sellOrder.updateSymbolStatsOrderFields(itemName, itemPos, updatedFields, index);
+	// added on 23/2/2011
+	windowManager.viewManager.symbolSumm.updateSymbolStatsSymbolSummFields(itemName, itemPos, updatedFields, index);
+	updateSymbolStatsOrderFields1(itemName, itemPos, updatedFields, index - 1);
+}
+
+protected function messagesBar_clickHandler(event:MouseEvent):void
+{
+	if (event.currentTarget.selectedIndex == 0)
+	{
+		txaMessages.visible = true;
+		txaCorporateAnnouncements.visible = false;
+		txaBulletins.visible = false;
+	}
+	else if (event.currentTarget.selectedIndex == 1)
+	{
+		txaMessages.visible = false;
+		txaCorporateAnnouncements.visible = true;
+		txaBulletins.visible = false;
+	}
+	else if (event.currentTarget.selectedIndex == 2)
+	{
+		txaMessages.visible = false;
+		txaCorporateAnnouncements.visible = false;
+		txaBulletins.visible = true;
+	}
+}
+
+// added on 4/3/2011
+public function stringSortCompare(itemA:Object, itemB:Object):int
+{
+	var compareValue:int = 0;
+	var itemAValue:String = "";
+	var itemBValue:String = "";
+	if(sortColumn == "EXCHANGE")
+	{
+		itemAValue = itemA.EXCHANGE == null ? "" : itemA.EXCHANGE ;
+		itemBValue = itemB.EXCHANGE == null ? "" : itemB.EXCHANGE;
+	}
+	else if(sortColumn == "MARKET")
+	{
+		itemAValue = itemA.MARKET == null ? "" : itemA.MARKET ;
+		itemBValue = itemB.MARKET == null ? "" : itemB.MARKET;
+	}
+	else if(sortColumn == "SYMBOL")
+	{
+		itemAValue = itemA.SYMBOL;
+		itemBValue = itemB.SYMBOL;
+	}
+	compareValue = ObjectUtil.stringCompare(itemAValue,itemBValue);
+	if(!sortDescending && (itemAValue == "" || itemBValue == "" ))
+	{
+		if(compareValue == -1)
+		{
+			compareValue = 1;
+		}
+		else if(compareValue == 1)
+		{
+			compareValue = -1;
+		}
+	}
+	
+	return compareValue;
+}
+
+public function calculateCurrentYield(currentPrice:Number, couponRate:Number):Number
+{
+	if(currentPrice > 0 && couponRate > 0)
+		return new Number(numberFormatter.format((couponRate / currentPrice) * 100));
+	else
+		return 0;
+}
+
+
+public function applyFilter():void
+{
+}

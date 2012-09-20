@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%" horizontalCenter="0"
+		 height="100%"
+		 xmlns:common="common.*"
+		 initialize="group1_initializeHandler(event)"
+		 xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/SymbolStateControl.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter"
+						  formatString="JJ:NN:SS"/>
+	</fx:Declarations>
+	<s:BorderContainer horizontalCenter="0" borderVisible="false"
+					   width="100%" 
+					   height="100%">
+		<s:Label text="{resourceManager.getString('marketwatch','exchange')}:"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-295':'-420'}" 
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 top="16"/>
+		<components:EZDropDownTextInput width="128"
+										top="11" 
+										height="22"
+										id="txtExchange"
+										editable="false"
+										click="txtExchange_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-370':'-325'}"/>
+		<s:Label text="{resourceManager.getString('marketwatch','market')}:"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-295':'-415'}" 
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 top="41"/>
+		<components:EZDropDownTextInput width="128"
+										top="36"
+										height="22"
+										id="txtMarket"
+										editable="false"
+										click="txtMarket_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-370':'-325'}"/>
+		<s:Label  text="{resourceManager.getString('marketwatch','symbol')}:"
+				  horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-295':'-418'}" 
+				  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 top="66"
+				/>
+		<s:TextInput width="128"
+					 top="61"
+					 height="20"
+					 id="txtSymbol"
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-370':'-325'}"
+					 keyDown="txtSymbol_keyDownHandler(event)"/>
+
+		<s:Label  text="{resourceManager.getString('marketwatch','currentState')}:"
+				  horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-280':'-430'}" 
+				  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 top="89"/>
+		<s:TextInput width="128"
+					 height="22"
+					 id="txtCurrentSymbolState"
+					 editable="false"
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-370':'-325'}"
+					 top="84"/>
+
+		<s:Label text="{resourceManager.getString('marketwatch','requestedState')}:"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-280':'-435'}" 
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 top="115"/>
+		<components:EZDropDownTextInput width="128"
+										top="110"
+										height="22"
+										id="txtRequestedSymbolState"
+										editable="false"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-370':'-325'}"
+										click="txtRequestedSymbolState_clickHandler(event)"/>
+
+		<s:CheckBox label="{resourceManager.getString('marketwatch','makePersistent')}"
+					id="chkPersist"
+					horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-420':'-420'}"
+					top="132"/>
+
+		<s:Button label="{resourceManager.getString('marketwatch','update')}"
+				  id="btnUpdate"
+				  horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-355':'-355'}"
+				  top="156"
+				  click="btnUpdate_clickHandler(event)"/>
+		<s:Button label="{resourceManager.getString('marketwatch','reset')}"
+				  id="btnReset"
+				  click="btnReset_clickHandler(event)"
+				  horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-285':'-285'}"
+				  top="156"/>
+	</s:BorderContainer>
+</s:Group>

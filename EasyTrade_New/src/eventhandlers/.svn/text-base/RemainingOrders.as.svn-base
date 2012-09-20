@@ -1,0 +1,302 @@
+import businessobjects.GrantBO;
+import businessobjects.OrderBO;
+
+import common.Constants;
+
+import components.ComboBoxItem;
+
+import controller.ModelManager;
+import controller.ProfileManager;
+import controller.ViewManager;
+import controller.WindowManager;
+
+import flash.events.MouseEvent;
+
+import flashx.textLayout.operations.ApplyFormatOperation;
+
+import flexlib.mdi.containers.MDIWindow;
+
+import mx.collections.ArrayCollection;
+import mx.events.FlexEvent;
+
+import view.Order;
+
+[Bindable]
+public var modelManager:ModelManager = ModelManager.getInstance();
+
+[Bindable]
+private var tradersList:ArrayCollection = new ArrayCollection();
+
+
+public var fr:FileReference;
+protected function group1_initializeHandler(event:FlexEvent):void
+{
+	// added on 27/12/2010
+	exchangeList.removeAll();
+	for (var i:int = 0; i < ModelManager.getInstance().exchangeModel.exchanges.length; ++i)
+	{
+		var obj:Object = ModelManager.getInstance().exchangeModel.exchanges.getItemAt(i);
+		//var cbi:ComboBoxItem = new ComboBoxItem(obj.EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		var cbi:ComboBoxItem = new ComboBoxItem(obj.INTERNAL_EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		exchangeList.addItem(cbi);
+	}
+	//exchangeID = -1;
+	internalExchangeID = -1;
+	//marketID = -1;
+	internalMarketID = -1;
+	symbolID = -1;
+	// added on 24/12/2010
+	//setDefaultExchangeAndMarket();
+	
+	fr = new FileReference();
+	fr.addEventListener(IOErrorEvent.IO_ERROR,fileIOError_Handler);
+	fr.addEventListener(Event.COMPLETE,fileSaved_Handler);
+	// added on 16/3/2011
+	tradersList = modelManager.userProfileModel.getTraders("RemainingOrders");
+	
+}
+
+
+protected function adgRemainingOrders_itemClickHandler(event:MouseEvent):void
+{
+	var windowManager:WindowManager = WindowManager.getInstance();
+	if (!this.adgRemainingOrders.selectedItem)
+	{
+		return;
+	}
+	
+	var ob:OrderBO = (this.adgRemainingOrders.selectedItem as OrderBO);
+	var g:Object = null;
+	var foundUser:Boolean = false;
+	for each (g in modelManager.userProfileModel.userProfile.grants)
+	{
+		if (ob.USER_ID == g.userId)
+		{
+			foundUser = true;
+			break;
+		}
+	}
+	
+	if (!foundUser)
+	{
+		if ((ob.USER_ID != modelManager.userID) &&
+			(ob.IS_NEGOTIATED && ob.COUNTER_USER_ID != modelManager.userID))
+		{
+			return;
+		}
+	}
+	
+	if (this.adgRemainingOrders.selectedItem.SYMBOL_ID > 0)
+	{
+		var window:MDIWindow = null;
+		var orderVeiw:Order = null;
+		if (event.ctrlKey)
+		{
+			if (foundUser)
+			{
+				var hasCancelPrivilege:Boolean = false;
+				var gs1:ArrayCollection = modelManager.userProfileModel.userProfile.grants;
+				for each (var p1:Object in gs1)
+				{
+					for each (var s1:String in p1.privileges)
+					{
+						if (s1 == "CancelOrder")
+						{
+							hasCancelPrivilege = true;
+						}
+					}
+				}
+				if (!hasCancelPrivilege)
+				{
+					return;
+				}
+			}
+
+			windowManager.viewManager.cancelOrder.isFromMenu = false;
+			windowManager.viewManager.cancelOrder.reset();
+			windowManager.viewManager.cancelOrder.disableFields(true);
+			windowManager.viewManager.cancelOrder.isFirstSubmission = true;
+			if (windowManager.cancelOrderWindow && windowManager.canvas.windowManager.container.contains(windowManager.cancelOrderWindow))
+			{
+				windowManager.updateCancelOrderWindow(this.adgRemainingOrders.selectedItem as OrderBO);
+				windowManager.canvas.windowManager.bringToFront(windowManager.cancelOrderWindow);
+			}
+			else
+			{
+				windowManager.initCancelOrderWindow();
+				windowManager.updateCancelOrderWindow(this.adgRemainingOrders.selectedItem as OrderBO);
+				windowManager.canvas.windowManager.add(windowManager.cancelOrderWindow);
+			}
+			window = windowManager.cancelOrderWindow;
+			orderVeiw = windowManager.viewManager.cancelOrder;
+			orderVeiw.COUNTER_CLIENT_ID = (this.adgRemainingOrders.selectedItem as OrderBO).COUNTER_CLIENT_ID;
+			orderVeiw.COUNTER_ORDER_NO = (this.adgRemainingOrders.selectedItem as OrderBO).COUNTER_ORDER_NO;
+			orderVeiw.COUNTER_USER_ID = (this.adgRemainingOrders.selectedItem as OrderBO).COUNTER_USER_ID;
+			orderVeiw.CLIENT_ID = (this.adgRemainingOrders.selectedItem as OrderBO).CLIENT_ID;
+			orderVeiw.IS_ORDER_NO_SWAPPED = (this.adgRemainingOrders.selectedItem as OrderBO).IS_ORDER_NO_SWAPPED;
+			orderVeiw.NTType = "Rejected";
+			orderVeiw.focusManager.setFocus(orderVeiw.txtOrderNum);
+		}
+		else
+		{
+			if (foundUser)
+			{
+				var hasChangePrivilege:Boolean = false;
+				var gs2:ArrayCollection = modelManager.userProfileModel.userProfile.grants;
+				for each (var p2:Object in gs2)
+				{
+					for each (var s2:String in p2.privileges)
+					{
+						if (s2 == "ChangeOrder")
+						{
+							hasChangePrivilege = true;
+						}
+					}
+				}
+				if (!hasChangePrivilege)
+				{
+					return;
+				}
+			}
+			
+			if (ob.IS_NEGOTIATED && (ob.USER_ID == modelManager.userID && ob.USER_ID != ob.COUNTER_USER_ID))
+			{
+				return;
+			}
+
+			windowManager.viewManager.changeOrder.isFromMenu = false;
+			windowManager.viewManager.changeOrder.reset();
+			windowManager.viewManager.changeOrder.disableFields(false);
+			windowManager.viewManager.changeOrder.isFirstSubmission = true;
+			if (windowManager.changeOrderWindow && windowManager.canvas.windowManager.container.contains(windowManager.changeOrderWindow))
+			{
+				windowManager.updateChangeOrderWindow(this.adgRemainingOrders.selectedItem as OrderBO);
+				windowManager.canvas.windowManager.bringToFront(windowManager.changeOrderWindow);
+			}
+			else
+			{
+				windowManager.initChangeOrderWindow();
+				windowManager.updateChangeOrderWindow(this.adgRemainingOrders.selectedItem as OrderBO);
+				windowManager.canvas.windowManager.add(windowManager.changeOrderWindow);
+			}
+			window = windowManager.changeOrderWindow;
+			orderVeiw = windowManager.viewManager.changeOrder;
+			orderVeiw.COUNTER_CLIENT_ID = (this.adgRemainingOrders.selectedItem as OrderBO).COUNTER_CLIENT_ID;
+			orderVeiw.COUNTER_ORDER_NO = (this.adgRemainingOrders.selectedItem as OrderBO).COUNTER_ORDER_NO;
+			orderVeiw.COUNTER_USER_ID = (this.adgRemainingOrders.selectedItem as OrderBO).COUNTER_USER_ID;
+			orderVeiw.CLIENT_ID = (this.adgRemainingOrders.selectedItem as OrderBO).CLIENT_ID;
+			orderVeiw.NTType = "Accepted";
+			orderVeiw.IS_ORDER_NO_SWAPPED = (this.adgRemainingOrders.selectedItem as OrderBO).IS_ORDER_NO_SWAPPED;
+			orderVeiw.focusManager.setFocus(orderVeiw.txtPrice);
+		}
+		
+		// added on 4/1/2011
+		modelManager.orderModel.REF_NO = (this.adgRemainingOrders.selectedItem as OrderBO).REF_NO ;
+		// added on 12/1/2011
+		modelManager.orderModel.CLIENT_ID = (this.adgRemainingOrders.selectedItem as OrderBO).CLIENT_ID ;
+		modelManager.orderModel.USER_ID = (this.adgRemainingOrders.selectedItem as OrderBO).USER_ID ;
+		modelManager.orderModel.BROKER_ID = (this.adgRemainingOrders.selectedItem as OrderBO).BROKER_ID ;
+
+		if (window != null)
+		{
+			if (ob.IS_NEGOTIATED)
+			{
+				orderVeiw.enableFields(false);
+				orderVeiw.enableNegotiatedTradePanel();
+				orderVeiw.enableCounterClientID();
+				orderVeiw.setFocusToCounterClientID();
+			}
+			else
+			{
+				orderVeiw.disableNegotiatedTradePanel();
+			}
+/*			if (ob.IS_NEGOTIATED && (ob.COUNTER_USER_ID == modelManager.userID))
+			{
+				orderVeiw.disableTrader();
+				orderVeiw.enableCounterClientID();
+
+				if (this.adgRemainingOrders.selectedItem.SIDE == "buy")
+				{
+					windowManager.setWindowColor(window, orderVeiw, Constants.SELL_COLOR_INT);
+				}
+				else
+				{
+					windowManager.setWindowColor(window, orderVeiw, Constants.BUY_COLOR_INT);
+				}
+			}
+			else
+			*/
+			{
+				if (this.adgRemainingOrders.selectedItem.SIDE == "buy")
+				{
+					windowManager.setWindowColor(window, orderVeiw, Constants.BUY_COLOR_INT);
+				}
+				else
+				{
+					windowManager.setWindowColor(window, orderVeiw, Constants.SELL_COLOR_INT);
+				}
+			}
+		}
+	}
+}
+
+protected function txtSymbol_keyDownHandler(event:KeyboardEvent):void
+{
+	if ( event.keyCode == 9 || event.keyCode == 13 )
+	{
+		txtSymbol.text = txtSymbol.text.toUpperCase();
+		internalSymbolID = ModelManager.getInstance().exchangeModel.getInternalSymbolIDByCode(internalExchangeID, internalMarketID, txtSymbol.text);
+		applyFilter();
+	}
+}
+
+public function applyFilterEx():void
+{
+	txtSymbol.text = txtSymbol.text.toUpperCase();
+	internalSymbolID = ModelManager.getInstance().exchangeModel.getInternalSymbolIDByCode(internalExchangeID, internalMarketID, txtSymbol.text);
+	applyFilter();
+}
+
+public function applyFilter():void
+{
+	modelManager.remainingOrdersModel.remainingOrders.refresh();
+}
+
+/*public var userID:Number;
+private var isExpanded:Boolean = false;
+
+public function handleExpandAll(event:ItemClickEvent):void
+{
+	var lbl:String;
+	if (isExpanded)
+	{
+		isExpanded = false;
+		lbl = Constants.BTN_TEXT_EXPAND_ALL;
+		adgRemainingOrders.collapseAll();
+	}
+	else
+	{
+		isExpanded = true;
+		lbl = Constants.BTN_TEXT_COLLAPSE_ALL;
+		adgRemainingOrders.expandAll();
+	}
+	var dp:ArrayCollection = new ArrayCollection();
+	dp.addItem(lbl);
+	dp.addItem(Constants.BTN_TEXT_REFRESH);
+	//toolbar.dataProvider = dp;
+}
+
+public function reset():void
+{
+	isExpanded = false;
+	var dp:ArrayCollection = new ArrayCollection();
+	dp.addItem(Constants.BTN_TEXT_EXPAND_ALL);
+	dp.addItem(Constants.BTN_TEXT_REFRESH);
+	//toolbar.dataProvider = dp;
+}
+*/
+
+protected function btnRefresh_clickHandler(event:MouseEvent):void
+{
+	ModelManager.getInstance().updateRemainingOrders();
+}

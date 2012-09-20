@@ -1,0 +1,138 @@
+package model
+{
+	import businessobjects.MarketBO;
+	import businessobjects.MarketWatchBO;
+	
+	import common.Constants;
+	import common.Messages;
+	
+	import controller.ModelManager;
+	import controller.WindowManager;
+	
+	import filters.Filters;
+	
+	import mx.collections.ArrayCollection;
+	import mx.controls.Alert;
+	import mx.resources.ResourceManager;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+	
+	import services.QWClient;
+
+	public class MarketWatchModel implements IModel
+	{
+		private var isDirty_:Boolean=true;
+
+		public function get isDirty():Boolean
+		{
+			return isDirty_;
+		}
+
+		public function set isDirty(value:Boolean):void
+		{
+			isDirty_=value;
+		}
+
+		[Bindable]
+		private var marketWatch_:Array=new Array();
+
+		[Bindable]
+		public function get marketWatch():Array
+		{
+			return marketWatch_;
+		}
+
+		public function set marketWatch(value:Array):void
+		{
+			marketWatch_=value;
+		}
+
+		[Bindable]
+		public var marketWatchCols:MarketWatchColumns=new MarketWatchColumns();
+
+		public function MarketWatchModel()
+		{
+			for (var i:int=0; i < Constants.PAGE_COUNT_MARKET_WATCH; ++i)
+			{
+				var marketWatchView:ArrayCollection=new ArrayCollection();
+				for (var j:int=0; j < Constants.ROW_COUNT_MARKET_WATCH; ++j)
+				{
+					marketWatchView.addItem(new MarketWatchBO());
+				}
+				marketWatch_.push(marketWatchView);
+			}
+		}
+
+		public function clearMarketWatchWindow():void
+		{
+			for (var i:int=0; i < Constants.PAGE_COUNT_MARKET_WATCH; ++i)
+			{
+				for (var j:int=0; j < Constants.ROW_COUNT_MARKET_WATCH; ++j)
+				{
+					var mwBO:MarketWatchBO=marketWatch[i][j] as MarketWatchBO;
+					if (mwBO)
+					{
+						mwBO.init();
+						mwBO.internalExchangeID=-1;
+						mwBO.internalMarketID=-1;
+						mwBO.symbolID=-1;
+						mwBO.exchangeID=-1;
+						mwBO.marketID=-1;
+						mwBO.SYMBOL="";
+					}
+				}
+			}
+		}
+
+		public function execute():void
+		{
+		}
+
+		public function onResult(event:ResultEvent):void
+		{
+		}
+
+		public function onFault(event:FaultEvent):void
+		{
+			isDirty=true;
+			Alert.show(event.fault.faultDetail, ResourceManager.getInstance().getString('marketwatch','error'));
+		}
+
+		public function isSymbolSubscribed(internalExchangeID:Number, internalMarketID:Number, symbolCode:String):Boolean
+		{
+			var retVal:Boolean=false;
+			for (var i:int=0; i < Constants.PAGE_COUNT_MARKET_WATCH; ++i)
+			{
+				var marketWatchView:ArrayCollection=marketWatch[i] as ArrayCollection;
+				for (var j:int=0; j < Constants.ROW_COUNT_MARKET_WATCH; ++j)
+				{
+					var mwbo:MarketWatchBO=marketWatchView.getItemAt(j) as MarketWatchBO;
+					if (mwbo && mwbo.SYMBOL == symbolCode && mwbo.internalExchangeID == internalExchangeID && mwbo.internalMarketID == internalMarketID)
+					{
+						retVal=true;
+						break;
+					}
+				}
+			}
+			return retVal;
+		}
+
+		// added on 11/1/2011
+		public function getMarketWatchBO(internalExchangeID:Number, internalMarketID:Number, symbolCode:String):MarketWatchBO
+		{
+			for (var i:int=0; i < Constants.PAGE_COUNT_MARKET_WATCH; ++i)
+			{
+				var marketWatchView:ArrayCollection=marketWatch[i] as ArrayCollection;
+				for (var j:int=0; j < Constants.ROW_COUNT_MARKET_WATCH; ++j)
+				{
+					var mwbo:MarketWatchBO=marketWatchView.getItemAt(j) as MarketWatchBO;
+					if (mwbo && mwbo.SYMBOL == symbolCode && mwbo.internalExchangeID == internalExchangeID && mwbo.internalMarketID == internalMarketID)
+					{
+						return mwbo;
+					}
+				}
+			}
+			return null;
+		}
+	}
+}

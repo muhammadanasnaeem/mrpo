@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="328" height="204"
+		 layout="vertical"   creationComplete="titlewindow1_creationCompleteHandler(event)"
+		 title="Select Page to add the symbol" mouseDownOutside="titlewindow1_closeHandler(event)"
+		 showCloseButton="true" close="titlewindow1_closeHandler(event)"
+		 >
+	<fx:Script>
+		<![CDATA[
+			import controller.WindowManager;
+			
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			private var selectedPage:Boolean;
+			private var windowManager:WindowManager = WindowManager.getInstance();
+			
+			protected function titlewindow1_creationCompleteHandler(event:FlexEvent):void
+			{
+				this.setStyle("backgroundColor",0x000000);
+			
+			}
+			
+			protected function titlewindow1_closeHandler(event:Event):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			protected function radiobutton1_clickHandler(event:MouseEvent):void
+			{
+				if(event.currentTarget.id = "radioOne")
+				{
+					selectedPage = event.currentTarget.selected;
+				}
+				if(event.currentTarget.id = "radioTwo")
+				{
+					selectedPage = event.currentTarget.selected;
+				}
+				if(event.currentTarget.id = "radioThree")
+				{
+					selectedPage = event.currentTarget.selected;
+				}
+				if(event.currentTarget.id = "radioFour")
+				{
+					selectedPage = event.currentTarget.selected;
+				}
+				if(event.currentTarget.id = "radioFive")
+				{
+					selectedPage = event.currentTarget.selected;
+				}
+				if(event.currentTarget.id = "radioSix")
+				{
+					selectedPage = event.currentTarget.selected;
+				}
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Button label="Cancel" click="titlewindow1_closeHandler(event)"/>
+	<s:VGroup horizontalCenter="0">
+		
+	<s:RadioButton id="radioOne" label="Page 1" click="radiobutton1_clickHandler(event)"/>
+	<s:RadioButton id="radioTwo" label="Page 4"/>
+	<s:RadioButton id="radioThree" label="Page 2"/>
+	<s:RadioButton id="radioFour" label="Page 3"/>
+	<s:RadioButton id="radioFive" label="Page 5"/>
+	<s:RadioButton id="radioSix" label="Page 6"/>
+	</s:VGroup>
+	<s:Button x="167" y="134" label="Ok" click="button1_clickHandler(event)"/>
+</s:TitleWindow>

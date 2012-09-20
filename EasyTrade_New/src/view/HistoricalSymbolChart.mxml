@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%"
+		 minWidth="402"
+		 height="100%"
+		 xmlns:components="components.*"
+		 initialize="group1_initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.ResizeEvent;
+			import mx.resources.IResourceManager;
+			import mx.resources.ResourceManager;
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/HistoricalSymbolChart.as"
+			
+//			private var resourceManager:IResourceManager = ResourceManager.getInstance();
+			
+			protected function chartVbox_resizeHandler(event:ResizeEvent):void
+			{
+				if(chartVbox.width >= 436 && chartVbox.width <= 440)
+				{
+					areaChart.percentWidth = 93;
+					timeVolumeChart.percentWidth = 93;
+					barChartSeparator.percentWidth = 93;
+				}
+				else
+				{
+					areaChart.percentWidth = 100;
+					timeVolumeChart.percentWidth = 100;
+					barChartSeparator.percentWidth = 100;
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here-->
+		<s:SolidColor color="#0d6b73"
+					  id="columnFillColor"
+					  alpha="0.7"/>
+		<s:SolidColor color="#0d1721"
+					  id="areaFillColor"
+					  alpha="0.7"/>
+		<mx:SolidColorStroke color="#00e1f1"
+							 weight="2"
+							 id="columnStroke"/>
+		<mx:SolidColorStroke color="#00c6d5"
+							 alpha="0.9"
+							 id="lineSolid"
+							 weight="2"/>
+		<mx:SolidColorStroke color="#06a8b7"
+							 weight="2"
+							 id="areaStroke"/>
+		<mx:SeriesInterpolate id="zoomEffect"
+							  minimumElementDuration="200"
+							  duration="5000"/>
+		<mx:SeriesZoom id="zoomOut"
+					   duration="2000"
+					   minimumElementDuration="50"
+					   elementOffset="50"
+					   verticalFocus="top"
+					   horizontalFocus="left"
+					   relativeTo="chart"/>
+		<mx:SeriesZoom id="zoomIn"
+					   duration="2000"
+					   minimumElementDuration="50"
+					   elementOffset="-50"
+					   verticalFocus="top"
+					   horizontalFocus="right"
+					   relativeTo="chart"/>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			public function genData(event:MouseEvent):void
+			{
+				var newData:Array=[];
+				var A:Number=Math.random() * 100 - 50;
+				var B:Number=A - Math.random() * 10;
+				var P:Number=Math.random() * 100;
+				for (var i:int=0; i < 200; i++)
+				{
+					A=A + Math.random() * 10 - 5;
+					B=A - Math.random() * 10;
+					P=Math.random() * 50;
+					newData.push({A: A, B: B, P: P});
+				}
+				dataSet=newData;
+			}
+			[Bindable]
+			public var dataSet:Array;
+
+			private function update():void
+			{
+				//genData();
+			}
+			
+			
+		]]>
+	</fx:Script>
+	<s:BorderContainer width="100%"
+					   height="100%"
+					   horizontalCenter="0"
+					   top="0"
+					   minWidth="402">
+		<s:backgroundFill>
+			<s:SolidColor color="black"
+						  alpha="1"/>
+		</s:backgroundFill>
+		<s:Label text="{resourceManager.getString('marketwatch','exchange')+':'}"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-82':'-137'}"
+				 top="7"
+				 color="white"/>
+		<components:EZDropDownTextInput width="49"
+										height="20"
+										id="txtExchange"
+										editable="false"
+										click="txtExchange_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-137':'-82'}"
+										top="2"/>
+		<s:Label text="{resourceManager.getString('marketwatch','market')+':'}"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'13':'-33'}"
+				 top="7"
+				 color="white"/>
+		<components:EZDropDownTextInput width="49"
+										height="20"
+										id="txtMarket"
+										editable="false"
+										click="txtMarket_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-33':'13'}"
+										top="2"/>
+		<s:Label text="{resourceManager.getString('marketwatch','symbol')+':'}"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'125':'63'}"
+				 top="7"
+				 color="white"/>
+		<s:TextInput id="txtSymbol" top="2" width="75" height="20" 
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'63':'125'}"
+					 keyDown="txtSymbol_keyDownHandler(event)"/>
+		<s:Button x="370"
+				  y="2"
+				  label="change"
+				  click="genData(event)"
+				  visible="false"/>
+		<mx:VBox x="-4.6" resize="chartVbox_resizeHandler(event)"
+				 y="30"
+				 width="99%" id="chartVbox"
+				 height="100%"
+				 verticalGap="0">
+			<!--Area Chart -->
+			<mx:AreaChart id="areaChart"
+						  width="100%"
+						  height="50%"
+						  color="#afdff3"
+						  fontSize="12"
+						  dataProvider="{modelManager.symbolTradeHistoryModel.symbolTrades}"
+						  showDataTips="true"
+						  dataTipFunction="priceDataTipFunction">
+				<mx:backgroundElements>
+					<mx:GridLines visible="true"
+								  gridDirection="both"
+								  styleName="chartBackGroundStyle">
+						<mx:horizontalStroke>
+							<mx:SolidColorStroke color="#2a292f"
+												 weight="1"/>
+						</mx:horizontalStroke>
+						<mx:verticalStroke>
+							<mx:SolidColorStroke color="#2a292f"
+												 weight="1"/>
+						</mx:verticalStroke>
+					</mx:GridLines>
+				</mx:backgroundElements>
+				<mx:verticalAxis>
+					<mx:LinearAxis baseAtZero="false"  
+								   title="{resourceManager.getString('marketwatch','price')}" />
+				</mx:verticalAxis>
+				<mx:horizontalAxis>
+					<mx:DateTimeAxis dataUnits="minutes"
+									 title="{resourceManager.getString('marketwatch','time')}"
+									 displayLocalTime="true"/>
+				</mx:horizontalAxis>
+				<mx:series>
+					<mx:AreaSeries yField="price"
+								   xField="time"
+								   form="segment"
+								   areaStroke="{areaStroke}"
+								   areaFill="{areaFillColor}"
+								   showDataEffect="{zoomEffect}"
+								   displayName="{txtSymbol.text}"
+								   itemRenderer="mx.charts.renderers.CircleItemRenderer">
+					</mx:AreaSeries>
+				</mx:series>
+			</mx:AreaChart>
+
+
+			<!--Bar Chart Started-->
+			<s:BorderContainer id="barChartSeparator"
+							   width="100%"
+							   height="2"
+							   borderAlpha="1"
+							   borderColor="#89a1b9"
+							   borderWeight="2"/>
+
+			<mx:ColumnChart id="timeVolumeChart"
+							height="50%" width="100%" fontSize="12"
+							color="#afdff3"
+							dataProvider="{modelManager.symbolTradeHistoryModel.symbolTrades}"
+							showDataTips="true"
+							dataTipFunction="volumeDataTipFunction">
+				<mx:backgroundElements>
+					<mx:GridLines visible="true"
+								  gridDirection="both"
+								  styleName="chartBackGroundStyle">
+						<mx:horizontalStroke>
+							<mx:SolidColorStroke color="#2a292f"
+												 weight="1"/>
+						</mx:horizontalStroke>
+						<mx:verticalStroke>
+							<mx:SolidColorStroke color="#2a292f"
+												 weight="1"/>
+						</mx:verticalStroke>
+					</mx:GridLines>
+				</mx:backgroundElements>
+
+				<!-- vertical axis -->
+				<mx:verticalAxis>
+					<mx:LinearAxis baseAtZero="false"
+								   title="{resourceManager.getString('marketwatch','volume')}"/>
+				</mx:verticalAxis>
+
+				<!-- horizontal axis -->
+				<mx:horizontalAxis>
+					<mx:DateTimeAxis dataUnits="seconds"
+									 title="{resourceManager.getString('marketwatch','time')}"
+									 displayLocalTime="true"/>
+				</mx:horizontalAxis>
+				<mx:series>
+					<mx:ColumnSeries displayName="{txtSymbol.text}"
+									 fill="{columnFillColor}"
+									 stroke="{columnStroke}"
+									 yField="size"
+									 xField="time"
+									 showDataEffect="{zoomEffect}"/>
+				</mx:series>
+			</mx:ColumnChart>
+			<!--Bar Chart Ended-->
+		</mx:VBox>
+	</s:BorderContainer>
+</s:Group>
+<!--showDataEffect="{zoomIn}" hideDataEffect="{zoomOut}-->

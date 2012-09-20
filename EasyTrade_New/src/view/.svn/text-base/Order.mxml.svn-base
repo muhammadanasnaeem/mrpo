@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:flexlib="http://code.google.com/p/flexlib/"
+		 xmlns:components="components.*"
+		 width="100%" height="100%"
+		 initialize="group1_initializeHandler(event)" >	
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/Order.as"
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<components:EZCurrencyFormatter id="moneyFormatter" />
+		<components:EZNumberFormatter id="numberFormatter" />
+		<s:RadioButtonGroup id="rdogrpLmtMkt" change="rdogrpLmtMkt_changeHandler(event)" />
+	</fx:Declarations>
+	<s:BorderContainer id="bcMain" x="0" y="0" width="100%" height="100%" contentBackgroundAlpha="1" backgroundAlpha="0">
+		<s:TextInput x="0" y="0" width="0" height="0" id="txtPreVolume" visible="false"  tabIndex="2" />
+		
+		<s:Label x="17.5" y="28" text="Exchange"/>
+		<components:EZDropDownTextInput x="8" y="41.55" width="74" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" tabIndex="3" />
+		
+		<s:Label x="102.5" y="28" text="Market"/>
+		<components:EZDropDownTextInput x="84" y="41.55" width="74" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" tabIndex="4" />
+		
+		<s:Label x="170" y="28" text="Symbol"/>
+		<s:TextInput x="161" y="41.55" width="65" height="20" id="txtSymbol" editable="true"  keyDown="txtSymbol_keyDownHandler(event)" focusOut="txtSymbol_focusOutHandler(event)" change="orderChangeHandler(event)" tabIndex="5" />
+		
+		<s:Label x="236.5" y="28" text="Volume"/>
+		<s:TextInput x="228" y="41.55" width="65" restrict="[0-9]" height="20" id="txtVolume" editable="true"  change="orderChangeHandler(event)" focusOut="numberInput_focusOutHandler(event)" textAlign="right" tabIndex="6" />
+		
+		
+		<s:Label x="318.5" y="28" text="Price"/>
+		<s:TextInput x="295" y="41.55" width="82" restrict="[0-9.]" height="20" id="txtPrice" editable="true"   change="orderChangeHandler(event)" focusOut="numberInput_focusOutHandler(event)" textAlign="right" tabIndex="7" />
+		
+		<s:Label x="404" y="28" text="Account"/>
+		<s:TextInput x="379" y="41.55" width="100" height="20" id="txtAccount" editable="true" tabIndex="8" />
+		
+		<s:Label x="4" y="67" text="Disc. Volume"/>
+		<s:TextInput x="8" y="81.6" width="65" height="20" id="txtDiscVol" editable="true" change="orderChangeHandler(event)" focusOut="numberInput_focusOutHandler(event)" textAlign="right" tabIndex="9" />
+		
+		<s:Label x="79.5" y="67" text="Trigger Price"/>
+		<s:TextInput id="txtTriggerPrice" x="76" y="81.6" width="66" height="20" editable="true"   focusOut="numberInput_focusOutHandler(event)" textAlign="right" tabIndex="10" />
+		
+		<s:Label x="157.5" y="67" text="Time in Force"/>
+		<mx:DateField id="dateTIF" x="145" y="78.65" width="100" tabIndex="11" />
+		
+		<s:Label x="261.5" y="67" text="Order #"/>
+		<s:TextInput x="247" y="79.9" width="71" height="20" id="txtOrderNum" editable="false"   keyDown="txtOrderNum_keyDownHandler(event)" change="txtOrderNum_changeHandler(event)" textAlign="right" tabIndex="12" />
+		
+		<s:Label x="342" y="67" text="Type"/>
+		<s:DropDownList id="ddType" x="320" y="79.85" width="80" height="20" enabled="true" dataProvider="{orderType}" selectedIndex="0" tabIndex="13" />
+
+		
+		<s:Label x="418.5" y="67" text="Trader"/>
+		<mx:ComboBox x="404" y="79.85" width="75" editable="false"   id="trader" dataProvider="{tradersList}"  tabIndex="14" ></mx:ComboBox>
+
+		<s:Group id="grpFields" width="100%" height="100%">
+			<s:RadioButton x="10" y="4" label="Limit" value="limit" id="rdoLmt" groupName="rdogrpLmtMkt" selected="true" />
+			<s:RadioButton x="63" y="4" label="Market" value="market" id="rdoMkt" groupName="rdogrpLmtMkt" />
+			<s:CheckBox x="366" y="4" label="Negotiated Trade" id="chkNgtd" change="chkNgtd_changeHandler(event)"/>
+			<s:Label x="26.5" y="126" text="Bid"/>
+			<s:TextInput id="txtBuy" x="8" y="141" width="57" height="20"  contentBackgroundColor="#FFFF87" editable="false" textAlign="right" />
+			
+			<s:Label x="193.5" y="126" text="Volume"/>
+			<s:TextInput id="txtBuyVolume" x="67" y="141" width="57" height="20"   contentBackgroundColor="#FFFF87" editable="false" textAlign="right" />
+			
+			<s:Label x="144" y="126" text="Offer"/>
+			<s:TextInput id="txtSell" x="126" y="141" width="57" height="20"   contentBackgroundColor="#FFFF87" editable="false" textAlign="right" />
+			
+			<s:Label x="74.5" y="126" text="Volume"/>
+			<s:TextInput id="txtSellVolume" x="186" y="141" width="57" height="20"   contentBackgroundColor="#FFFF87" editable="false" textAlign="right" />
+			
+			<s:Label x="261" y="126" text="Last"/>
+			<s:TextInput id="txtLast" x="245" y="141" width="57" height="20"   contentBackgroundColor="#FFFF87" editable="false" textAlign="right" />
+			
+			<s:Label x="310" y="126" text="Change"/>
+			<s:TextInput id="txtChange" x="304" y="141" width="57" height="20"   contentBackgroundColor="#FFFF87" editable="false" textAlign="right" />
+			
+			<s:Label x="365" y="126" text="Turnover"/>
+			<s:TextInput id="txtTurnOver" x="363" y="141" width="57" height="20"   contentBackgroundColor="#FFFF87" editable="false" textAlign="right" />
+			
+			<s:Label x="434.5" y="126" text="Flags"/>
+			<s:TextInput id="txtFlags" x="422" y="141" width="57" height="20"   contentBackgroundColor="#FFFF87" editable="false" />
+			<s:TextInput id="txtMsg" x="8" y="166" height="20" width="471"   contentBackgroundColor="#FFFF87" editable="false" />
+		</s:Group>
+
+		<s:BorderContainer x="7" y="106" width="472" height="15" id="bondPanel" visible="true" borderWeight="0" contentBackgroundAlpha="1" backgroundAlpha="0">
+			<s:Group id="grpBond" contentBackgroundColor="white"  x="2" y="2" height="75" width="453" visible="false">
+				<s:Label text="Bid (Price / Yield)"  x="4" y="8"/>
+				<s:TextInput width="49" height="20" id="txtBondBidPrice"  x="97" y="3.5" editable="false" tabIndex="15" />
+				
+				<s:Label text="Offer (Price / Yield)"  x="241" y="8"/>
+				<s:TextInput width="49" height="20" id="txtBondAskPrice"  x="335" y="3.5" editable="false" tabIndex="16" />
+				
+				<s:Label text="/"  x="150" y="8"/>
+				<s:TextInput width="49" height="20" id="txtBondBidYield"  x="159" y="3.5" editable="false" tabIndex="17" />
+				
+				<s:Label text="/"  x="389" y="8"/>
+				<s:TextInput width="49" height="20" id="txtBondAskYield"  x="397" y="3.5" editable="false" tabIndex="18" />
+				<s:Label text="Coupon Rate"  x="13" y="30"/>
+				<s:TextInput width="80" height="20" id="txtCouponRate" x="4" y="46" editable="false" tabIndex="19" />
+				<s:Label text="Next Coupon"  x="98" y="30"/>
+				<s:TextInput width="80" height="20" id="txtNextCoupon" x="89" y="46" editable="false" tabIndex="20" />
+				<s:Label text="Maturity Date"  x="181.5" y="30"/>
+				<s:TextInput width="80" height="20" id="txtMaturityDate" x="173.5" y="46" editable="false" tabIndex="21" />
+				<s:Button label="Calculator" width="95" height="20" id="btnCalculator" x="351" y="46" click="btnCalculator_clickHandler(event)" tabIndex="22" />
+			</s:Group>
+			<mx:Image id="imgExpanderBond" visible="true" source="{IMG_EXPANDER}" scaleContent="true" height="{pnlHeightMin}" width="{pnlHeightMin}" verticalAlign="middle" horizontalAlign="center" click="imgExpander_clickHandler(event)" x="456" top="1" rotation="-90"  tabIndex="23" />
+		</s:BorderContainer>
+		
+		<s:BorderContainer x="7" y="123" width="472" height="0" id="negotiatedTradePanel" visible="true" borderWeight="0" contentBackgroundAlpha="1" backgroundAlpha="0">
+			<s:Group id="grpNegotiatedTrade" contentBackgroundColor="white"  x="2" y="2" height="75" width="470" visible="false">
+				<s:Label text="Counter Party User Name: "  x="4" y="8" />
+				<s:TextInput width="80" height="20" id="txtCounterPartyUserName" x="152" y="3" editable="true" tabIndex="24"/>
+				<s:Label text="Counter Party Client Code: "  x="235" y="8" />
+				<s:TextInput width="80" height="20" id="txtCounterPartyClientCode" x="384" y="3" editable="true" tabIndex="25" />
+			</s:Group>
+		</s:BorderContainer>
+		
+	</s:BorderContainer>	
+</s:Group>

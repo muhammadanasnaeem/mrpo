@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/components/ticker
+END
+NewsTapeTickerItem.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/components/ticker/NewsTapeTickerItem.mxml
+END
+Ticker.as
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/components/ticker/Ticker.as
+END
+TickerType.as
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/components/ticker/TickerType.as
+END
+SymbolTapeTickerItem.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/components/ticker/SymbolTapeTickerItem.mxml
+END
+TickerItemData.as
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/components/ticker/TickerItemData.as
+END

@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%"
+		 height="100%"
+		 xmlns:components="components.*"
+		 initialize="group1_initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import businessobjects.YieldBO;
+
+			import services.QWClient;
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/YieldCalculator.as"
+
+			protected function updateOrderFields(order:Order):void
+			{
+				order.internalExchangeID=internalExchangeID;
+				order.internalMarketID=internalMarketID;
+				order.internalSymbolID=internalSymbolID;
+				order.txtExchange.text=txtExchange.text;
+				order.txtMarket.text=txtMarket.text;
+				order.txtSymbol.text=txtSymbol.text;
+			}
+
+			protected function btnCalculate_clickHandler(event:MouseEvent):void
+			{
+				var yield:YieldBO=new YieldBO();
+
+				// modified on 27/1/2011
+				txtRate.text="";
+
+				yield.exchangeId=new Number(internalExchangeID);
+				yield.marketId=new Number(internalMarketID);
+				yield.symbolId=new Number(internalSymbolID);
+				if (internalExchangeID < 0 || internalMarketID < 0 || internalSymbolID < 0)
+				{
+					return;
+				}
+				yield.couponRate=new Number(txtCouponRate.text);
+				yield.currentRate=new Number(txtCurrentRate.text);
+				yield.discountRate=new Number(txtDiscountRate.text);
+				yield.spread=new Number(txtSpread.text);
+				yield.effectiveBaseRate=new Number(txtEffectiveBaseRate.text);
+
+				yield.nextCouponDate=nextCouponDate;
+				yield.issueDate=issueDate;
+				yield.maturityDate=maturityDate;
+
+				yield.rate=0;
+				yield.currentYield=0;
+
+				QWClient.getInstance().calculateYield(yield);
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<components:EZCurrencyFormatter id="moneyFormatter"/>
+	</fx:Declarations>
+	<s:BorderContainer width="100%"
+					   height="100%"
+					   horizontalCenter="0"
+					   borderAlpha="0">
+		<s:Spacer horizontalCenter="-200"
+				  width="10"
+				  top="13"/>
+		<s:Label text="{resourceManager.getString('marketwatch','exchange')}:"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-120':'-180'}"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 top="13"/>
+		<components:EZDropDownTextInput width="97"
+										height="20"
+										id="txtExchange"
+										editable="false"
+										click="txtExchange_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-180':'-135'}"
+										top="8"/>
+
+		<s:Label text="{resourceManager.getString('marketwatch','market')}:"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'20':'-50'}"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 top="13"/>
+		<components:EZDropDownTextInput width="97"
+										height="20"
+										id="txtMarket"
+										editable="false"
+										click="txtMarket_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-50':'25'}"
+										top="8"/>
+		<mx:HBox horizontalCenter="-81"
+				 top="39"
+				 horizontalGap="7"
+				 verticalAlign="middle"
+				 layoutDirection="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}">
+
+			<s:Label text="{resourceManager.getString('marketwatch','symbol')}:"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 top="39"/>
+			<s:TextInput width="89"
+						 height="20"
+						 id="txtSymbol"
+						 keyDown="txtSymbol_keyDownHandler(event)"
+						 focusOut="txtSymbol_focusOutHandler(event)"
+						 horizontalCenter="106"
+						 top="35"
+						 editable="false"/>
+
+			<s:Label text="{resourceManager.getString('marketwatch','currentRate')}:"
+					 top="39"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 horizontalCenter="-117"/>
+			<s:TextInput width="49"
+						 height="20"
+						 id="txtCurrentRate"
+						 top="35"
+						 horizontalCenter="-17"
+						 textAlign="right"
+						 editable="true"/>
+		</mx:HBox>
+		<mx:HBox horizontalCenter="-95"
+				 top="97"
+				 horizontalGap="0"
+				 verticalAlign="middle"
+				 layoutDirection="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}">
+			<s:Label text="{resourceManager.getString('marketwatch','discountRate')}:"
+					 top="67"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"/>
+			<s:TextInput width="49"
+						 height="20"
+						 id="txtDiscountRate"
+						 horizontalCenter="-17"
+						 top="63"
+						 textAlign="right"
+						 editable="true"/>
+
+			<s:Label text="{resourceManager.getString('marketwatch','effectiveBaseRate')}:"
+					 top="97"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 horizontalCenter="-101"/>
+			<s:TextInput width="49"
+						 height="20"
+						 id="txtEffectiveBaseRate"
+						 horizontalCenter="-17"
+						 top="93"
+						 textAlign="right"
+						 editable="true"/>
+		</mx:HBox>
+		<mx:HBox horizontalCenter="-95"
+				 top="67"
+				 horizontalGap="14"
+				 verticalAlign="middle"
+				 layoutDirection="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}">
+			<s:Label text="{resourceManager.getString('marketwatch','couponrate')}:"
+					 top="97"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"/>
+			<s:TextInput width="49"
+						 height="20"
+						 id="txtCouponRate"
+						 horizontalCenter="126"
+						 top="63"
+						 textAlign="right"
+						 editable="true"/>
+
+			<s:Label text="{resourceManager.getString('marketwatch','spread')}:"
+					 horizontalCenter="32"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 top="97"/>
+			<s:TextInput width="49"
+						 height="20"
+						 id="txtSpread"
+						 horizontalCenter="126"
+						 top="93"
+						 textAlign="right"
+						 editable="true"/>
+		</mx:HBox>
+
+		<mx:HBox horizontalCenter="-71"
+				 top="124"
+				 horizontalGap="12"
+				 verticalAlign="middle"
+				 layoutDirection="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}">
+			<s:Label text="{resourceManager.getString('marketwatch','yieldToMaturity')}:"
+					 horizontalCenter="-113"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 top="150"/>
+			<s:TextInput width="211"
+						 height="20"
+						 id="txtRate"
+						 top="146"
+						 horizontalCenter="10"
+						 textAlign="right"
+						 editable="true"/>
+		</mx:HBox>
+	</s:BorderContainer>
+	<s:Button id="btnCalculate"
+			  label="{resourceManager.getString('marketwatch','calculate')}"
+			  width="95"
+			  height="20"
+			  horizontalCenter="1"
+			  top="154"
+			  click="btnCalculate_clickHandler(event)"/>
+</s:Group>

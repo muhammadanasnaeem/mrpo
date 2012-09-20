@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 initialize="group1_initializeHandler(event)"
+		 width="100%" height="100%" xmlns:view="view.*" xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/ExchangeStats.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%" height="100%" horizontalCenter="0" top="0">
+		<s:Label text="Exchange" top="9" left="8.5"/>
+		<components:EZDropDownTextInput width="74" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)"  paddingLeft="0" paddingRight="0" paddingTop="0" paddingBottom="0"  top="5.55" left="67"/>
+		<components:EZDropDownTextInput width="0" height="0" id="txtMarket" editable="false" left="0" top="0" right="0" bottom="0" visible="false" />
+	<mx:TabNavigator id="tabNavigator" x="0" y="35" width="100%" height="100%">
+		<s:NavigatorContent name="indices" label="Indices" width="100%" height="100%">
+			<view:ExchangeStatsIndices name="exchangeIndices" id="exchangeInds">
+			</view:ExchangeStatsIndices>
+		</s:NavigatorContent>
+		<s:NavigatorContent name="sectors" label="Sectors"  width="100%" height="100%">
+			<view:ExchangeStatsSectors id="sectors">
+			</view:ExchangeStatsSectors>
+		</s:NavigatorContent>
+		<s:NavigatorContent name="advdec" label="Adv/Dec" width="100%" height="100%">
+			<view:ExchangeStatsAdvDec id="exchangeStatsAdv">
+			</view:ExchangeStatsAdvDec>
+		</s:NavigatorContent>
+	</mx:TabNavigator>
+	</s:BorderContainer>
+</s:Group>

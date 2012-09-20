@@ -1,0 +1,175 @@
+import businessobjects.SymbolStateInfo;
+
+import common.Constants;
+import common.States;
+
+import components.ComboBoxItem;
+
+import controller.ModelManager;
+import controller.ViewManager;
+import controller.WindowManager;
+
+import flash.events.Event;
+import flash.events.KeyboardEvent;
+import flash.events.MouseEvent;
+
+import flashx.textLayout.operations.ApplyFormatOperation;
+
+import flexlib.mdi.containers.MDIWindow;
+
+import mx.collections.ArrayList;
+import mx.controls.DateField;
+import mx.core.IVisualElement;
+import mx.events.FlexEvent;
+import mx.formatters.DateFormatter;
+import mx.managers.PopUpManager;
+
+import view.Order;
+import view.SelectionMenu;
+
+[Bindable]
+public var modelManager:ModelManager=ModelManager.getInstance();
+
+[Bindable]
+private var symbolStateList:ArrayList=new ArrayList();
+
+private var selectedState:Number=-1;
+
+protected function group1_initializeHandler(event:FlexEvent):void
+{
+	for (var i:int=0; i < ModelManager.getInstance().exchangeModel.exchanges.length; ++i)
+	{
+		var obj:Object=ModelManager.getInstance().exchangeModel.exchanges.getItemAt(i);
+		//var cbi:ComboBoxItem = new ComboBoxItem(obj.EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		var cbi:ComboBoxItem=new ComboBoxItem(obj.INTERNAL_EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		exchangeList.addItem(cbi);
+	}
+
+	obj=null;
+
+	for (obj in States.SYMBOL_STATES)
+	{
+		if (obj != "StateCount")
+		{
+			cbi=new ComboBoxItem(States.SYMBOL_STATES[obj].toString(), obj.toString());
+			symbolStateList.addItem(cbi);
+		}
+	}
+	//exchangeID = -1;
+	internalExchangeID=-1;
+	//marketID = -1;
+	internalMarketID=-1;
+	internalSymbolID=-1;
+	symbolID=-1;
+	selectedState=-1;
+}
+
+public function applyFilter():void
+{
+	if (txtCurrentSymbolState)
+		txtCurrentSymbolState.text=modelManager.exchangeModel.getSymbolState(internalExchangeID, internalMarketID, internalSymbolID);
+}
+
+protected function dgMarketStates_clickHandler(event:MouseEvent):void
+{
+	var windowManager:WindowManager=WindowManager.getInstance();
+}
+
+protected function btnReset_clickHandler(event:MouseEvent):void
+{
+	resetFields();
+}
+
+public function resetFields(clearAll:Boolean=true):void
+{
+	if (clearAll)
+	{
+		txtExchange.text="";
+		txtMarket.text="";
+		txtSymbol.text="";
+		txtCurrentSymbolState.text="";
+		txtRequestedSymbolState.text="";
+		internalExchangeID=-1;
+		internalMarketID=-1;
+		internalSymbolID=-1;
+		selectedState=-1;
+	}
+	applyFilter();
+}
+
+protected function txtSymbol_keyDownHandler(event:KeyboardEvent):void
+{
+	if (event.keyCode == 9 || event.keyCode == 13)
+	{
+//		txtSymbol.text=txtSymbol.text.toUpperCase();
+		// modified on 6/4/2011
+		var obj:Object=ModelManager.getInstance().exchangeModel.getSymbolByCode(internalExchangeID, internalMarketID, txtSymbol.text);
+
+		if (obj)
+		{
+			internalSymbolID=obj.INTERNAL_SYMBOL_ID;
+			txtCurrentSymbolState.text=ModelManager.getInstance().exchangeModel.getSymbolState(internalExchangeID, internalMarketID, internalSymbolID);
+		}
+		else
+		{
+			txtSymbol.text="";
+			txtCurrentSymbolState.text="";
+			txtRequestedSymbolState.text="";
+			internalSymbolID=-1;
+			selectedState=-1;
+			chkPersist.selected=false;
+		}
+
+
+	}
+}
+
+protected function txtRequestedSymbolState_clickHandler(event:MouseEvent):void
+{
+	var menu:SelectionMenu=PopUpManager.createPopUp(this, SelectionMenu) as SelectionMenu;
+	menu.lstList.dataProvider=symbolStateList;
+	positionMenu(event, menu);
+	menu.addEventListener(Constants.EVENT_MENU_CLOSE, requestedSymbolStateMenuClosed);
+}
+
+protected function requestedSymbolStateMenuClosed(event:Event):void
+{
+	if (!event.currentTarget.lstList.selectedItem)
+	{
+		return;
+	}
+	txtRequestedSymbolState.text=event.currentTarget.lstList.selectedItem.label;
+	selectedState=event.currentTarget.lstList.selectedItem.value;
+	applyFilter();
+}
+
+protected function btnUpdate_clickHandler(event:MouseEvent):void
+{
+	if (internalExchangeID > -1 && internalExchangeID > -1 && internalSymbolID > -1)
+	{
+		if (txtRequestedSymbolState.text == '')
+		{
+			return;
+		}
+		var symbolStateInfo:SymbolStateInfo=new SymbolStateInfo();
+		symbolStateInfo.exchangeID.internalID_=internalExchangeID;
+		symbolStateInfo.exchangeID.actualID_=modelManager.exchangeModel.getExchangeID(internalExchangeID);
+
+		symbolStateInfo.marketID.internalID_=internalMarketID;
+		symbolStateInfo.marketID.actualID_=modelManager.exchangeModel.getMarketID(internalExchangeID, internalMarketID);
+
+		symbolStateInfo.symbolID.internalID_=internalSymbolID;
+		symbolStateInfo.symbolID.actualID_=modelManager.exchangeModel.getSymbolID(internalExchangeID, internalMarketID, internalSymbolID);
+
+		symbolStateInfo.state_=txtRequestedSymbolState.text;
+		symbolStateInfo.startDateTime_.hours=0;
+		symbolStateInfo.startDateTime_.minutes=0;
+		symbolStateInfo.startDateTime_.seconds=0;
+		symbolStateInfo.startDateTime_.milliseconds=0;
+
+		symbolStateInfo.persist_=chkPersist.selected ? true : false;
+
+		modelManager.SymbolStateChange(symbolStateInfo);
+	}
+
+}

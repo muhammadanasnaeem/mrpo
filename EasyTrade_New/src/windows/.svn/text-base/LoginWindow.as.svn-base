@@ -1,0 +1,172 @@
+package windows
+{
+	import common.Constants;
+	import common.Messages;
+	
+	import controller.EasyTradeApp;
+	import controller.ModelManager;
+	
+	import flash.events.KeyboardEvent;
+	import flash.events.MouseEvent;
+	import flash.external.ExternalInterface;
+	import flash.geom.Point;
+	import flash.net.SharedObject;
+	import flash.system.System;
+	
+	import flexlib.mdi.containers.MDIWindow;
+	import flexlib.mdi.events.MDIWindowEvent;
+	
+	import mx.controls.Alert;
+	import mx.controls.CheckBox;
+	import mx.managers.FocusManager;
+	import mx.states.SetEventHandler;
+	import mx.utils.StringUtil;
+	
+	import spark.components.BorderContainer;
+	import spark.components.Button;
+	import spark.components.Label;
+	import spark.components.TextInput;
+	import spark.events.TextOperationEvent;
+	
+	public class LoginWindow extends MDIWindow
+	{
+		private var easyTradeApp_:EasyTradeApp = EasyTradeApp.getInstance();;
+		private var modelManager_:ModelManager = ModelManager.getInstance();
+
+		private var bc:BorderContainer = new BorderContainer();
+		private var lblUserID:Label = new Label();
+		private var _txtUserID:TextInput = new TextInput();
+		private var lblPassword:Label = new Label();
+		private var _txtPassword:TextInput = new TextInput();
+		private var btnLogin:Button = new Button();
+		private var _chckRememberMe:CheckBox = new CheckBox();
+		
+		public function LoginWindow()
+		{
+			super();
+
+			addEventListener(MDIWindowEvent.CLOSE, onLoginWindowClose);
+			id = "Login";
+			title = "Login";
+			
+			resizable = false;
+			minimizeBtn.visible = false;
+			maximizeRestoreBtn.visible = false;
+			var pglobal:Point = new Point(200, 200);
+			var plocal:Point = globalToLocal(pglobal);
+			x = plocal.x;
+			y = plocal.y;
+			width = 245;
+			height = 170;
+			
+			bc.x = 0;
+			bc.y = 0;
+			bc.width = 238;
+			bc.height = 137;
+			
+			lblUserID.text = "User Name: ";
+			lblUserID.x = 10;
+			lblUserID.y = 22;
+			bc.addElement(lblUserID);
+			
+			txtUserID.id = "txtUserID";
+			txtUserID.x = 100;
+			txtUserID.y = 10;
+			txtUserID.width = 125;
+			txtUserID.text = "";
+			bc.addElement(txtUserID);
+			
+			lblPassword.text = "Password: ";
+			lblPassword.x = 10;
+			lblPassword.y = 62;
+			bc.addElement(lblPassword);
+			
+			txtPassword.id = "txtPassword";
+			txtPassword.x = 100;
+			txtPassword.y = 50;
+			txtPassword.width = 125;
+			txtPassword.displayAsPassword = true;
+			bc.addElement(txtPassword);
+			
+			chckRememberMe.x = 10;
+			chckRememberMe.y = 80;
+			chckRememberMe.label = "Remember me";
+			chckRememberMe.id = "chckRememberMe";
+			bc.addElement(chckRememberMe);
+			
+			btnLogin.x = 85;
+			btnLogin.y =100;
+			btnLogin.label = "Login";
+			btnLogin.id = "btnLogin";
+			btnLogin.addEventListener(MouseEvent.CLICK, btnLogin_clickHandler);
+			bc.addElement(btnLogin);
+			
+			addElement(bc);
+			
+			this.defaultButton = btnLogin;
+			// Start : added on 8/12//2010 for remember me functionality
+			var userProfileRemSO:SharedObject = SharedObject.getLocal(Constants.USER_LOGIN_PREFERENCES);
+			if(userProfileRemSO.size > 0){
+				txtUserID.text = userProfileRemSO.data.userName;
+				txtPassword.text = userProfileRemSO.data.password;
+				chckRememberMe.selected = true;
+			}
+			
+			// End : added on 8/12//2010 for remember me functionality
+		}
+		
+		private function btnLogin_clickHandler(event:MouseEvent):void
+		{
+			if (StringUtil.trim(txtUserID.text).length <= 0 ||
+				StringUtil.trim(txtPassword.text).length <= 0)
+			{
+				Alert.show(Messages.INVALID_USER_PWD, Messages.TITLE_ERROR);
+				return;
+			}
+			else
+			{
+				modelManager_.Login(txtUserID.text, txtPassword.text);
+			}
+		}
+
+		public function onLoginWindowClose(event:MDIWindowEvent):void
+		{
+			if (!easyTradeApp_.isUserLoggedin())
+			{
+				//NativeApplication.nativeApplication.exit();
+			}
+		}
+
+		public function get chckRememberMe():CheckBox
+		{
+			return _chckRememberMe;
+		}
+
+		public function set chckRememberMe(value:CheckBox):void
+		{
+			_chckRememberMe = value;
+		}
+
+		public function get txtPassword():TextInput
+		{
+			return _txtPassword;
+		}
+
+		public function set txtPassword(value:TextInput):void
+		{
+			_txtPassword = value;
+		}
+
+		public function get txtUserID():TextInput
+		{
+			return _txtUserID;
+		}
+
+		public function set txtUserID(value:TextInput):void
+		{
+			_txtUserID = value;
+		}
+
+		
+	}
+}

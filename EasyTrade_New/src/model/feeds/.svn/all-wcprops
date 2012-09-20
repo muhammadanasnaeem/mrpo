@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/model/feeds
+END
+NewsTickerFeedModel.as
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/model/feeds/NewsTickerFeedModel.as
+END
+SymbolTickerFeedModel.as
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/model/feeds/SymbolTickerFeedModel.as
+END

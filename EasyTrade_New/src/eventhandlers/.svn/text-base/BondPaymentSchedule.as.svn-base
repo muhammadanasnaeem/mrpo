@@ -1,0 +1,84 @@
+import common.Messages;
+
+import components.ComboBoxItem;
+
+import controller.ModelManager;
+import controller.WindowManager;
+
+import mx.controls.Alert;
+import mx.core.IVisualElement;
+import mx.events.FlexEvent;
+
+public var modelManager:ModelManager = ModelManager.getInstance();
+public var windowManager:WindowManager = WindowManager.getInstance();
+
+
+protected function group1_initializeHandler(event:FlexEvent):void
+{
+	for (var i:int = 0; i < ModelManager.getInstance().exchangeModel.exchanges.length; ++i)
+	{
+		var obj:Object = ModelManager.getInstance().exchangeModel.exchanges.getItemAt(i);
+		var cbi:ComboBoxItem = new ComboBoxItem(obj.INTERNAL_EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		exchangeList.addItem(cbi);
+	}
+	internalExchangeID = -1;
+	internalMarketID = -1;
+	internalSymbolID = -1;
+}
+
+public function applyFilter():void
+{
+	//modelManager.remainingOrdersModel.remainingOrders.refresh();
+}
+protected function txtSymbol_keyDownHandler(event:KeyboardEvent):void
+{
+	if ( event.keyCode == 13 )
+	{
+		event.stopImmediatePropagation();
+		txtSymbol_focusOutHandler(null);
+	}
+}
+
+protected function txtSymbol_focusOutHandler(event:FocusEvent):void
+{
+	if (txtSymbol.text.length == 0)
+	{
+		return;
+	}
+
+	var modelManager:ModelManager = ModelManager.getInstance();
+	txtSymbol.text = txtSymbol.text.toUpperCase();
+	var internalSymbolID:Number = modelManager.exchangeModel.getInternalSymbolIDByCode(
+		internalExchangeID,
+		internalMarketID,
+		txtSymbol.text
+	);
+
+	if (internalSymbolID < 0)
+	{
+		Alert.show(Messages.ERROR_INVALID_SYMBOL, Messages.TITLE_ERROR);
+		txtSymbol.text = "";
+		return;
+	}
+}
+
+public function reset():void
+{
+	internalExchangeID = -1;
+	internalMarketID = -1;
+	internalSymbolID = -1;
+
+	txtExchange.text = "";
+	txtMarket.text = "";
+	txtSymbol.text = "";
+
+	for (var j:int = 0; j < numElements; ++j)
+	{
+		var el:IVisualElement = getElementAt(j);
+		if (el is TextInput)
+		{
+			(el as TextInput).text = "";
+		}
+	}
+}
+

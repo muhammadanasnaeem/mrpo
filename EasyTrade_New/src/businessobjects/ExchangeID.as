@@ -1,0 +1,11 @@
+package businessobjects
+{
+
+	public class ExchangeID extends ID
+	{
+		public function ExchangeID()
+		{
+			super(-1, -1);
+		}
+	}
+}

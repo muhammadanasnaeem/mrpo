@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" xmlns:components="components.*"
+		 initialize="group1_initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import businessobjects.BondBO;
+			import businessobjects.SymbolBO;
+			import businessobjects.SymbolBrowserBO;
+			
+			import controller.WindowManager;
+			
+			import mx.collections.ArrayCollection;
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/SymbolBrowser.as"
+			public function addSymbolToWatch(o:Object):void
+			{
+				var data:SymbolBrowserBO = o as SymbolBrowserBO;
+				/*var symbolObj:Object = modelManager.exchangeModel.getSymbol(
+					data.INTERNAL_EXCHANGE_ID, data.INTERNAL_MARKET_ID, data.INTERNAL_SYMBOL_ID);*/
+
+				var selectedIndex:Number = WindowManager.getInstance().viewManager.marketWatch.selectedIndex;
+				var marketWatch:ArrayCollection =
+					modelManager.marketWatchModel.marketWatch[selectedIndex];
+
+				var marketWatchView:MarketWatch = WindowManager.getInstance().viewManager.marketWatch;
+
+				var index:Number = 0;
+				for (var i:int = 0; i < Constants.ROW_COUNT_MARKET_WATCH; ++i)
+				{
+					if (!modelManager.marketWatchModel.marketWatch[selectedIndex][i].SYMBOL || 
+						modelManager.marketWatchModel.marketWatch[selectedIndex][i].SYMBOL == "")
+					{
+						index = i;
+						break;
+					}
+				}
+
+				marketWatchView.adgMarketWatch.selectedIndex = index;
+
+				marketWatchView.adgMarketWatch.selectedItem.init();
+				marketWatchView.adgMarketWatch.selectedItem.EXCHANGE =
+					modelManager.exchangeModel.getExchangeCode(data.INTERNAL_EXCHANGE_ID);
+				marketWatchView.adgMarketWatch.selectedItem.internalExchangeID =
+					data.INTERNAL_EXCHANGE_ID;
+				marketWatchView.adgMarketWatch.selectedItem.exchangeID =
+					ModelManager.getInstance().exchangeModel.getExchangeID(marketWatchView.adgMarketWatch.selectedItem.internalExchangeID);
+
+				marketWatchView.adgMarketWatch.selectedItem.MARKET =
+					modelManager.exchangeModel.getMarketCode(data.INTERNAL_EXCHANGE_ID, data.INTERNAL_MARKET_ID);
+				marketWatchView.adgMarketWatch.selectedItem.internalMarketID =
+					data.INTERNAL_MARKET_ID;
+				marketWatchView.adgMarketWatch.selectedItem.marketID =
+					ModelManager.getInstance().exchangeModel.getMarketID(marketWatchView.adgMarketWatch.selectedItem.internalExchangeID, marketWatchView.adgMarketWatch.selectedItem.internalMarketID);
+
+
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].EXCHANGE =
+					modelManager.exchangeModel.getExchangeCode(data.INTERNAL_EXCHANGE_ID);	
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].MARKET =
+					modelManager.exchangeModel.getMarketCode(data.INTERNAL_EXCHANGE_ID, data.INTERNAL_MARKET_ID);	
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL =
+					data.SYMBOL_CODE;	
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].internalExchangeID =
+					data.INTERNAL_EXCHANGE_ID;
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].internalMarketID =
+					data.INTERNAL_MARKET_ID;
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID =
+					data.symbolID;
+				
+				if (index >= 0 && index < Constants.ROW_COUNT_MARKET_WATCH)
+				{
+					WindowManager.getInstance().viewManager.marketWatch.addSymbolToWatch(/*symbolObj, */index);
+				}
+				else
+				{
+					Alert.show(Messages.MARKET_WATCH_FULL, Messages.TITLE_ERROR);
+				}
+				/*if (symbolObj is BondBO)
+				{
+					var bondBO:BondBO = symbolObj as BondBO;
+				}
+				else if (symbolObj is SymbolBO)
+				{
+					var symbolBO:SymbolBO = symbolObj as SymbolBO;
+				}*/
+			}
+		]]>
+	</fx:Script>	<fx:Declarations>
+						<!-- Place non-visual elements (e.g., services, value objects) here -->
+					</fx:Declarations>
+	<s:BorderContainer width="100%" height="30" horizontalCenter="0" top="0">
+		<s:Label text="Exchange:" top="7" horizontalCenter="-108"/>
+		<components:EZDropDownTextInput width="49" top="2" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-53"/>
+		<s:Label text="Market:" top="7" horizontalCenter="1"/>
+		<components:EZDropDownTextInput width="49" top="2" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" horizontalCenter="47"/>
+		<s:Label text="Symbol:" top="7" horizontalCenter="98"/>
+		<s:TextInput width="110" top="2" height="20" id="txtSymbol" horizontalCenter="180" keyDown="txtSymbol_keyDownHandler(event)" />
+	</s:BorderContainer>
+	<mx:DataGrid dataProvider="{ModelManager.getInstance().symbolBrowserModel.symbols}" 
+				 right="1" left="1" bottom="1" top="30"
+				 id="dgSymbolBrowser" 
+				 width="100%" height="100%"
+				 >
+		<mx:columns>
+			<!--mx:DataGridColumn headerText="Exchange" dataField="EXCHANGE_CODE" />
+			<mx:DataGridColumn headerText="Market" dataField="MARKET_CODE" /-->
+			<mx:DataGridColumn editable="false">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Button label="Add To Watch" click="outerDocument.addSymbolToWatch(data);"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Symbol" dataField="SYMBOL_CODE" />
+			<mx:DataGridColumn headerText="Company Name" dataField="company"  />
+			<mx:DataGridColumn headerText="STATE" dataField=""  />
+			<mx:DataGridColumn headerText="Is Spot" dataField="isspot"  />
+			<mx:DataGridColumn editable="false" width="60">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Button width="60" label="Details" enabled="false"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+</s:Group>

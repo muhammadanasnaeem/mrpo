@@ -1,0 +1,59 @@
+package common
+{
+
+	public class States
+	{
+		public static const EXCHANGE_STATES:Object={Loaded: 0, Ready: 1, Idle: 2, Close: 3, StateCount: 4};
+
+		public static const MARKET_STATES:Object={Loaded: 0, PreOpen: 1, Open: 2, Suspend: 3, Close: 4, PostClose: 5, StateCount: 6};
+
+		public static const SYMBOL_STATES:Object={
+			/*Open: 0,
+				Suspend: 1,
+				PreOpen: 2,
+				StateCount: 3*/Active: 0, Suspend: 1, StateCount: 2};
+
+		public function States()
+		{
+		}
+
+		public static function getExchangeStateID(stateName:String):Number
+		{
+			return EXCHANGE_STATES[stateName];
+		}
+
+		public static function getMarketStateID(stateName:String):Number
+		{
+			return MARKET_STATES[stateName];
+		}
+
+		public static function getMarketState(stateID:String):String
+		{
+			for (var s:String in MARKET_STATES)
+			{
+				if (stateID == MARKET_STATES[s])
+				{
+					return s;
+				}
+			}
+			return "";
+		}
+
+		public static function getSymbolStateID(stateName:String):Number
+		{
+			return SYMBOL_STATES[stateName];
+		}
+
+		public static function getSymbolState(stateID:String):String
+		{
+			for (var s:String in SYMBOL_STATES)
+			{
+				if (stateID == SYMBOL_STATES[s])
+				{
+					return s;
+				}
+			}
+			return "";
+		}
+	}
+}

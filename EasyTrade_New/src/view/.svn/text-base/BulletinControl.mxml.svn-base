@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" xmlns:components="components.*" initialize="group1_initializeHandler(event)" >
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/BulletinControl.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%" height="100%" horizontalCenter="0" top="0">
+		<mx:HBox width="100%" horizontalAlign="center" verticalAlign="middle" x="0" y="0" height="30" >
+			<s:Label text="Exchange" />
+			<components:EZDropDownTextInput width="74" height="20" id="txtExchange" editable="false" />
+			<components:EZDropDownTextInput width="0" height="0" id="txtMarket" editable="false" visible="false" />
+			<s:CheckBox id="chckAll" label="All exchanges" click="chckAll_clickHandler(event)" />
+		</mx:HBox>
+		<mx:VBox width="100%" height="100%" horizontalAlign="center" paddingLeft="5" paddingRight="5" paddingBottom="5" paddingTop="5" x="0" y="25" >
+			<s:TextArea id="txaBulletin" width="100%" height="100%" >
+			</s:TextArea>
+			<mx:HBox>
+				<s:Button id="btnSubmit" label="Submit" click="btnSubmit_clickHandler(event)"/>
+				<s:Button id="btnReset" label="Reset" click="btnReset_clickHandler(event)" />
+			</mx:HBox>
+		</mx:VBox>
+	</s:BorderContainer>
+</s:Group>

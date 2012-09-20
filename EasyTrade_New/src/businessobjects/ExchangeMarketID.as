@@ -1,0 +1,35 @@
+package businessobjects
+{
+
+	public class ExchangeMarketID
+	{
+		private var exchangeID_:ExchangeID=new ExchangeID();
+
+		public function get exchangeID():ExchangeID
+		{
+			return exchangeID_;
+		}
+
+		public function set exchangeID(value:ExchangeID):void
+		{
+			exchangeID_=value;
+		}
+
+		private var marketID_:MarketID=new MarketID();
+
+		public function get marketID():MarketID
+		{
+			return marketID_;
+		}
+
+		public function set marketID(value:MarketID):void
+		{
+			marketID_=value;
+		}
+
+
+		public function ExchangeMarketID()
+		{
+		}
+	}
+}

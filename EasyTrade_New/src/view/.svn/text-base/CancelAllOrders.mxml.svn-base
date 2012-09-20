@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:flexlib="http://code.google.com/p/flexlib/"
+		 xmlns:components="components.*"
+		 width="100%" height="100%"
+		 initialize="group1_initializeHandler(event)" >	
+	<fx:Script>
+		<![CDATA[
+			import businessobjects.CancelAllOrdersBO;
+			
+			import common.HashMap;
+			
+			import components.ComboBoxItem;
+			
+			import mx.events.FlexEvent;
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/CancelAllOrders.as"
+
+			[Bindable]
+			private var distinctBrokerList:ArrayList = new ArrayList ();
+
+			[Bindable]
+			private var distinctSymbolList:ArrayList = new ArrayList ();
+
+			[Bindable]
+			private var distinctExchangeList:ArrayList = new ArrayList();
+			
+			[Bindable]
+			private var distinctMarketList:ArrayList = new ArrayList ();
+			private var tempMarketList:ArrayList = new ArrayList();
+			
+
+			public var brokerID:Number  = -1;
+			public var isSymbolDataFetched:Boolean = false;
+			private var exchangeID:Number = -1;
+			private var marketID:Number = -1;
+
+			protected function txtMarket_clickHandler1(event:MouseEvent):void
+			{
+				if (txtMarket && !txtMarket.enabled)
+				{
+					return;
+				}
+				if ( internalExchangeID < 0 )
+				{
+					Alert.show(Messages.SELECT_EXCHANGE, Messages.TITLE_ERROR);
+					return;
+				}
+				var menu:SelectionMenu = PopUpManager.createPopUp( this, SelectionMenu ) as SelectionMenu;
+				marketList = ModelManager.getInstance().exchangeModel.getexchangeMarkets( internalExchangeID );
+				if (chkAllExchanges.selected)
+				{
+					menu.lstList.dataProvider = distinctMarketList;
+				}
+				else
+				{
+					menu.lstList.dataProvider = marketList;
+				}
+				
+				positionMenu(event, menu);
+				menu.addEventListener(Constants.EVENT_MENU_CLOSE, marketSelectionMenuClosed);
+			}
+			
+			protected function txtBroker_clickHandler(event:MouseEvent):void
+			{
+				if (txtBroker && !txtBroker.enabled)
+				{
+					return;
+				}
+				var menu:SelectionMenu = PopUpManager.createPopUp( this, SelectionMenu ) as SelectionMenu;
+				menu.lstList.dataProvider = distinctBrokerList;
+				positionMenu(event, menu);
+				menu.addEventListener(Constants.EVENT_MENU_CLOSE, brokerSelectionMenuClosed);
+			}
+
+			protected function brokerSelectionMenuClosed(event:Event):void
+			{
+				if (!event.currentTarget.lstList.selectedItem)
+				{
+					return;
+				}
+				if (brokerID != event.currentTarget.lstList.selectedItem.value)
+				{
+					txtBroker.text = event.currentTarget.lstList.selectedItem.label;
+					brokerID = event.currentTarget.lstList.selectedItem.value;
+					applyFilter();
+				}
+			}
+
+			protected function txtSymbol_clickHandler(event:MouseEvent):void
+			{
+				if (txtSymbol && !txtSymbol.enabled)
+				{
+					return;
+				}
+				var menu:SelectionMenu = PopUpManager.createPopUp( this, SelectionMenu ) as SelectionMenu;
+				menu.lstList.dataProvider = distinctSymbolList;
+				positionMenu(event, menu);
+				menu.addEventListener(Constants.EVENT_MENU_CLOSE, symbolSelectionMenuClosed);
+			}
+			
+			protected function symbolSelectionMenuClosed(event:Event):void
+			{
+				if (!event.currentTarget.lstList.selectedItem)
+				{
+					return;
+				}
+				if (symbolID != event.currentTarget.lstList.selectedItem.value)
+				{
+					txtSymbol.text = event.currentTarget.lstList.selectedItem.label;
+					symbolID = event.currentTarget.lstList.selectedItem.value;
+					internalSymbolID = event.currentTarget.lstList.selectedItem.value;
+					applyFilter();
+				}
+			}
+
+			protected function chkAllExchanges_changeHandler(event:Event):void
+			{
+				txtExchange.text = "";
+				txtMarket.text = "";
+				txtExchange.enabled = !chkAllExchanges.selected;
+				internalExchangeID = chkAllExchanges.selected ? 0 : -1;
+				internalMarketID = -1; //chkAllExchanges.selected ? 0 : -1;
+				//internalSymbolID = chkAllExchanges.selected ? 0 : -1;
+				//symbolID = chkAllExchanges.selected ? 0 : -1;
+				//brokerID = chkAllExchanges.selected ? 0 : -1;
+				if (!chkAllExchanges.selected)
+				{
+					marketList.removeAll();
+					internalMarketID = -1;
+					txtMarket.enabled = true;
+					chkAllMarkets.selected = false;
+				}
+
+				if (chkAllExchanges.selected && chkAllMarkets.selected && chkAllSymbols.selected)
+				{
+					chkAllBrokers.selected = true;
+					chkAllBrokers_changeHandler(null);
+				}
+
+			}
+
+
+			protected function chkAllMarkets_changeHandler(event:Event):void
+			{
+				txtMarket.text = "";
+				txtMarket.enabled = !chkAllMarkets.selected;
+				internalMarketID = chkAllMarkets.selected ? 0 : -1;
+				//internalSymbolID = chkAllMarkets.selected ? 0 : -1;
+				//symbolID = chkAllMarkets.selected ? 0 : -1;
+				//brokerID = chkAllMarkets.selected ? 0 : -1;
+
+				if (chkAllExchanges.selected && chkAllMarkets.selected && chkAllSymbols.selected)
+				{
+					chkAllBrokers.selected = true;
+					chkAllBrokers_changeHandler(null);
+				}
+				
+			}
+
+
+			protected function chkAllSymbols_changeHandler(event:Event):void
+			{
+				txtSymbol.text = "";
+				txtSymbol.enabled = !chkAllSymbols.selected;
+				internalSymbolID = chkAllSymbols.selected ? 0 : -1;
+				symbolID = chkAllSymbols.selected ? 0 : -1;
+				//brokerID = chkAllSymbols.selected ? 0 : -1;
+
+				if (chkAllExchanges.selected && chkAllMarkets.selected && chkAllSymbols.selected)
+				{
+					chkAllBrokers.selected = true;
+					chkAllBrokers_changeHandler(null);
+				}
+				
+			}
+
+			
+			// Ref: Usman 10 Nov. 2011 12:15PM
+			//If all exchanges + all markets + all symbols selected
+			//then select all brokers.
+
+			protected function chkAllBrokers_changeHandler(event:Event):void
+			{
+				txtBroker.text = "";
+				txtBroker.enabled = !chkAllBrokers.selected;
+				brokerID = chkAllBrokers.selected ? 0 : -1;
+			}
+
+
+			protected function btnSubmit_clickHandler(event:MouseEvent):void
+			{
+				if (
+					internalExchangeID == -1 || 
+					internalMarketID == -1 ||
+					internalSymbolID == -1 ||
+					brokerID == -1 ||
+					symbolID == -1
+					)
+				{
+					Alert.show("Please make a selection.", "Error");
+					return;
+				}
+				var cao:CancelAllOrdersBO = new CancelAllOrdersBO();
+				cao.EXCHANGE_ID = internalExchangeID;
+				cao.MARKET_ID = internalMarketID;
+				cao.SYMBOL_ID = internalSymbolID;
+				cao.BROKER_ID = brokerID;
+				ModelManager.getInstance().cancelAllOrders(cao);
+			}
+
+
+			protected function btnReset_clickHandler(event:MouseEvent):void
+			{
+				txtExchange.text = "";
+				txtMarket.text = "";
+				txtSymbol.text = "";
+				txtBroker.text = "";
+
+				txtExchange.enabled = true;
+				txtMarket.enabled = true;
+				txtSymbol.enabled = true;
+				txtBroker.enabled = true;
+
+				chkAllExchanges.selected = false;
+				chkAllMarkets.selected = false;
+				chkAllSymbols.selected = false;
+				chkAllBrokers.selected = false;
+
+				internalExchangeID = -1;
+				internalMarketID = -1;
+				internalSymbolID = -1;
+				brokerID = -1;
+				symbolID = -1;
+			}
+
+
+			protected function group1_initializeHandler(event:FlexEvent):void
+			{
+				exchangeList.removeAll();
+				for (var i:int = 0; i < ModelManager.getInstance().exchangeModel.exchanges.length; ++i)
+				{
+					var obj:Object = ModelManager.getInstance().exchangeModel.exchanges.getItemAt(i);
+					//var cbi:ComboBoxItem = new ComboBoxItem(obj.EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+					var cbi:ComboBoxItem = new ComboBoxItem(obj.INTERNAL_EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+					exchangeList.addItem(cbi);
+				}
+
+				distinctExchangeList.removeAll();
+				for (i = 0; i < ModelManager.getInstance().distinctModel.exchanges.size(); ++i)
+				{
+					obj = ModelManager.getInstance().distinctModel.exchanges.getItemAt(i);
+					cbi = new ComboBoxItem(obj.value, obj.key);
+					distinctExchangeList.addItem(cbi);
+				}
+
+				distinctMarketList.removeAll();
+				for (i = 0; i < ModelManager.getInstance().distinctModel.markets.size(); ++i)
+				{
+					obj = ModelManager.getInstance().distinctModel.markets.getItemAt(i);
+					cbi = new ComboBoxItem(obj.value, obj.key);
+					distinctMarketList.addItem(cbi);
+				}
+
+				distinctSymbolList.removeAll();
+				for (i = 0; i < ModelManager.getInstance().distinctModel.symbols.size(); ++i)
+				{
+					obj = ModelManager.getInstance().distinctModel.symbols.getItemAt(i);
+					cbi = new ComboBoxItem(obj.value, obj.key);
+					distinctSymbolList.addItem(cbi);
+				}
+				
+				distinctBrokerList.removeAll();
+				for (i = 0; i < ModelManager.getInstance().distinctModel.brokers.size(); ++i)
+				{
+					obj = ModelManager.getInstance().distinctModel.brokers.getItemAt(i);
+					cbi = new ComboBoxItem(obj.value, obj.key);
+					distinctBrokerList.addItem(cbi);
+				}
+				
+				if (event)
+				{
+					btnReset_clickHandler(null);
+				}
+			}
+
+		]]>
+	</fx:Script>
+	
+
+	<s:BorderContainer id="bcMain" x="0" y="0" width="100%" height="100%">
+
+		<s:Label x="15.5" y="22" text="Exchange: "/>
+		<components:EZDropDownTextInput x="81" y="14.7" width="74" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" tabIndex="1" />
+		<s:CheckBox x="176" y="17" label="All Exchanges" id="chkAllExchanges" change="chkAllExchanges_changeHandler(event)" tabIndex="2" />
+
+		<s:Label x="33.5" y="47" text="Market: "/>
+		<components:EZDropDownTextInput x="81" y="39.65" width="74" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandler1(event)" tabIndex="3" />
+		<s:CheckBox x="176" y="42" label="All Markets" id="chkAllMarkets" change="chkAllMarkets_changeHandler(event)" tabIndex="4" />
+		
+		<s:Label x="29.5" y="71" text="Symbol: "/>
+		<components:EZDropDownTextInput x="81" y="64.9" width="74" height="20" id="txtSymbol" editable="false"  click="txtSymbol_clickHandler(event)" tabIndex="5" />
+		<s:CheckBox x="176" y="66" label="All Symbols" id="chkAllSymbols" change="chkAllSymbols_changeHandler(event)" tabIndex="6" />
+
+		<s:Label x="33.5" y="97" text="Broker: "/>
+		<components:EZDropDownTextInput x="81" y="89.7" width="74" height="20" id="txtBroker" editable="false" click="txtBroker_clickHandler(event)" tabIndex="7" />
+		<s:CheckBox x="176" y="92" label="All Brokers" id="chkAllBrokers" change="chkAllBrokers_changeHandler(event)" tabIndex="7" />
+		
+		<s:Button id="btnSubmit" label="Cancel All Orders" click="btnSubmit_clickHandler(event)"  x="31" y="125" tabIndex="8" />
+			
+		<s:Button id="btnReset" label="Reset" click="btnReset_clickHandler(event)"  x="163" y="125" tabIndex="9" />
+
+	</s:BorderContainer>	
+</s:Group>

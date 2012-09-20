@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<fxpProperties abbreviated="false" authoringTool="Flex Builder" compiles="true" parentProject="e499c5e8-bb25-40a0-91fd-35a32deaac12" projectUUID="e499c5e8-bb25-40a0-91fd-35a32deaac12" pureCatalystProject="false" sdkVersion="4.5.1" uuid="4ecb68f2-3a41-4ad2-8703-8bba92f884e3" version="15">
+  <projects/>
+  <src/>
+  <swc>
+    <linked location="sdkPlaceHolder" path="sdkPlaceHolder" position="0" uuid="4ecb68f2-3a41-4ad2-8703-8bba92f884e3"/>
+    <linked location="D:/easytrade/EasyTradeWeb_JS/libs" path="/libs" position="1" uuid="6c510722-49d8-4492-915b-a48314c3a1fa"/>
+  </swc>
+  <misc/>
+  <theme/>
+  <mxmlFormattingPrefs groupAttributesByState="true" maxLineWidth="100" mxmlAlignAttributes="true" mxmlAttributeOrder="id,userLabel,includeIn,excludeFrom,visible,x,y,z,left,right,top,bottom,width,height,minWidth,minHeight,maxWidth,maxHeight,label" mxmlKeepAttributeValuesOrganized="true"/>
+</fxpProperties>

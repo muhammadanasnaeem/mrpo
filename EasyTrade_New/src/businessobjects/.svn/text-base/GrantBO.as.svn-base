@@ -1,0 +1,14 @@
+package businessobjects
+{
+	import mx.collections.ArrayCollection;
+	
+	[Bindable]
+	public class GrantBO
+	{
+		public var userId:Number;
+		public var userName:String;
+		public var privileges:ArrayCollection;
+		public var brokerId:Number;
+		public var brokerCode:String;
+	}
+}

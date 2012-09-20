@@ -1,0 +1,728 @@
+package model
+{
+	import businessobjects.OrderBO;
+	
+	import common.Messages;
+	
+	import components.ComboBoxItem;
+	import components.EZNumberFormatter;
+	
+	import controller.ModelManager;
+	import controller.WindowManager;
+	
+	import flashx.textLayout.factory.TruncationOptions;
+	
+	import flexlib.mdi.containers.MDIWindow;
+	
+	import mx.collections.ArrayCollection;
+	import mx.controls.Alert;
+	import mx.managers.CursorManager;
+	import mx.resources.ResourceManager;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+	
+	import services.OrdererClient;
+	
+	import view.Order;
+	import view.SellOrder;
+
+	public class OrderModel implements IModel
+	{
+		private var orderBO_:OrderBO=new OrderBO();
+
+		public function get orderBO():OrderBO
+		{
+			return orderBO_;
+		}
+
+		public function set orderBO(value:OrderBO):void
+		{
+			orderBO_=value;
+		}
+
+		private var isDirty_:Boolean=true;
+
+		public function get isDirty():Boolean
+		{
+			return isDirty_;
+		}
+
+		public function set isDirty(value:Boolean):void
+		{
+			isDirty_=value;
+		}
+
+		// added on 4/1/2011
+		private var REF_NO_:String="";
+
+		public function get REF_NO():String
+		{
+			return REF_NO_;
+		}
+
+		public function set REF_NO(value:String):void
+		{
+			REF_NO_=value;
+		}
+
+		// added on 12/1/2011
+		private var CLIENT_ID_:Number;
+
+		public function get CLIENT_ID():Number
+		{
+			return CLIENT_ID_;
+		}
+
+		public function set CLIENT_ID(value:Number):void
+		{
+			CLIENT_ID_=value;
+		}
+
+		// added on 08/06/2011
+		private var USER_ID_:Number;
+
+		public function get USER_ID():Number
+		{
+			return USER_ID_;
+		}
+
+		public function set USER_ID(value:Number):void
+		{
+			USER_ID_=value;
+		}
+
+		// added on 08/06/2011
+		private var BROKER_ID_:Number;
+
+		public function get BROKER_ID():Number
+		{
+			return BROKER_ID_;
+		}
+
+		public function set BROKER_ID(value:Number):void
+		{
+			BROKER_ID_=value;
+		}
+
+		public function OrderModel()
+		{
+		}
+
+		public function execute():void
+		{
+			OrdererClient.getInstance().submitOrder(orderBO);
+		}
+
+		public function executeLastDayRemainigOrders(submittedOrders:ArrayCollection):void
+		{
+			OrdererClient.getInstance().submitLastDayRemainingOrder(submittedOrders);
+		}
+
+		public function changeOrder():void
+		{
+			OrdererClient.getInstance().changeOrder(orderBO);
+		}
+
+		public function sellOrderAccept():void
+		{
+			OrdererClient.getInstance().submitOrder(orderBO);
+		}
+
+		public function buyOrderAccept():void
+		{
+			OrdererClient.getInstance().submitOrder(orderBO);
+		}
+
+		public function sellOrderReject():void
+		{
+			OrdererClient.getInstance().submitOrder(orderBO);
+		}
+
+		public function buyOrderReject():void
+		{
+			OrdererClient.getInstance().submitOrder(orderBO);
+		}
+
+		public function cancelOrder():void
+		{
+			OrdererClient.getInstance().cancelOrder(orderBO);
+		}
+
+		public function onResult(event:ResultEvent):void
+		{
+			try
+			{
+				ModelManager.getInstance().orderModel.isDirty=true;
+				WindowManager.getInstance().viewManager.changeOrder.clearForm();
+				WindowManager.getInstance().viewManager.cancelOrder.clearForm();
+				CursorManager.removeBusyCursor();
+				ModelManager.getInstance().updateRemainingOrders();
+			}
+			catch (e:Error)
+			{
+				trace('' + e.message);
+			}
+		}
+
+		public function onChangeOrderResult(event:ResultEvent):void
+		{
+			ModelManager.getInstance().orderModel.isDirty=true;
+			WindowManager.getInstance().viewManager.changeOrder.txtMsg.text="";
+			WindowManager.getInstance().viewManager.changeOrder.clearForm(); // added on 30/3/2011 after discussion with usman majeed
+			CursorManager.removeBusyCursor();
+			ModelManager.getInstance().updateRemainingOrders();
+		}
+
+		public function onCancelOrderResult(event:ResultEvent):void
+		{
+			ModelManager.getInstance().orderModel.isDirty=true;
+			WindowManager.getInstance().viewManager.cancelOrder.txtMsg.text="";
+			WindowManager.getInstance().viewManager.cancelOrder.resetOrderForm(); // added on 30/3/2011 after discussion with usman majeed
+			CursorManager.removeBusyCursor();
+			ModelManager.getInstance().updateRemainingOrders();
+		}
+
+		public function onLastDayRemainingOrderResult(event:ResultEvent):void
+		{
+			onResult(event);
+			// modified on 17/1/2011
+			//ModelManager.getInstance().lastDayRemainingOrdersModel.execute();
+		}
+
+		public function onBuyOrderResult(event:ResultEvent):void
+		{
+			try
+			{
+				var windowManager:WindowManager=WindowManager.getInstance();
+
+				if (windowManager.viewManager.buyOrder)
+				{
+					ModelManager.getInstance().updateSymbolTradeHistory();
+					windowManager.viewManager.buyOrder.resetOrderForm(); // added on 2/12/2010
+					windowManager.viewManager.buyOrder.group1_initializeHandler(null);
+					windowManager.viewManager.buyOrder.txtVolume.setFocus();
+					windowManager.viewManager.buyOrder.txtMsg.text="";
+					onResult(event);
+				}
+			}
+			catch (e:Error)
+			{
+				trace('' + e.message);
+			}
+		}
+
+		public function onBuyQuickOrderResult(event:ResultEvent):void
+		{
+			try
+			{
+				var windowManager:WindowManager=WindowManager.getInstance();
+
+				if (windowManager.viewManager.quickOrders)
+				{
+					WindowManager.getInstance().viewManager.quickOrders.setFocus();
+//					WindowManager.getInstance().viewManager.quickOrders.firstclientCode.text = "";
+					onResult(event);
+				}
+				else if (windowManager.viewManager.quickOrders)
+				{
+//					onResult(event);
+				}
+			}
+			catch (e:Error)
+			{
+				trace('' + e.message);
+			}
+		}
+
+		public function onSellOrderResult(event:ResultEvent):void
+		{
+			try
+			{
+				ModelManager.getInstance().updateSymbolTradeHistory();
+				var windowManager:WindowManager=WindowManager.getInstance();
+				windowManager.viewManager.sellOrder.group1_initializeHandler(null);
+				windowManager.viewManager.sellOrder.txtVolume.setFocus();
+				WindowManager.getInstance().viewManager.sellOrder.txtMsg.text="";
+	//			WindowManager.getInstance().viewManager.sellOrder.resetOrderForm(); // added on 2/12/2010
+				onResult(event);
+			}
+			catch(e:Error)
+			{
+				trace(e.message);
+			}
+		}
+
+		public function onSellQuickOrderResult(event:ResultEvent):void
+		{
+			var windowManager:WindowManager=WindowManager.getInstance();
+			WindowManager.getInstance().viewManager.quickOrders.setFocus();
+//			WindowManager.getInstance().viewManager.quickOrders.firstclientCode.text = "";
+//			WindowManager.getInstance().viewManager.quickOrders.firstNumericStepper.value = 0;
+//			WindowManager.getInstance().viewManager.sellOrder.resetOrderForm(); // added on 2/12/2010
+			onResult(event);
+		}
+
+		public function onFault(event:FaultEvent):void
+		{
+			ModelManager.getInstance().orderModel.isDirty=false;
+			CursorManager.removeBusyCursor();
+			Alert.show(event.fault.message, ResourceManager.getInstance().getString('marketwatch','error'));
+		}
+
+		public function fillOrderBO(order:Order):void
+		{
+			var delimRegExp:RegExp=/,/g;
+			var numberFormatter:EZNumberFormatter=new EZNumberFormatter();
+			//modified on 12/1/2011 after discussion with usman majeed
+			//orderBO_.CLIENT_ID = ModelManager.getInstance().userID;
+			orderBO_.ENTRY_DATETIME=new Date();
+			orderBO_.IS_SHORT=false;
+			// modified on 16/3/2011
+			//orderBO_.USER_ID = ModelManager.getInstance().userID;
+
+			orderBO_.NEGOTIATED_ORDER_STATE=order.NTType;
+
+			if (order.chkNgtd && order.chkNgtd.selected)
+			{
+				if (orderBO_.NEGOTIATED_ORDER_STATE.length == 0)
+				{
+					orderBO_.NEGOTIATED_ORDER_STATE="Initiated";
+				}
+				order.userId;
+				orderBO_.IS_NEGOTIATED=true;
+				orderBO_.TYPE="negotiated";
+			}
+			else
+			{
+				orderBO_.NEGOTIATED_ORDER_STATE="Initiated";
+				orderBO_.IS_NEGOTIATED=false;
+			}
+
+			var userId:Number=ModelManager.getInstance().userID;
+			var selectedItem:ComboBoxItem=order.trader.selectedItem as ComboBoxItem;
+			if (selectedItem && selectedItem.value != "")
+			{
+				userId=new Number(selectedItem.value);
+			}
+
+			if (orderBO_.IS_NEGOTIATED && (orderBO_.NEGOTIATED_ORDER_STATE == "Accepted" || orderBO_.NEGOTIATED_ORDER_STATE == "Rejected"))
+			{
+				orderBO_.SENDER_USER_ID=ModelManager.getInstance().orderModel.USER_ID;
+				orderBO_.USER_ID=ModelManager.getInstance().orderModel.USER_ID;
+				//no order.brokerID in Order
+				//orderBO_.BROKER_ID = order.brokerID;
+				orderBO_.COUNTER_BROKER_ID=ModelManager.getInstance().brokerID;
+			}
+			else
+			{
+				orderBO_.SENDER_USER_ID=ModelManager.getInstance().userID;
+				orderBO_.BROKER_ID=ModelManager.getInstance().brokerID;
+				orderBO_.USER_ID=userId;
+				if(userId!=ModelManager.getInstance().userID)
+				{
+					var g:Object=null;
+					for each (g in ModelManager.getInstance().userProfileModel.userProfile.grants)
+					{
+						if (orderBO_.USER_ID == g.userId)
+						{
+							orderBO_.BROKER_ID = g.brokerId;
+							break;
+						}
+					}
+				}
+			}
+
+			if (order.rdogrpLmtMkt.selectedValue == "limit")
+			{
+				orderBO_.PRICE=new Number(order.txtPrice.text.replace(delimRegExp, ""));
+				orderBO_.PRICE_TYPE="limit";
+			}
+			else
+			{
+				orderBO_.PRICE=0;
+				orderBO_.PRICE_TYPE="market";
+			}
+
+			if (order.txtDiscVol.text.length > 0 && !isNaN(parseInt(order.txtDiscVol.text)))
+			{
+				orderBO_.TYPE="disclosed";
+			}
+
+			orderBO_.TRIGGER_PRICE=new Number(order.txtTriggerPrice.text.replace(delimRegExp, ""));
+			orderBO_.TRAILING_STOPLOSS_DIP=new Number(order.txtPrice.text.replace(delimRegExp, ""));
+			orderBO_.EXCHANGE_ID=ModelManager.getInstance().exchangeModel.getExchangeID(order.internalExchangeID);
+
+			if (order.ddType.selectedIndex > 0 && order.ddType.selectedItem)
+			{
+				orderBO_.ORDER_CONDITION=order.ddType.selectedItem.label;
+			}
+
+			orderBO_.MARKET_ID=ModelManager.getInstance().exchangeModel.getMarketID(order.internalExchangeID, order.internalMarketID);
+			orderBO_.SYMBOL=order.txtSymbol.text.toUpperCase();
+			if (order.dateTIF.selectedDate)
+			{
+				orderBO_.TIF=order.dateTIF.selectedDate;
+			}
+			else
+			{
+				orderBO_.TIF=new Date();
+			}
+
+			orderBO_.IS_SHORT=false;
+			if (orderBO_.SIDE.length == 0)
+			{
+				orderBO_.SIDE=order.side;
+			}
+			orderBO_.INTERNAL_EXCHANGE_ID=order.internalExchangeID;
+			orderBO_.INTERNAL_MARKET_ID=order.internalMarketID;
+			orderBO_.INTERNAL_SYMBOL_ID=ModelManager.getInstance().exchangeModel.getInternalSymbolIDByCode(orderBO_.INTERNAL_EXCHANGE_ID, orderBO_.INTERNAL_MARKET_ID, orderBO_.SYMBOL);
+
+			orderBO_.SYMBOL_ID=ModelManager.getInstance().exchangeModel.getSymbolID(orderBO_.INTERNAL_EXCHANGE_ID, orderBO_.INTERNAL_MARKET_ID, orderBO_.INTERNAL_SYMBOL_ID);
+
+			orderBO_.VOLUME=new Number(order.txtVolume.text.replace(delimRegExp, ""));
+			try
+			{
+				if (orderBO.SIDE == "buy")
+				{
+//					WindowManager.getInstance().viewManager.cancelOrder.txtSellVolume.text = orderBO_.VOLUME.toString();
+//					WindowManager.getInstance().viewManager.cancelOrder.txtVolume.text = WindowManager.getInstance().viewManager.cancelOrder.txtBuyVolume.text;
+				}
+				else if (orderBO.SIDE == "sell")
+				{
+//					WindowManager.getInstance().viewManager.cancelOrder.txtSellVolume.text = orderBO_.VOLUME.toString();
+//					WindowManager.getInstance().viewManager.cancelOrder.txtVolume.text = WindowManager.getInstance().viewManager.cancelOrder.txtSellVolume.text;
+				}
+			}catch(e:Error)
+			{
+				trace(e.message);
+			}
+			if (order.txtPreVolume.text != '')
+				orderBO_.PREVIOUS_VOLUME=new Number(order.txtPreVolume.text);
+
+			orderBO_.DISCLOSED_VOLUME=new Number(order.txtDiscVol.text.replace(delimRegExp, ""));
+			if (order.txtOrderNum.text.length > 0)
+			{
+				orderBO_.ORDER_NO=new Number(order.txtOrderNum.text);
+			}
+			// 28/12/2010 Modified after discussion with Usman Majeed
+			//orderBO_.REF_NO = order.txtAccount.text;
+
+			orderBO_.CLIENT_CODE=order.txtAccount.text;
+			//TODO:
+
+			orderBO_.PUBLIC_ORDER_STATE="Submit";
+			orderBO_.PRIVATE_ORDER_STATE="UnExecuted";
+
+			//Negotiated Trade
+			orderBO_.COUNTER_CLIENT_CODE=order.txtCounterPartyClientCode.text;
+			orderBO_.COUNTER_USER_NAME=order.txtCounterPartyUserName.text;
+			//orderBO_.COUNTER_BROKER_ID = ModelManager.getInstance().userID;
+			orderBO_.COUNTER_CLIENT_ID=order.COUNTER_CLIENT_ID;
+			orderBO_.COUNTER_ORDER_NO=order.COUNTER_ORDER_NO;
+			orderBO_.COUNTER_USER_ID=order.COUNTER_USER_ID;
+
+			/*if (order.chkNgtd && order.chkNgtd.selected)
+			{
+				if (orderBO_.NEGOTIATED_ORDER_STATE.length == 0)
+				{
+					orderBO_.NEGOTIATED_ORDER_STATE = "Initiated";
+				}
+				orderBO_.IS_NEGOTIATED = true;
+			}
+			else
+			{
+				orderBO_.NEGOTIATED_ORDER_STATE = "Initiated";
+				orderBO_.IS_NEGOTIATED = false;
+			}*/
+			if (orderBO.IS_NEGOTIATED)
+			{
+				orderBO.TYPE="negotiated";
+				if (orderBO.USER_ID != ModelManager.getInstance().userID)
+				{
+					if (orderBO.SIDE == "buy")
+					{
+						orderBO.SIDE="sell";
+					}
+					else if (orderBO.SIDE == "sell")
+					{
+						orderBO.SIDE="buy";
+					}
+
+					var tmp:Number=orderBO.CLIENT_ID;
+					orderBO.CLIENT_ID=orderBO.COUNTER_CLIENT_ID;
+					orderBO.COUNTER_CLIENT_ID=tmp;
+					tmp=orderBO.ORDER_NO;
+					orderBO.ORDER_NO=orderBO.COUNTER_ORDER_NO;
+					orderBO.COUNTER_ORDER_NO=tmp;
+				}
+				else if (orderBO.USER_ID == orderBO.COUNTER_USER_ID)
+				{
+					if (orderBO.SIDE == "buy")
+					{
+						orderBO.SIDE="sell";
+					}
+					else if (orderBO.SIDE == "sell")
+					{
+						orderBO.SIDE="buy";
+					}
+
+					tmp=orderBO.CLIENT_ID;
+					orderBO.CLIENT_ID=orderBO.COUNTER_CLIENT_ID;
+					orderBO.COUNTER_CLIENT_ID=tmp;
+					if (order.IS_ORDER_NO_SWAPPED)
+					{
+						tmp=orderBO.ORDER_NO;
+						orderBO.ORDER_NO=orderBO.COUNTER_ORDER_NO;
+						orderBO.COUNTER_ORDER_NO=tmp;
+					}
+					if (orderBO.NEGOTIATED_ORDER_STATE == "Rejected")
+					{
+						orderBO.NEGOTIATED_ORDER_STATE="Initiated";
+					}
+					else if (orderBO.NEGOTIATED_ORDER_STATE == "Accepted")
+					{
+						orderBO.CLIENT_ID=order.CLIENT_ID;
+					}
+
+				}
+				else if (orderBO.NEGOTIATED_ORDER_STATE == "Rejected")
+				{
+					orderBO.NEGOTIATED_ORDER_STATE="Initiated";
+				}
+				else if (orderBO.NEGOTIATED_ORDER_STATE == "Accepted")
+				{
+					orderBO.CLIENT_ID=order.CLIENT_ID;
+				}
+			}
+		}
+
+		public function fillOrderBO1(order:SellOrder):void
+		{
+			var delimRegExp:RegExp=/,/g;
+			var numberFormatter:EZNumberFormatter=new EZNumberFormatter();
+			//modified on 12/1/2011 after discussion with usman majeed
+			//orderBO_.CLIENT_ID = ModelManager.getInstance().userID;
+			orderBO_.ENTRY_DATETIME=new Date();
+			orderBO_.IS_SHORT=false;
+			// modified on 16/3/2011
+			//orderBO_.USER_ID = ModelManager.getInstance().userID;
+
+			orderBO_.NEGOTIATED_ORDER_STATE=order.NTType;
+
+			if (order.chkNgtd && order.chkNgtd.selected)
+			{
+				if (orderBO_.NEGOTIATED_ORDER_STATE.length == 0)
+				{
+					orderBO_.NEGOTIATED_ORDER_STATE="Initiated";
+				}
+				order.userId;
+				orderBO_.IS_NEGOTIATED=true;
+				orderBO_.TYPE="negotiated";
+			}
+			else
+			{
+				orderBO_.NEGOTIATED_ORDER_STATE="Initiated";
+				orderBO_.IS_NEGOTIATED=false;
+			}
+
+			var userId:Number=ModelManager.getInstance().userID;
+			var selectedItem:ComboBoxItem=order.trader.selectedItem as ComboBoxItem;
+			if (selectedItem && selectedItem.value != "")
+			{
+				userId=new Number(selectedItem.value);
+			}
+
+			if (orderBO_.IS_NEGOTIATED && (orderBO_.NEGOTIATED_ORDER_STATE == "Accepted" || orderBO_.NEGOTIATED_ORDER_STATE == "Rejected"))
+			{
+				orderBO_.SENDER_USER_ID=ModelManager.getInstance().orderModel.USER_ID;
+				orderBO_.USER_ID=ModelManager.getInstance().orderModel.USER_ID;
+				//no order.brokerID in Order
+				//orderBO_.BROKER_ID = order.brokerID;
+				orderBO_.COUNTER_BROKER_ID=ModelManager.getInstance().brokerID;
+			}
+			else
+			{
+				orderBO_.SENDER_USER_ID=ModelManager.getInstance().userID;
+				orderBO_.BROKER_ID=ModelManager.getInstance().brokerID;
+				orderBO_.USER_ID=userId;
+				if(userId!=ModelManager.getInstance().userID)
+				{
+					var g2:Object=null;
+					for each (g2 in ModelManager.getInstance().userProfileModel.userProfile.grants)
+					{
+						if (orderBO_.USER_ID == g2.userId)
+						{
+							orderBO_.BROKER_ID = g2.brokerId;
+							break;
+						}
+					}
+				}
+			}
+
+			if (order.rdogrpLmtMkt.selectedValue == "limit")
+			{
+				orderBO_.PRICE=new Number(order.txtPrice.text.replace(delimRegExp, ""));
+				orderBO_.PRICE_TYPE="limit";
+			}
+			else
+			{
+				orderBO_.PRICE=0;
+				orderBO_.PRICE_TYPE="market";
+			}
+
+			if (order.txtDiscVol.text.length > 0 && !isNaN(parseInt(order.txtDiscVol.text)))
+			{
+				orderBO_.TYPE="disclosed";
+			}
+
+			orderBO_.TRIGGER_PRICE=new Number(order.txtTriggerPrice.text.replace(delimRegExp, ""));
+			orderBO_.TRAILING_STOPLOSS_DIP=new Number(order.txtPrice.text.replace(delimRegExp, ""));
+			orderBO_.EXCHANGE_ID=ModelManager.getInstance().exchangeModel.getExchangeID(order.internalExchangeID);
+
+			if (order.ddType.selectedIndex > 0 && order.ddType.selectedItem)
+			{
+				orderBO_.ORDER_CONDITION=order.ddType.selectedItem.label;
+			}
+
+			orderBO_.MARKET_ID=ModelManager.getInstance().exchangeModel.getMarketID(order.internalExchangeID, order.internalMarketID);
+			orderBO_.SYMBOL=order.txtSymbol.text.toUpperCase();
+			if (order.dateTIF.selectedDate)
+			{
+				orderBO_.TIF=order.dateTIF.selectedDate;
+			}
+			else
+			{
+				orderBO_.TIF=new Date();
+			}
+
+			orderBO_.IS_SHORT=false;
+			if (orderBO_.SIDE.length == 0)
+			{
+				orderBO_.SIDE=order.side;
+			}
+			orderBO_.INTERNAL_EXCHANGE_ID=order.internalExchangeID;
+			orderBO_.INTERNAL_MARKET_ID=order.internalMarketID;
+			orderBO_.INTERNAL_SYMBOL_ID=ModelManager.getInstance().exchangeModel.getInternalSymbolIDByCode(orderBO_.INTERNAL_EXCHANGE_ID, orderBO_.INTERNAL_MARKET_ID, orderBO_.SYMBOL);
+
+			orderBO_.SYMBOL_ID=ModelManager.getInstance().exchangeModel.getSymbolID(orderBO_.INTERNAL_EXCHANGE_ID, orderBO_.INTERNAL_MARKET_ID, orderBO_.INTERNAL_SYMBOL_ID);
+
+			orderBO_.VOLUME=new Number(order.txtVolume.text.replace(delimRegExp, ""));
+			
+			try
+			{
+				if (orderBO.SIDE == "buy")
+				{
+//					WindowManager.getInstance().viewManager.cancelOrder.txtSellVolume.text = orderBO_.VOLUME.toString();
+//					WindowManager.getInstance().viewManager.cancelOrder.txtVolume.text = WindowManager.getInstance().viewManager.cancelOrder.txtBuyVolume.text;
+				}
+				else if (orderBO.SIDE == "sell")
+				{
+//					WindowManager.getInstance().viewManager.cancelOrder.txtSellVolume.text = orderBO_.VOLUME.toString();
+//					WindowManager.getInstance().viewManager.cancelOrder.txtVolume.text = WindowManager.getInstance().viewManager.cancelOrder.txtSellVolume.text;
+				}
+			}catch(e:Error)
+			{
+				trace(e.message);
+			}
+			
+			if (order.txtPreVolume.text != '')
+				orderBO_.PREVIOUS_VOLUME=new Number(order.txtPreVolume.text);
+
+			orderBO_.DISCLOSED_VOLUME=new Number(order.txtDiscVol.text.replace(delimRegExp, ""));
+			if (order.txtOrderNum.text.length > 0)
+			{
+				orderBO_.ORDER_NO=new Number(order.txtOrderNum.text);
+			}
+			// 28/12/2010 Modified after discussion with Usman Majeed
+			//orderBO_.REF_NO = order.txtAccount.text;
+
+			orderBO_.CLIENT_CODE=order.txtAccount.text;
+			//TODO:
+
+			orderBO_.PUBLIC_ORDER_STATE="Submit";
+			orderBO_.PRIVATE_ORDER_STATE="UnExecuted";
+
+			//Negotiated Trade
+			orderBO_.COUNTER_CLIENT_CODE=order.txtCounterPartyClientCode.text;
+			orderBO_.COUNTER_USER_NAME=order.txtCounterPartyUserName.text;
+			//orderBO_.COUNTER_BROKER_ID = ModelManager.getInstance().userID;
+			orderBO_.COUNTER_CLIENT_ID=order.COUNTER_CLIENT_ID;
+			orderBO_.COUNTER_ORDER_NO=order.COUNTER_ORDER_NO;
+			orderBO_.COUNTER_USER_ID=order.COUNTER_USER_ID;
+
+			/*if (order.chkNgtd && order.chkNgtd.selected)
+			{
+			if (orderBO_.NEGOTIATED_ORDER_STATE.length == 0)
+			{
+			orderBO_.NEGOTIATED_ORDER_STATE = "Initiated";
+			}
+			orderBO_.IS_NEGOTIATED = true;
+			}
+			else
+			{
+			orderBO_.NEGOTIATED_ORDER_STATE = "Initiated";
+			orderBO_.IS_NEGOTIATED = false;
+			}*/
+			if (orderBO.IS_NEGOTIATED)
+			{
+				orderBO.TYPE="negotiated";
+				if (orderBO.USER_ID != ModelManager.getInstance().userID)
+				{
+					if (orderBO.SIDE == "buy")
+					{
+						orderBO.SIDE="sell";
+					}
+					else if (orderBO.SIDE == "sell")
+					{
+						orderBO.SIDE="buy";
+					}
+
+					var tmp:Number=orderBO.CLIENT_ID;
+					orderBO.CLIENT_ID=orderBO.COUNTER_CLIENT_ID;
+					orderBO.COUNTER_CLIENT_ID=tmp;
+					tmp=orderBO.ORDER_NO;
+					orderBO.ORDER_NO=orderBO.COUNTER_ORDER_NO;
+					orderBO.COUNTER_ORDER_NO=tmp;
+				}
+				else if (orderBO.USER_ID == orderBO.COUNTER_USER_ID)
+				{
+					if (orderBO.SIDE == "buy")
+					{
+						orderBO.SIDE="sell";
+					}
+					else if (orderBO.SIDE == "sell")
+					{
+						orderBO.SIDE="buy";
+					}
+
+					tmp=orderBO.CLIENT_ID;
+					orderBO.CLIENT_ID=orderBO.COUNTER_CLIENT_ID;
+					orderBO.COUNTER_CLIENT_ID=tmp;
+					if (order.IS_ORDER_NO_SWAPPED)
+					{
+						tmp=orderBO.ORDER_NO;
+						orderBO.ORDER_NO=orderBO.COUNTER_ORDER_NO;
+						orderBO.COUNTER_ORDER_NO=tmp;
+					}
+					if (orderBO.NEGOTIATED_ORDER_STATE == "Rejected")
+					{
+						orderBO.NEGOTIATED_ORDER_STATE="Initiated";
+					}
+					else if (orderBO.NEGOTIATED_ORDER_STATE == "Accepted")
+					{
+						orderBO.CLIENT_ID=order.CLIENT_ID;
+					}
+
+				}
+				else if (orderBO.NEGOTIATED_ORDER_STATE == "Rejected")
+				{
+					orderBO.NEGOTIATED_ORDER_STATE="Initiated";
+				}
+				else if (orderBO.NEGOTIATED_ORDER_STATE == "Accepted")
+				{
+					orderBO.CLIENT_ID=order.CLIENT_ID;
+				}
+			}
+		}
+	}
+}

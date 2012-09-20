@@ -1,0 +1,79 @@
+import common.Constants;
+
+import components.ComboBoxItem;
+
+import controller.ModelManager;
+
+import flashx.textLayout.events.UpdateCompleteEvent;
+
+import model.UserTradeHistoryModel;
+
+import mx.collections.ArrayCollection;
+import mx.collections.Sort;
+import mx.collections.SortField;
+import mx.controls.Alert;
+import mx.controls.dataGridClasses.DataGridColumn;
+import mx.events.DataGridEvent;
+import mx.events.FlexEvent;
+import mx.events.ItemClickEvent;
+
+public var userID:Number;
+
+
+
+protected function group1_initializeHandler(event:FlexEvent):void
+{
+	for (var i:int = 0; i < ModelManager.getInstance().exchangeModel.exchanges.length; ++i)
+	{
+		var obj:Object = ModelManager.getInstance().exchangeModel.exchanges.getItemAt(i);
+		//var cbi:ComboBoxItem = new ComboBoxItem(obj.EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		var cbi:ComboBoxItem = new ComboBoxItem(obj.INTERNAL_EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		exchangeList.addItem(cbi);
+	}
+	//exchangeID = -1;
+	internalExchangeID = -1;
+	//marketID = -1;
+	internalMarketID = -1;
+	symbolID = -1;	
+	
+}
+
+
+protected function txtMarket_NetPosition_clickHandler(event:MouseEvent):void
+{
+	if ( internalExchangeID < 0 )
+	{
+		Alert.show(Messages.SELECT_EXCHANGE, Messages.TITLE_ERROR);
+		return;
+	}
+	var menu:SelectionMenu = PopUpManager.createPopUp( this, SelectionMenu ) as SelectionMenu;
+	marketList = ModelManager.getInstance().exchangeModel.getexchangeMarkets( internalExchangeID );
+	menu.lstList.dataProvider = marketList;
+	positionMenu(event, menu);
+	menu.addEventListener(Constants.EVENT_MENU_CLOSE, marketSelectionNetPositionMenuClosed);
+}
+
+protected function marketSelectionNetPositionMenuClosed(event:Event):void
+{
+	if (!event.currentTarget.lstList.selectedItem)
+	{
+		return;
+	}
+	txtMarket.text = event.currentTarget.lstList.selectedItem.label;
+	internalMarketID = event.currentTarget.lstList.selectedItem.value;
+	ModelManager.getInstance().netPositionModel.execute();
+}
+
+
+
+public function applyFilter():void
+{
+	//ModelManager.getInstance().userTradeHistoryModel.userTradeHistory.refresh();
+	
+}
+
+protected function btnRefresh_clickHandler(event:MouseEvent):void
+{
+	if(internalExchangeID > -1 && internalMarketID > -1)
+		ModelManager.getInstance().netPositionModel.execute();
+}

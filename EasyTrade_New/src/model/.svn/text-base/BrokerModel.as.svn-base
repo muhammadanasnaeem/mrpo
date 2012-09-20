@@ -1,0 +1,74 @@
+package model
+{
+	import common.Messages;
+	
+	import controller.ModelManager;
+	
+	import mx.collections.ArrayList;
+	import mx.controls.Alert;
+	import mx.managers.CursorManager;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+	
+	import services.QWClient;
+
+	public class BrokerModel implements IModel
+	{
+		private var isDirty_:Boolean = true;
+		public function get isDirty():Boolean
+		{
+			return isDirty_;
+		}
+		public function set isDirty(value:Boolean):void
+		{
+			isDirty_ = value;
+		}
+		
+		private var brokers_:ArrayList = new ArrayList ();
+		[Bindable]
+		public function get brokers():ArrayList
+		{
+			return brokers_;
+		}
+		public function set brokers(value:ArrayList):void
+		{
+			brokers_ = value;
+		}
+		
+		public function BrokerModel()
+		{
+		}
+		
+		public function execute():void
+		{
+			QWClient.getInstance().getBrokers();
+			isDirty = false;
+		}
+		
+		public function onResult(event:ResultEvent):void
+		{
+			var modelManager:ModelManager = ModelManager.getInstance();
+			if (event.result)
+			{
+				if (event.result.length)
+				{
+					for each (var obj:Object in event.result)
+					{
+						//brokers.addItem( fillExchangeBO( obj, new ExchangeBO() ) );
+					}
+				}
+				else
+				{
+					//brokers.addItem( fillExchangeBO( event.result, new ExchangeBO() ) );
+				}
+			}
+		}
+		
+		public function onFault(event:FaultEvent):void
+		{
+			isDirty = true;
+			Alert.show(event.fault.faultDetail, Messages.TITLE_ERROR);
+			CursorManager.removeBusyCursor();
+		}
+	}
+}

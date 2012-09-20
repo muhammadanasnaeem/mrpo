@@ -1,0 +1,96 @@
+package common
+{
+	import mx.collections.ArrayCollection;
+
+	public dynamic class HashMap
+	{
+		private var size_:Number = 0;
+		public function clear():void
+		{
+			for (var key:String in this)
+			{
+				delete this[key];
+			}
+			size_ == 0;
+		}
+
+		public function empty():Boolean
+		{
+			return size_ == 0;
+		}
+
+		public function getItemAt(index:int):*
+		{
+			var i:int = 0;
+			for (var key:String in this)
+			{
+				if (i == index)
+				{
+					//return this[key];
+					var obj:Object = new Object();
+					obj["key"] = key;
+					obj["value"] = this[key];
+					return obj;
+				}
+				++i;
+			}
+			return null;
+		}
+		
+		public function getItem(key:String):Object
+		{
+			return this[key];
+		}
+		
+		public function hasKey(key:String):Boolean
+		{
+			return this[key] != null;
+		}
+
+		public function put(key:String, value:Object):void
+		{
+			if (!this.hasOwnProperty(key))
+			{
+				size_++;
+			}
+			this[key] = value;
+		}
+		
+		public function remove(key:String):Object
+		{
+			if (this[key])
+			{
+				size_--;
+			}
+			delete this[key];
+			return this;
+		}
+		
+		public function size():int
+		{
+			return size_;
+		}
+		
+		public function toString():String
+		{
+			var delim:String = "";
+			var str:String;
+			for (var key:String in this)
+			{
+				str += delim + key + ": " + this[key];
+				delim = "\n";
+			}
+			return str;
+		}
+		
+		public function values():ArrayCollection
+		{
+			var values:ArrayCollection = new ArrayCollection();
+			for (var key:String in this)
+			{
+				values.addItem(this[key]);
+			}
+			return values;
+		}
+	}
+}

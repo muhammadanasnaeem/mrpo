@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%"
+		 height="100%"
+		 xmlns:components="components.*"
+		 initialize="group1_initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/OrderLimitControl.as"
+
+			protected function rdoLimitType_changeHandler(event:Event):void
+			{
+				if (txtSymbol.text.length == 0)
+				{
+					return;
+				}
+
+				var modelManager:ModelManager=ModelManager.getInstance();
+
+				var obj:SymbolBO=modelManager.exchangeModel.getSymbolByCode(internalExchangeID, internalMarketID, txtSymbol.text) as SymbolBO;
+				if (obj.INTERNAL_SYMBOL_ID < 0)
+				{
+					txtSymbol.text="";
+					return;
+				}
+
+				if (rdoLimitType.selectedValue == 'PRICE')
+				{
+					txtLowerLimit.text=obj.LOWER_CIRCUIT_BREAKER_LIMIT.toString();
+					txtUpperLimit.text=obj.UPPER_CIRCUIT_BREAKER_LIMIT.toString();
+					txtLowerLimit.restrict='[0-9.]';
+					txtUpperLimit.restrict='[0-9.]';
+				}
+				else if (rdoLimitType.selectedValue == 'VALUE')
+				{
+					txtLowerLimit.text=obj.LOWER_ORDER_VALUE_LIMIT.toString();
+					txtUpperLimit.text=obj.UPPER_ORDER_VALUE_LIMIT.toString();
+					txtLowerLimit.restrict='[0-9.]';
+					txtUpperLimit.restrict='[0-9.]';
+				}
+
+				else if (rdoLimitType.selectedValue == 'VOLUME')
+				{
+					txtLowerLimit.text=obj.LOWER_ORDER_VOLUME_LIMIT.toString();
+					txtUpperLimit.text=obj.UPPER_ORDER_VOLUME_LIMIT.toString();
+					txtLowerLimit.restrict='[0-9]';
+					txtUpperLimit.restrict='[0-9]';
+				}
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%" 
+					   height="100%"
+					   horizontalCenter="0"
+					   top="0">
+		<s:BorderContainer width="100%" 
+						   horizontalCenter="0"
+						   top="0"
+				 height="30">
+			<s:Label y="4"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-58':'-130'}"
+					 text="{resourceManager.getString('marketwatch','exchange')}"/>
+			<components:EZDropDownTextInput width="74"
+											height="20"
+											horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-115':'-68'}"
+											id="txtExchange"
+											editable="false"
+											click="txtExchange_clickHandler(event)"/>
+
+			<s:Label  horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'60':'-15'}" y="4"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 text="{resourceManager.getString('marketwatch','market')}"/>
+			<components:EZDropDownTextInput id="txtMarket" y="0" width="74" height="20"
+											click="txtMarket_clickHandler(event)" editable="false"
+											horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'0':'45'}"/>
+
+			<s:Label y="4"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'160':'95'}" text="{resourceManager.getString('marketwatch','symbol')}"/>
+			<s:TextInput id="txtSymbol" y="0" width="65" height="20" editable="true"
+						 focusOut="txtSymbol_focusOutHandler(event)" horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'110':'150'}"
+						 keyDown="txtSymbol_keyDownHandler(event)"/>
+		</s:BorderContainer>
+		<s:BorderContainer height="140"
+						   width="100%"
+						   x="0"
+						   y="30">
+			<mx:VBox horizontalAlign="center" layoutDirection="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 y="0"
+					 width="100%">
+				<mx:HBox paddingBottom="2"
+						 paddingTop="2"
+						 paddingLeft="2"
+						 paddingRight="2">
+					<s:RadioButtonGroup id="rdoLimitType"
+										change="rdoLimitType_changeHandler(event)"/>
+					<s:RadioButton id="rdoLimitTypePrice"
+								   groupName="rdoLimitType"
+								   label="{resourceManager.getString('marketwatch','price')}"
+								   value="PRICE"
+								   selected="true"/>
+					<s:RadioButton groupName="rdoLimitType"
+								   label="{resourceManager.getString('marketwatch','value')}"
+								   value="VALUE"/>
+					<s:RadioButton groupName="rdoLimitType"
+								   label="{resourceManager.getString('marketwatch','volume')}"
+								   value="VOLUME"/>
+				</mx:HBox>
+				<mx:VBox paddingBottom="2"
+						 paddingTop="2"
+						 paddingLeft="2"
+						 paddingRight="2">
+					<mx:HBox>
+						<s:Label direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}" 
+							text="{resourceManager.getString('marketwatch','upperLimit')}:"/>
+						<s:TextInput id="txtUpperLimit"
+									 width="100"
+									 restrict="[0-9.]"/>
+					</mx:HBox>
+					<mx:HBox>
+						<s:Label direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}" 
+							text="{resourceManager.getString('marketwatch','lowerLimit')}:"/>
+						<s:TextInput id="txtLowerLimit"
+									 width="100"
+									 restrict="[0-9.]"/>
+					</mx:HBox>
+					<mx:HBox>
+						<s:CheckBox  
+							label="{resourceManager.getString('marketwatch','makePersistent')}"
+									id="chkPersist"/>
+					</mx:HBox>
+					<mx:HBox>
+						<s:Button id="btnSubmit"
+								  label="{resourceManager.getString('marketwatch','submit')}"
+								  click="btnSubmit_clickHandler(event)"/>
+						<s:Button id="btnReset"
+								  label="{resourceManager.getString('marketwatch','reset')}"
+								  click="btnReset_clickHandler(event)"/>
+					</mx:HBox>
+				</mx:VBox>
+			</mx:VBox>
+		</s:BorderContainer>
+	</s:BorderContainer>
+</s:Group>

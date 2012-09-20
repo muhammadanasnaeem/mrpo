@@ -1,0 +1,889 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer verticalCenter="0"
+				   horizontalCenter="0"
+				   x="0"
+				   y="0"
+				   xmlns:fx="http://ns.adobe.com/mxml/2009"
+				   xmlns:s="library://ns.adobe.com/flex/spark"
+				   xmlns:mx="library://ns.adobe.com/flex/mx"
+				   width="100%"
+				   height="100%"
+				   minHeight="200"
+				   xmlns:flexlib="http://code.google.com/p/flexlib/"
+				   xmlns:components="components.*"
+				   creationComplete="bordercontainer1creationCompleteHandler(event)">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.as3xls.xls.Cell;
+			import com.as3xls.xls.ExcelFile;
+			import com.as3xls.xls.Sheet;
+			import com.lightstreamer.as_client.events.NonVisualItemUpdateEvent;
+			
+			import controller.WindowManager;
+			
+			import flash.ui.ContextMenu;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.TextInput;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.events.ScrollEvent;
+			
+//			import org.alivepdf.display.Display;
+//			import org.alivepdf.layout.Orientation;
+//			import org.alivepdf.layout.Size;
+//			import org.alivepdf.layout.Unit;
+//			import org.alivepdf.pdf.PDF;
+//			import org.alivepdf.saving.Method;
+			
+			import services.LSListener;
+			
+			import spark.components.RichEditableText;
+			import spark.components.RichText;
+			import spark.components.TextArea;
+			import spark.components.TextInput;
+			import spark.components.VGroup;
+			import spark.effects.Resize;
+//			include "../eventhandlers/MarketMessage.as"
+//			import 
+			
+			[Bindable]
+			[Embed(source="../images/newsup.jpg")]
+			private var newsUp:Class;
+			
+			[Bindable]
+			[Embed(source="../images/newsover.jpg")]
+			private var newsOver:Class;
+			
+			[Bindable]
+			[Embed(source="../images/coporateannouceup.jpg")]
+			private var corporateAnnouncementsUp:Class;
+			
+			[Bindable]
+			[Embed(source="../images/corporateannounceover.jpg")]
+			private var corporateAnnouncementsOver:Class;
+			
+			[Bindable]
+			[Embed(source="../images/bulletinsupdown.jpg")]
+			private var bulletinsUp:Class;
+			
+			[Bindable]
+			[Embed(source="../images/bulletinsover.jpg")]
+			private var bulletinsOver:Class;
+			
+			[Bindable]
+			[Embed(source="../images/tradeactivityover.jpg")]
+			private var tradeactivityOver:Class;
+			
+			[Bindable]
+			[Embed(source="../images/tardeactivityup.jpg")]
+			private var tradeactivityUp:Class;
+			
+			[Bindable]
+			[Embed(source="../images/1.jpg")]
+			private var AR_BulletinsUp:Class;
+			
+			[Bindable]
+			[Embed(source="../images/2.jpg")]
+			private var AR_BulletinsOver:Class;
+			
+			[Bindable]
+			[Embed(source="../images/11 (1).jpg")]
+			private var AR_CorporateUp:Class;
+			
+			[Bindable]
+			[Embed(source="../images/11 (3).jpg")]
+			private var AR_CorporateOver:Class;
+			
+			[Bindable]
+			[Embed(source="../images/12 (1).jpg")]
+			private var AR_NewsUp:Class;
+			
+			[Bindable]
+			[Embed(source="../images/12 (3).jpg")]
+			private var AR_NewsOver:Class;
+			
+			[Bindable]
+			[Embed(source="../images/3 (1).jpg")]
+			private var AR_tradeActivityUp:Class;
+			
+			[Bindable]
+			[Embed(source="../images/3 (3).jpg")]
+			private var AR_tradeActivityOver:Class;
+			
+			[Bindable]
+			private var windowManager:WindowManager=WindowManager.getInstance();
+			
+			[Bindable]
+			public var messagesArrayCol:ArrayCollection = new ArrayCollection();
+			
+			public var textBullet1:mx.controls.TextInput;
+			public var flag2:Boolean=true;
+			public var textBullet3:mx.controls.TextInput;;
+			public var flag3:Boolean=true;
+			public var textBullet:mx.controls.TextInput;;
+			public var flag:Boolean=true;
+			public var textBullet2:mx.controls.TextInput;;
+			public var marketMessages:Boolean=true
+			private var item1:ContextMenuItem;
+			public var fr:FileReference = new FileReference();
+			public var tp:mx.controls.TextInput;
+			public var txIp:spark.components.TextInput;
+			public var txIp2:spark.components.TextInput
+			[Bindable]
+			private var pdfByte:ByteArray = new ByteArray();
+			// we create the PDF
+			[Bindable]
+//			private var myPDF:PDF = new PDF(  Orientation.PORTRAIT, Unit.MM, Size.A4 );
+			
+			protected function corporateAnnouncementsMouseOverHandler(event:MouseEvent):void
+			{
+				if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+				{
+					corporateAnnouncements.source=corporateAnnouncementsOver;
+				}
+				else
+				{
+					corporateAnnouncements.source=AR_CorporateOver;
+				}
+			}
+			
+			protected function corporateAnnouncementsMouseOutHandler(event:MouseEvent):void
+			{  
+				if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+				{
+					corporateAnnouncements.source=corporateAnnouncementsUp;
+				}
+				else
+				{
+					corporateAnnouncements.source=AR_CorporateUp;
+				}
+			}
+			
+			protected function bulletinsMouseOutHandler(event:MouseEvent):void
+			{
+				if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+				{
+					bulletins.source=bulletinsUp;
+				}
+				else
+				{
+					bulletins.source=AR_BulletinsUp;
+				}
+			}
+			
+			protected function bulletinsMouseOverHandler(event:MouseEvent):void
+			{
+				if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+				{
+					bulletins.source=bulletinsOver;
+				}
+				else
+				{
+					bulletins.source=AR_BulletinsOver;
+				}
+			}
+			
+			protected function tradeActivityMouseOutHandler(event:MouseEvent):void
+			{
+			}
+			
+			protected function tradeActivityMouseOverHandler(event:MouseEvent):void
+			{
+			}
+			
+			protected function newsMouseOverHandler(event:MouseEvent):void
+			{
+				if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+				{
+					messages.source=newsOver;
+				}
+				else
+				{
+					messages.source=AR_NewsOver;
+				}
+			}
+			
+			protected function newsMouseOutHandler(event:MouseEvent):void
+			{
+				if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+				{
+					messages.source=newsUp;
+				}
+				else
+				{
+					messages.source=AR_NewsUp;
+				}
+			}
+			
+			protected function messagesBar_clickHandler(event:MouseEvent):void
+			{
+				if (event.currentTarget.id == "messages")
+				{
+					if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+					{
+						corporateAnnouncements.source=corporateAnnouncementsUp;
+						bulletins.source=bulletinsUp;
+						tradeActivity.source = tradeactivityUp;
+					}
+					else
+					{
+						corporateAnnouncements.source=AR_CorporateUp;
+						bulletins.source=AR_BulletinsUp;
+						tradeActivity.source = AR_tradeActivityUp;
+					}
+					
+					if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+					{
+						messages.source=newsOver;
+					}
+					else
+					{
+						messages.source=AR_NewsOver;
+					}
+					
+					txaMessagess.visible=true;
+					if((FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'))
+					{
+						txaMessagess.setStyle('direction','rtl');
+						txaMessagess.setStyle('layoutDirection','rtl');
+					}
+					txaMessages.visible=false;
+					txaCorporateAnnouncements.visible=false;
+					txaBulletins.visible=false;
+				}
+				else if (event.currentTarget.id == "corporateAnnouncements")
+				{
+					if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+					{
+						messages.source=newsUp;
+						bulletins.source=bulletinsUp;
+						tradeActivity.source = tradeactivityUp;
+					}
+					else
+					{
+						messages.source=AR_NewsUp;
+						bulletins.source=AR_BulletinsUp;
+						tradeActivity.source = AR_tradeActivityUp;
+					}
+					
+					if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+					{
+						corporateAnnouncements.source=corporateAnnouncementsOver;
+					}
+					else
+					{
+						corporateAnnouncements.source=AR_CorporateOver;
+					}
+					
+					txaMessages.visible=false;
+					txaCorporateAnnouncements.visible=true;
+					txaBulletins.visible=false;
+					txaMessagess.visible=false;
+				}
+				else if (event.currentTarget.id == "bulletins")
+				{
+					if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+					{
+						messages.source=newsUp;
+						corporateAnnouncements.source=corporateAnnouncementsUp;
+						tradeActivity.source = tradeactivityUp;
+					}
+					else
+					{
+						messages.source=AR_NewsUp;
+						corporateAnnouncements.source=AR_CorporateUp;
+						tradeActivity.source = AR_tradeActivityUp;
+					}
+					
+					if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+					{
+						bulletins.source=bulletinsOver;
+					}
+					else
+					{
+						bulletins.source=AR_BulletinsOver;
+					}
+					txaMessages.visible=false;
+					txaCorporateAnnouncements.visible=false;
+					txaBulletins.visible=true;
+					if((FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'))
+					{
+						txaBulletins.setStyle('direction','rtl');
+						txaBulletins.setStyle('layoutDirection','rtl');
+					}
+					txaMessagess.visible=false;
+				}
+				else if (event.currentTarget.id == "tradeActivity")
+				{
+					if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+					{
+						messages.source=newsUp;
+						corporateAnnouncements.source=corporateAnnouncementsUp;
+						bulletins.source=bulletinsUp;
+					}
+					else
+					{
+						messages.source=AR_NewsUp;
+						corporateAnnouncements.source=AR_CorporateUp;
+						bulletins.source=AR_BulletinsUp;
+					}
+					
+					if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+					{
+						tradeActivity.source = tradeactivityOver
+					}
+					else
+					{
+						tradeActivity.source = AR_tradeActivityOver;
+					}
+					
+					txaMessages.visible=true;
+					txaCorporateAnnouncements.visible=false;
+					txaBulletins.visible=false;
+					txaMessagess.visible=false;
+				}
+			}
+			
+			protected function bordercontainer1creationCompleteHandler(event:FlexEvent):void
+			{
+				customizeContextMenu();  
+				if(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')
+				{
+					tradeActivity.source = tradeactivityOver;
+				}
+				else
+				{
+					tradeActivity.source = AR_tradeActivityOver;
+				}
+				txaMessages.visible=true;
+				txaCorporateAnnouncements.visible=false;
+				txaBulletins.visible=false;
+			}
+			
+			
+			
+			//Custom Context Menu Handlers
+			private function customizeContextMenu():void
+			{
+				// InteractiveObject objects as Application, Panel, Button, ... have a contextMenu 
+				// property used to reference the ContextMenu to be displayed when right clicking 
+				// on the component.
+				// In most of the cases, this property is initialized to null and you have to
+				// create a new ContextMenu object.
+				// Note: this is not the case for the Application object.
+				if (!contextMenu) {
+					contextMenu = new ContextMenu();
+				}
+				
+				// By default, the ContextMenu contains some Flash Player related menu items as
+				// Print, Zoom, etc...
+				// These menu items can be hidden as done below.
+//				contextMenu.hideBuiltInItems();
+				// You can also hide individual items by setting to false the corresponding
+				// properties of the builtInItems property.
+				// For example, to remove only the Print entry:
+				//         contextMenu.builtInItems.print=false;
+				
+				/*
+				Creation of some customized menu items
+				
+				Notes:
+				
+				Use the second parameter of ContextMenuItem constructor to add (true) or not (false)
+				a separator in the menu before the entry.
+				
+				Customized items are put on top of the ContextMenu with one exception: if
+				View Source is enabled, it will always remain as the first entry in the menu.
+				
+				If the debug Flash Player is used, debugging items will be displayed just
+				after your customized entries and cannot be hidden.
+				
+				Parameters and Flash Player version entries are displayed at the bottom of
+				the menu and cannot be hidden.
+				
+				When you right click a selectable or editable text field, clipboard entries
+				(Cut/Copy/Paste/Clear/Select All) are automatically added to the menu and 
+				cannot be removed.
+				*/
+//				item1 = new ContextMenuItem("Export to Excel", true);
+				
+				// Manage clicks on your customized items
+//				item1.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, menuItemHandler);
+				
+				// Add your customized entries to the menu            
+//				contextMenu.customItems.push(item1);
+				
+				// Manage Menu selection to handle visibility or enablement changes
+//				contextMenu.addEventListener(ContextMenuEvent.MENU_SELECT, menuSelectHandler);
+			}
+			
+			// Handler when context menu is opened.
+			// Use it to implement any enablement/visibility logic required for your
+			// customized menu entries.        
+			private function menuSelectHandler(event:ContextMenuEvent):void {
+				// Toggle item2 enablement and item3 visibility each time the menu is displayed
+//				item2.enabled = !item2.enabled;
+//				item3.visible = !item3.visible;
+			}
+			
+			private function menuItemHandler(event:ContextMenuEvent):void {
+				switch (event.target) {
+					case item1:
+						var rowCount:int = messagesArrayCol.length; 
+						var i:int=0;
+						var sheet:Sheet = new Sheet();
+						var vg:Canvas = new Canvas();
+						var vb:VBox = new VBox();
+						for(var r:int=0; r < rowCount; r++)  
+						{  
+							var record:Object = messagesArrayCol.getItemAt(r);
+							
+							tp = new mx.controls.TextInput();
+							tp.text = record.toString();
+							vb.addChild(tp);
+							i++;
+						}
+							vgg.addChild(vb);
+//						myPDF.setDisplayMode ( Display.FULL_WIDTH ); 
+//						var ar:Array = vgg.getChildren();
+//						myPDF.addPage();
+//						myPDF.addImage(vgg);
+//						
+//						pdfByte = myPDF.save( Method.LOCAL,  "messages.pdf" );
+						
+						fr.addEventListener(Event.COMPLETE,fileReference_Complete);
+						fr.save(pdfByte,"messages.pdf");	
+						
+						break;
+				}
+			}
+			private function fileReference_Progress(event:ProgressEvent):void
+			{
+			}
+			
+			private function fileReference_Complete(event:Event):void
+			{
+				try
+				{
+				Alert.show("Exported to Excel.", event.currentTarget.caption);
+				}catch(e:Error)
+				{
+					trace(e.message);
+				}
+			}
+			
+			
+			
+			private function generatePDF ( event:ContextMenuEvent ):void
+			{
+				try
+				{
+				
+				// we set the zoom to 100%
+//				myPDF.setDisplayMode ( Display.FULL_PAGE ); 
+//				
+//				
+//				// we add a page
+//				myPDF.addPage();
+//				
+//				myPDF.addImage(vgg);
+//				// to save the PDF your specificy the path to the create.php script
+//				// alivepdf takes care of the rest, if you are using AIR and want to save the PDF locally just use Method.LOCAL
+//				// and save the returned bytes on the disk through the FileStream class
+//				pdfByte = myPDF.save( Method.LOCAL,  "messages.pdf" );
+//				
+				fr.addEventListener(Event.COMPLETE,fileReference_Complete);
+				fr.save(pdfByte,"messages.pdf");	
+				}catch(e:Error)
+				{
+					trace(e.message);
+				}
+			}
+			
+			public function updateStatus2(event:NonVisualItemUpdateEvent,msg:String):void
+			{
+				textBullet1=new mx.controls.TextInput();
+				textBullet1.visible = false;
+				txIp2 = new spark.components.TextInput();
+				
+				
+				if (marketMessages == true)
+				{
+					messagesArrayCol.addItem(msg);
+//					txIp2.setStyle('direction',(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr');
+					txIp2.setStyle("borderStyle", "none");
+					
+					if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[0]) == "2") // change
+					{
+						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")
+						{
+							txIp2.setStyle("color", 0x3dbeff);
+						}
+						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+						{
+							txIp2.setStyle("color", 0xe65cd4);
+						}
+					}
+					
+					if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[23]) == "1")//negotiated
+					{
+						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")
+						{
+							txIp2.setStyle("color", 0x3dbeff);
+						}
+						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+						{
+							txIp2.setStyle("color", 0xe65cd4);
+						}
+					}
+					else
+					{
+						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")//submit
+						{
+							txIp2.setStyle("color", 0x3dbeff);
+						}
+						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+						{
+							txIp2.setStyle("color", 0xe65cd4);
+						}
+					}
+					
+					
+					if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[0]) == "4") // rejected
+					{
+						txIp2.setStyle("color", 0xFF0000);
+//						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")
+//						{
+//							txIp2.setStyle("color", 0x3dbeff);
+//						}
+//						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+//						{
+//							txIp2.setStyle("color", 0xe65cd4);
+//						}
+					}
+					else if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[0]) == "1") // cancel
+					{
+						txIp2.setStyle("color", 0xFC0606);
+					}
+					else if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[0]) == "3") // exe
+					{
+						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")
+						{
+							txIp2.setStyle("color", 0x3dbeff);
+						}
+						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+						{
+							txIp2.setStyle("color", 0xe65cd4);
+						}
+					}
+					txIp2.setStyle("contentBackgroundColor", 0x000000);
+					txIp2.setStyle("borderVisible", "false");
+					txIp2.setStyle("borderThickness", 0);
+//					textBullet1.htmlText+="<TEXTFORMAT>" + msg + "</font><br /></TEXTFORMAT>";
+					if((FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'))
+					{
+						txIp2.setStyle('textAlign','right');
+						txIp2.setStyle('direction','rtl');
+					}
+					else
+					{
+						txIp2.setStyle('direction','ltr');
+						txIp2.setStyle('textAlign','left');
+					}
+					txIp2.width=vgroup.width
+					txIp2.editable=false;
+					vgroup1.setStyle("backgroundColor", 0x000000);
+					txIp2.text = msg;
+					vgroup1.addChild(txIp2);
+					marketMessages=false;
+				}
+				else
+				{
+					messagesArrayCol.addItem(msg);
+					txIp2.setStyle('direction',(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr');
+					
+					if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[0]) == "2") // change
+					{
+						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")
+						{
+							txIp2.setStyle("color", 0x3dbeff);
+						}
+						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+						{
+							txIp2.setStyle("color", 0xe65cd4);
+						}
+					}
+					
+					if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[23]) == "1")//negotiated
+					{
+						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")
+						{
+							txIp2.setStyle("color", 0x3dbeff);
+						}
+						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+						{
+							txIp2.setStyle("color", 0xe65cd4);
+						}
+					}
+					else
+					{
+						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")//submit
+						{
+							txIp2.setStyle("color", 0x3dbeff);
+						}
+						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+						{
+							txIp2.setStyle("color", 0xe65cd4);
+						}
+					}
+					
+					
+					if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[0]) == "4") // rejected
+					{
+						txIp2.setStyle("color", 0xFF0000);
+//						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")
+//						{
+//							txIp2.setStyle("color", 0x3dbeff);
+//						}
+//						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+//						{
+//							txIp2.setStyle("color", 0xe65cd4);
+//						}
+					}
+					else if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[0]) == "1") // cancel
+					{
+						txIp2.setStyle("color", 0xFC0606);
+					}
+					else if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[0]) == "3") // exe
+					{
+						if (LSListener.extractFieldData(event, LSListener.fieldSchemaOrderConfirmation[9]) == "0")
+						{
+							txIp2.setStyle("color", 0x3dbeff);
+						}
+						else//if(LSListener.extractFieldData(event, LSListener.fieldSchemaBestMarket[0] == "4")
+						{
+							txIp2.setStyle("color", 0xe65cd4);
+						}
+					}
+					txIp2.setStyle("borderStyle", "none");
+					txIp2.setStyle("contentBackgroundColor", 0x1e1e1e);
+					txIp2.setStyle("borderVisible", "false");
+					txIp2.setStyle("borderThickness", 0);
+//					textBullet1.htmlText+="<TEXTFORMAT>" + msg + "</font><br /></TEXTFORMAT>";
+					if((FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'))
+					{
+						txIp2.setStyle('textAlign','right');
+						txIp2.setStyle('direction','rtl');
+					}
+					else
+					{
+						txIp2.setStyle('direction','ltr');
+						txIp2.setStyle('textAlign','left');
+					}
+					txIp2.width=vgroup.width
+					txIp2.editable=false;
+					vgroup1.setStyle("backgroundColor", 0x1e1e1e);
+					txIp2.text = msg;
+					vgroup1.addChild(txIp2);
+					marketMessages=true;
+				}
+			}
+			
+			public function updateStatus(msg:String):void
+			{
+				textBullet1=new mx.controls.TextInput();
+				txIp = new spark.components.TextInput();
+				textBullet1.visible = false;
+				messagesArrayCol.addItem(msg);
+				txaMessages.visible=true;
+				if (flag2 == true)
+				{
+					textBullet1.htmlText+="<TEXTFORMAT><font color='#FFFFFF'>" + msg + "</font><br /></TEXTFORMAT>";
+					txIp.setStyle("color", 0xffffff);
+					txIp.setStyle("borderStyle", "none");
+					txIp.setStyle("contentBackgroundColor", 0x000000);
+					txIp.setStyle("borderVisible", "false");
+					txIp.setStyle("borderThickness", 0);
+					txIp.text = msg;
+					if((FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'))
+					{
+						txIp.setStyle('direction','rtl');
+						txIp.setStyle('textAlign','right');
+					}
+					else
+					{
+						txIp.setStyle('direction','ltr');
+						txIp.setStyle('textAlign','left');
+					}
+					txIp.width=vgroup.width
+					txIp.editable=false;
+					vgroup1.setStyle("backgroundColor", 0x000000);
+					vgroup1.addChild(txIp);
+					flag2=false;
+				}
+				else if (flag2 == false)
+				{
+					messagesArrayCol.addItem(msg);
+					txIp.setStyle("color", 0xffffff);
+					txIp.setStyle("borderStyle", "none");
+					txIp.setStyle("borderVisible", "false");
+					txIp.setStyle("borderThickness", 0);
+					txIp.setStyle("contentBackgroundColor", 0x1e1e1e);
+					textBullet1.htmlText+="<TEXTFORMAT><font color='#FFFFFF'>" + msg + "</font><br /></TEXTFORMAT>";
+					txIp.text = msg;
+					if((FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'))
+					{
+						txIp.setStyle('direction','rtl');
+						txIp.setStyle('textAlign','right');
+					}
+					else
+					{
+						txIp.setStyle('direction','ltr');
+						txIp.setStyle('textAlign','left');
+					}
+					txIp.width=vgroup.width
+					txIp.editable=false;
+					vgroup1.setStyle("backgroundColor", 0x1e1e1e);
+					vgroup1.addChild(txIp);
+					flag2=true;
+				}
+				
+			}
+			
+			public function updateBulletin(msg:String):void
+			{
+				
+				if (flag == true)
+				{
+					messagesArrayCol.addItem(msg);
+					textBullet=new mx.controls.TextInput();
+					textBullet.setStyle("color", 0xffffff);
+					textBullet.setStyle("borderStyle", "none");
+					textBullet.setStyle("backgroundColor", 0x000000);
+					textBullet.htmlText+="<TEXTFORMAT><span style='background-color:#222021;'><font color='#FFFFFF'>" + msg + "</font><span><br /></TEXTFORMAT>";
+					if((FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'))
+					{
+						textBullet.setStyle('textAlign','right');
+					}
+					textBullet.width=vgroup.width
+					textBullet.editable=false;
+					vgroup.setStyle("backgroundColor", 0x000000);
+					vgroup.addChild(textBullet);
+					flag=false;
+				}
+				else
+				{
+					messagesArrayCol.addItem(msg);
+					textBullet=new mx.controls.TextInput();
+					textBullet.setStyle("color", 0xffffff);
+					textBullet.setStyle("borderStyle", "none");
+					textBullet.setStyle("backgroundColor", 0x1e1e1e);
+					textBullet.htmlText+="<TEXTFORMAT><span style='background-color:#222021;'><font color='#FFFFFF'>" + msg + "</font><span><br /></TEXTFORMAT>";
+					if((FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'))
+					{
+						textBullet.setStyle('textAlign','right');
+					}
+					textBullet.width=vgroup.width
+					textBullet.editable=false;
+					vgroup.setStyle("backgroundColor", 0x1e1e1e);
+					vgroup.addChild(textBullet);
+					flag=true;
+				}
+			}
+		]]>
+	</fx:Script>
+	<mx:Canvas  visible="false" width="100%"  id="vgg"/>
+	<mx:Canvas borderStyle="none"
+			   id="txaMessages" direction="rtl"
+			   width="100%" layoutDirection="rtl"
+			   left="0"
+			   height="167"
+			   backgroundColor="#000000"
+			   minHeight="200"
+			   color="#ffffff">
+		<mx:VBox id="vgroup1" 
+				 width="100%" 
+				 verticalGap="-2"
+				 horizontalScrollPolicy="auto"
+				 borderStyle="none" 
+				 borderColor="#000000"/>
+	</mx:Canvas>
+	<mx:Canvas borderStyle="none"
+			   id="txaMessagess"  
+			   width="100%" 
+			   left="0"
+			   height="167" visible="false"
+			   backgroundColor="#000000"
+			   minHeight="200"
+			   color="#ffffff">
+		<mx:VBox id="vgroup13"
+				 width="100%"
+				 verticalGap="-2"
+				 horizontalScrollPolicy="auto"
+				 borderStyle="none"
+				 borderColor="#000000"/>
+	</mx:Canvas>
+	<mx:Canvas borderStyle="none"
+			   id="txaCorporateAnnouncements"
+			   width="100%" 
+			   left="0" 
+			   height="167"
+			   backgroundColor="#000000"
+			   minHeight="200"
+			   color="#ffffff">
+		<mx:VBox id="vgroup2"
+				 width="100%" 
+				 verticalGap="-2"
+				 horizontalScrollPolicy="auto"
+				 borderStyle="none"
+				 borderColor="#000000"/>
+	</mx:Canvas>
+	<mx:Canvas borderStyle="none"
+			   id="txaBulletins" 
+			   width="100%" 
+			   left="0"
+			   height="167"
+			   backgroundColor="#000000"
+			   minHeight="200"
+			   color="#ffffff">
+		<mx:VBox id="vgroup" 
+				 width="100%" 
+				 verticalGap="-2"
+				 horizontalScrollPolicy="auto"
+				 borderStyle="none"
+				 borderColor="#000000"/>
+	</mx:Canvas>
+	<mx:HBox id="marketWatchHGroup"
+			 x="0"
+			 y="165"
+			 width="100%"
+			 horizontalGap="0">
+		<s:Image source="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')?tradeactivityUp:AR_tradeActivityUp}"
+				 id="tradeActivity" useHandCursor="true" buttonMode="true"
+				 click="messagesBar_clickHandler(event)"
+				 />
+		<s:Image source="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')?newsUp:AR_NewsUp}"
+				 id="messages"
+				 buttonMode="true"
+				 useHandCursor="true"
+				 click="messagesBar_clickHandler(event)"
+				 />
+		<s:Image source="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')?corporateAnnouncementsUp:AR_CorporateUp}"
+				 id="corporateAnnouncements"
+				 buttonMode="true"
+				 useHandCursor="true"
+				 click="messagesBar_clickHandler(event)"
+				 />
+		<s:Image source="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'en_US')?bulletinsUp:AR_BulletinsUp}"
+				 id="bulletins"
+				 buttonMode="true"
+				 useHandCursor="true"
+				 click="messagesBar_clickHandler(event)"
+				 />
+	</mx:HBox>
+</s:BorderContainer>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%"
+		 >
+	<fx:Script>
+		<![CDATA[
+			import controller.ModelManager;
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<mx:PieChart
+		id="pcSectors"
+		x="10" y="10"
+		dataProvider="{ModelManager.getInstance().exchangeStatsModel.exchangeStats.sectorsDetails}"
+		showDataTips="false"
+		width="50%" height="90%">
+		<mx:series>
+			<mx:PieSeries
+				field="VALUE"
+				nameField="LEGEND_TIP"
+				labelPosition="insideWithCallout"
+				/>
+		</mx:series>
+	</mx:PieChart>
+	<mx:Legend dataProvider="{pcSectors}" id="lgndSectors"  bottom="0" right="11" width="254" height="387" fontFamily="Arial" fontSize="16"/>
+</s:Group>

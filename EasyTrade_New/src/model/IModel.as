@@ -1,0 +1,38 @@
+package model
+{
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+
+	public interface IModel
+	{
+		/**
+		 *
+		 * This method will be called from ModelManager when the manager considers
+		 * It needs to update data (due to some user action or server signal)
+		 * @return void
+		 *
+		 */
+		function execute():void;
+
+		/**
+		 *
+		 * This method will be called by QW service when a result is recieved from
+		 * the webservice.
+		 * @param event
+		 * @return void
+		 *
+		 */
+		function onResult(event:ResultEvent):void;
+
+		/**
+		 *
+		 * This method will be called by QW service when an exception occurs
+		 * @param event
+		 * @return void
+		 *
+		 */
+		function onFault(event:FaultEvent):void;
+
+		function set isDirty(value:Boolean):void;
+	}
+}

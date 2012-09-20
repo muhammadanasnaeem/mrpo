@@ -1,0 +1,86 @@
+package model.feeds
+{
+	import common.Constants;
+	
+	import components.EZCurrencyFormatter;
+	import components.EZNumberFormatter;
+	import components.ticker.TickerItemData;
+	
+	public class SymbolTickerFeedModel
+	{
+		private var feed_:Array = new Array();
+		private var ezNumberFormatter:EZNumberFormatter = new EZNumberFormatter();
+		private var ezCurrencyFormatter:EZCurrencyFormatter = new EZCurrencyFormatter();
+		
+		public function SymbolTickerFeedModel()
+		{
+		}
+
+		public function get feed():Array
+		{
+			return feed_;
+		}
+
+		public function set feed(value:Array):void
+		{
+			feed_ = value;
+		}
+
+		public function addFeedItem(code:String, change:Number, lastPrice:Number, lastVolume:Number):void
+		{
+			var hasItem:Boolean = false;
+			var tickerItemData:TickerItemData = new TickerItemData();
+
+			tickerItemData.CODE = code;
+			tickerItemData.guid = code;
+			tickerItemData.value = change;
+			tickerItemData.lastPrice = lastPrice;
+			tickerItemData.lastVolume = lastVolume;
+			tickerItemData.info =
+				tickerItemData.CODE + " " +
+				tickerItemData.lastPrice + "/" +
+				tickerItemData.lastVolume + " ";
+
+			if (tickerItemData.value > 0)
+			{
+				tickerItemData.imgDirection.source = TickerItemData.IMG_UP;
+				tickerItemData.textColor = Constants.TICKER_COLOR_UP_INT;
+			}
+			else if (tickerItemData.value < 0)
+			{
+				tickerItemData.imgDirection.source = TickerItemData.IMG_DOWN;
+				tickerItemData.textColor = Constants.TICKER_COLOR_DOWN_INT;
+			}
+			else //if (tickerItemData.value == 0)
+			{
+				tickerItemData.imgDirection.source = TickerItemData.IMG_NO_CHANGE;
+				tickerItemData.textColor = Constants.TICKER_COLOR_NO_CHANGE_INT;
+			}
+
+			for each (var tid:TickerItemData in feed)
+			{
+				if (tid.guid == tickerItemData.guid)
+				{
+					tid.value = tickerItemData.value;
+					tid.imgDirection.source = tickerItemData.imgDirection.source;
+					tid.lastPrice = tickerItemData.lastPrice;
+					tid.lastVolume = tickerItemData.lastVolume;
+					tid.textColor = tickerItemData.textColor;
+					tid.info =
+						tickerItemData.CODE + " " +
+						ezCurrencyFormatter.format(tickerItemData.lastPrice) + "/" +
+						ezNumberFormatter.format(tickerItemData.lastVolume) + " ";
+					hasItem = true;
+					break;
+				}
+			}
+
+			if (!hasItem)
+			{
+				tickerItemData.isChanged = true;
+				feed.push(tickerItemData);
+			}
+		}
+
+	}
+}

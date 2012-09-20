@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" xmlns:components="components.*"
+		 initialize="group1_initializeHandler(event)"
+		 >
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/BondPaymentSchedule.as"
+			
+			protected function btnPushToBuy_clickHandler(event:MouseEvent):void
+			{
+				if (windowManager.buyOrderWindow && windowManager.canvas.windowManager.container.contains(windowManager.buyOrderWindow))
+				{
+					windowManager.canvas.windowManager.bringToFront(windowManager.buyOrderWindow);
+				}
+				else
+				{
+					windowManager.initBuyOrderWindow();
+					windowManager.canvas.windowManager.add(windowManager.buyOrderWindow);
+				}
+				updateOrderFields(windowManager.viewManager.buyOrder);
+			}
+
+			protected function btnPushToSell_clickHandler(event:MouseEvent):void
+			{
+				if (windowManager.sellOrderWindow && windowManager.canvas.windowManager.container.contains(windowManager.sellOrderWindow))
+				{
+					windowManager.canvas.windowManager.bringToFront(windowManager.sellOrderWindow);
+				}
+				else
+				{
+					windowManager.initSellOrderWindow();
+					windowManager.canvas.windowManager.add(windowManager.sellOrderWindow);
+				}
+				updateOrderFields(windowManager.viewManager.sellOrder);
+			}
+			
+			protected function updateOrderFields(order:Order):void
+			{
+				order.internalExchangeID = internalExchangeID;
+				order.internalMarketID = internalMarketID;
+				order.internalSymbolID = internalSymbolID;
+				order.txtExchange.text = txtExchange.text;
+				order.txtMarket.text = txtMarket.text;
+				order.txtSymbol.text = txtSymbol.text;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<components:EZCurrencyFormatter id="moneyFormatter" />
+	</fx:Declarations>
+	<s:BorderContainer width="100%" height="100%" horizontalCenter="0">
+		<s:Label text="Exchange:" horizontalCenter="-123" top="13"/>
+		<components:EZDropDownTextInput width="49" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-65" top="8"/>
+
+		<s:Label text="Market:" horizontalCenter="-15" top="13"/>
+		<components:EZDropDownTextInput width="49" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" horizontalCenter="31" top="8"/>
+
+		<s:Label text="Symbol:" horizontalCenter="81" top="13"/>
+		<s:TextInput width="49" height="20" id="txtSymbol" keyDown="txtSymbol_keyDownHandler(event)" focusOut="txtSymbol_focusOutHandler(event)" horizontalCenter="131" top="8"/>
+
+		<s:Label text="Current Rate:" top="39" horizontalCenter="-116"/>
+		<s:TextInput width="49" height="20" id="txtCurrentRate" top="35" horizontalCenter="-12"/>
+
+		<s:Label text="Discount Rate:" top="67" horizontalCenter="-112"/>
+		<s:TextInput width="49" height="20" id="txtDiscountRate" horizontalCenter="-12" top="63"/>
+
+		<s:Label text="Effective Base Rate:" top="97" horizontalCenter="-98"/>
+		<s:TextInput width="49" height="20" id="txtEffectiveBaseRate" horizontalCenter="-12" top="93"/>
+
+		<s:Label text="KIBOR:" top="39" horizontalCenter="78"/>
+		<s:TextInput width="49" height="20" id="txtKIBOR" horizontalCenter="131" top="35"/>
+
+		<s:Label text="Spread:" horizontalCenter="80" top="67"/>
+		<s:TextInput width="49" height="20" id="txtSpread" horizontalCenter="131" top="67"/>
+
+		<s:Label text="Rate:" horizontalCenter="73" top="97"/>
+		<s:TextInput width="49" height="20" id="txtRate" horizontalCenter="131" top="97"/>
+		
+		<s:Button label="Push to Buy" width="95" height="20" id="btnPushToBuy" horizontalCenter="-33" top="126" click="btnPushToBuy_clickHandler(event)" />
+		<s:Button label="Push to Sell" width="95" height="20" id="btnPushToSell" top="126" horizontalCenter="67" click="btnPushToSell_clickHandler(event)" />
+
+	</s:BorderContainer>
+</s:Group>

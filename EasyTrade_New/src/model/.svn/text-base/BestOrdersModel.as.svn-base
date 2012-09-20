@@ -1,0 +1,148 @@
+package model
+{
+	import businessobjects.BestOrdersBO;
+	
+	import common.Constants;
+	import common.Messages;
+	
+	import controller.ModelManager;
+	import controller.WindowManager;
+	
+	import mx.collections.ArrayCollection;
+	import mx.collections.ArrayList;
+	import mx.controls.Alert;
+	import mx.managers.CursorManager;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+	
+	import services.QWClient;
+
+	public class BestOrdersModel implements IModel
+	{
+		private var totalBuy_:Number = 0;
+		[Bindable]
+		public function get totalBuy():Number
+		{
+			return totalBuy_;
+		}
+		
+		private function set totalBuy(value:Number):void
+		{
+			totalBuy_ = value;
+		}
+		
+		private var totalSell_:Number = 0;
+		[Bindable]
+		public function get totalSell():Number
+		{
+			return totalSell_;
+		}
+		private function set totalSell(value:Number):void
+		{
+			totalSell_ = value;
+		}
+		
+		
+		private var isDirty_:Boolean = true;
+		public function get isDirty():Boolean
+		{
+			return isDirty_;
+		}
+		public function set isDirty(value:Boolean):void
+		{
+			isDirty_ = value;
+		}
+
+		private var bestOrders_:ArrayList = new ArrayList();
+		[Bindable]
+		public function get bestOrders():ArrayList
+		{
+			return bestOrders_;
+		}
+		private function set bestOrders(value:ArrayList):void
+		{
+			bestOrders_ = bestOrders;
+		}
+
+		public function BestOrdersModel()
+		{
+		}
+		
+		public function execute():void
+		{
+			CursorManager.setBusyCursor();
+			// modified on 31/3/2011 after discussion with usman
+			var internalExchangeId:Number = WindowManager.getInstance().viewManager.bestOrders.internalExchangeID;
+			var exchangeId:Number = ModelManager.getInstance().exchangeModel.getExchangeID(internalExchangeId);
+			var marketId:Number = ModelManager.getInstance().exchangeModel.getMarketID(internalExchangeId,WindowManager.getInstance().viewManager.bestOrders.internalMarketID);
+			
+			QWClient.getInstance().getBestOrders(
+				exchangeId,
+				marketId,
+				WindowManager.getInstance().viewManager.bestOrders.symbolID
+											     );
+		}
+
+		public function onFault(event:FaultEvent):void
+		{
+			isDirty = true;
+			Alert.show(event.fault.faultDetail, Messages.TITLE_ERROR);
+			CursorManager.removeBusyCursor();
+		}
+		
+		public function onResult(event:ResultEvent):void
+		{
+			
+			bestOrders_.removeAll();
+			totalBuy_ = 0;
+			totalSell_ = 0;
+			
+			for (var i:int = 0; i < Constants.ROW_COUNT_BEST_ORDERS; ++i)
+			{
+				var obj:BestOrdersBO = new BestOrdersBO();
+				bestOrders_.addItem(obj);
+			}
+			
+			WindowManager.getInstance().viewManager.bestOrders.txtTotalBuy.text = "";
+			WindowManager.getInstance().viewManager.bestOrders.txtTotalSell.text = "";			
+			FillOrders(event.result.buyOrders_, true);
+			FillOrders(event.result.sellOrders_, false);
+			//isDirty = false;
+			//CursorManager.removeBusyCursor();
+			CursorManager.removeAllCursors();
+		}
+		
+		private function FillOrders(orders:ArrayCollection, isBuyOrders:Boolean):void
+		{
+			for (var i:int = 0; i < Constants.ROW_COUNT_BEST_ORDERS && i < orders.length; ++i)
+			{
+				if(isBuyOrders)
+				{
+					totalBuy += orders.getItemAt(i).VOLUME as Number;
+					bestOrders_.getItemAt(i).BUY_VOLUME = orders.getItemAt(i).VOLUME;
+					bestOrders_.getItemAt(i).BUY_PRICE = orders.getItemAt(i).PRICE;
+					if (orders.getItemAt(i).type)
+					{
+						if (orders.getItemAt(i).type == "disclosed")
+						{
+							bestOrders_.getItemAt(i).BUY_FLAGS = "DC";
+						}
+					}
+				}
+				else
+				{
+					totalSell += orders.getItemAt(i).VOLUME as Number;
+					bestOrders_.getItemAt(i).SELL_VOLUME = orders.getItemAt(i).VOLUME;
+					bestOrders_.getItemAt(i).SELL_PRICE = orders.getItemAt(i).PRICE;
+					if (orders.getItemAt(i).type)
+					{
+						if (orders.getItemAt(i).type == "disclosed")
+						{
+							bestOrders_.getItemAt(i).SELL_FLAGS = "DC";
+						}
+					}
+				}
+			}
+		}
+	}
+}

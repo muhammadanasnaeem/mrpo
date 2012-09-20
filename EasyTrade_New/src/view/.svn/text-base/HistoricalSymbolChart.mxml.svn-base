@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" xmlns:components="components.*" initialize="group1_initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/HistoricalSymbolChart.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%" height="100%" horizontalCenter="0" top="0">
+		<s:Label text="Exchange:" horizontalCenter="-137" top="7"/>
+		<components:EZDropDownTextInput width="49" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-82" top="2"/>
+		<s:Label text="Market:" horizontalCenter="-33" top="7"/>
+		<components:EZDropDownTextInput width="49" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" horizontalCenter="13" top="2"/>
+		<s:Label text="Symbol:" horizontalCenter="63" top="7"/>
+		<s:TextInput width="105" height="20" id="txtSymbol" keyDown="txtSymbol_keyDownHandler(event)" horizontalCenter="141" top="2"/>
+
+		<mx:VBox x="0" y="30" width="100%" height="100%">
+			<mx:LineChart id="timePriceChart" height="50%"
+						  dataProvider="{modelManager.symbolTradeHistoryModel.symbolTrades}" width="99%" showDataTips="true" dataTipFunction="priceDataTipFunction" >
+				
+				<!-- vertical axis -->
+				<mx:verticalAxis>
+					<mx:LinearAxis baseAtZero="false" title="Price" />
+				</mx:verticalAxis>
+				
+				<!-- horizontal axis -->
+				<mx:horizontalAxis>
+					<mx:DateTimeAxis dataUnits="minutes" title="Time" displayLocalTime="true" />
+				</mx:horizontalAxis>
+				
+				
+				<mx:series>
+					<mx:LineSeries displayName="{txtSymbol.text}" yField="price" xField="time" interactive="true" itemRenderer="mx.charts.renderers.CircleItemRenderer" />
+				</mx:series>
+			</mx:LineChart>
+			<!--0mx:Legend dataProvider="{timePriceChart}"/-->
+
+			<mx:ColumnChart id="timeVolumeChart" height="50%"
+				dataProvider="{modelManager.symbolTradeHistoryModel.symbolTrades}" width="99%" showDataTips="true" dataTipFunction="volumeDataTipFunction" >
+				
+				<!-- vertical axis -->
+				<mx:verticalAxis>
+					<mx:LinearAxis baseAtZero="false" title="Volume" />
+				</mx:verticalAxis>
+				
+				<!-- horizontal axis -->
+				<mx:horizontalAxis>
+					<mx:DateTimeAxis dataUnits="minutes" title="Time" displayLocalTime="true" />
+				</mx:horizontalAxis>
+				<mx:series>
+					<mx:ColumnSeries displayName="{txtSymbol.text}" yField="size" xField="time" />
+				</mx:series>
+			</mx:ColumnChart>
+		</mx:VBox>
+	</s:BorderContainer>
+</s:Group>

@@ -1,0 +1,34 @@
+/* CSS file */
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace mx "library://ns.adobe.com/flex/mx";
+
+
+global
+{
+	content-background-color: #FFFFFF;
+	color: #000202;
+	chrome-color: #718DAA;
+	selection-color: #3B98F7;
+	roll-over-color: #ADD0F3;
+	focus-color: #B6B786;
+	symbol-color: #635D5D;
+}
+
+.bgNewsTapeTicker
+{
+	background-color		: #ADC5ED;
+}
+
+.bgSymbolTapeTicker
+{
+	background-color		: #000000;
+}
+.menustyle
+{
+	background-color:	red;
+}
+.welcomeString
+{
+	font-weight:bold;
+	font-size : 12;
+}

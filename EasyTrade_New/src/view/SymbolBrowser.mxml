@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%"
+		 height="100%"
+		 xmlns:components="components.*"
+		 initialize="group1_initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import businessobjects.BondBO;
+			import businessobjects.QuickOrdersBO;
+			import businessobjects.SymbolBO;
+			import businessobjects.SymbolBrowserBO;
+			
+			import components.DedupeArrayCollection;
+			
+			import controller.WindowManager;
+			
+			import mx.collections.ArrayCollection;
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/SymbolBrowser.as"
+
+			public var isInvalidSymbol:Boolean=false;
+			
+			public function addSymbolToWatch(o:Object):void
+			{
+				var data:SymbolBrowserBO=o as SymbolBrowserBO;
+				/*var symbolObj:Object = modelManager.exchangeModel.getSymbol(
+					data.INTERNAL_EXCHANGE_ID, data.INTERNAL_MARKET_ID, data.INTERNAL_SYMBOL_ID);*/
+
+				var selectedIndex:Number=WindowManager.getInstance().viewManager.marketWatch.currentPage;
+				var marketWatch:ArrayCollection=modelManager.marketWatchModel.marketWatch[selectedIndex];
+				var marketWatchView:MarketWatch=WindowManager.getInstance().viewManager.marketWatch;
+
+				var index:Number=0;
+				for (var i:int=0; i < Constants.ROW_COUNT_MARKET_WATCH; ++i)
+				{
+					if(selectedIndex <= 5)
+					{
+						if (!modelManager.marketWatchModel.marketWatch[selectedIndex][i].SYMBOL || modelManager.marketWatchModel.marketWatch[selectedIndex][i].SYMBOL == "")
+						{
+							index=i;
+							break;
+						}
+					}
+					if(selectedIndex >= 6)
+					{
+						selectedIndex = 1
+						if (modelManager.marketWatchModel.marketWatch[selectedIndex][i].SYMBOL || modelManager.marketWatchModel.marketWatch[selectedIndex][i].SYMBOL == "")
+						{
+							index=marketWatchView.adgMarketWatch.selectedIndex+1;
+							break;
+						}
+					}
+				}
+
+				marketWatchView.adgMarketWatch.selectedIndex=index;
+				marketWatchView.adgMarketWatch.selectedItem.init();
+				marketWatchView.adgMarketWatch.selectedItem.EXCHANGE=modelManager.exchangeModel.getExchangeCode(data.INTERNAL_EXCHANGE_ID);
+				marketWatchView.adgMarketWatch.selectedItem.internalExchangeID=data.INTERNAL_EXCHANGE_ID;
+				marketWatchView.adgMarketWatch.selectedItem.exchangeID=ModelManager.getInstance().exchangeModel.getExchangeID(marketWatchView.adgMarketWatch.selectedItem.internalExchangeID);
+
+				marketWatchView.adgMarketWatch.selectedItem.MARKET=modelManager.exchangeModel.getMarketCode(data.INTERNAL_EXCHANGE_ID, data.INTERNAL_MARKET_ID);
+				marketWatchView.adgMarketWatch.selectedItem.internalMarketID=data.INTERNAL_MARKET_ID;
+				marketWatchView.adgMarketWatch.selectedItem.marketID=ModelManager.getInstance().exchangeModel.getMarketID(marketWatchView.adgMarketWatch.selectedItem.internalExchangeID, marketWatchView.adgMarketWatch.selectedItem.internalMarketID);
+				
+				marketWatchView.adgMarketWatch.selectedItem.SYMBOL=data.SYMBOL_CODE;
+//				marketWatchView.adgMarketWatch.selectedItem.internalSymbolID=data.INTERNAL_SYMBOL_ID;
+				marketWatchView.adgMarketWatch.selectedItem.symbolID=data.symbolID;
+
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].EXCHANGE=modelManager.exchangeModel.getExchangeCode(data.INTERNAL_EXCHANGE_ID);
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].MARKET=modelManager.exchangeModel.getMarketCode(data.INTERNAL_EXCHANGE_ID, data.INTERNAL_MARKET_ID);
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].SYMBOL=data.SYMBOL_CODE;
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].internalExchangeID=data.INTERNAL_EXCHANGE_ID;
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].internalMarketID=data.INTERNAL_MARKET_ID;
+				modelManager.marketWatchModel.marketWatch[selectedIndex][index].symbolID=data.symbolID;
+
+				if (selectedIndex <= 5 && selectedIndex < Constants.ROW_COUNT_MARKET_WATCH)
+				{
+					WindowManager.getInstance().viewManager.marketWatch.addSymbolToWatchFromSymbolBrowser( selectedIndex, index);
+					if(WindowManager.getInstance().viewManager.marketWatch.equitiesPage == 1)
+					{
+						WindowManager.getInstance().viewManager.marketWatch.showHideColumns(false);
+					}
+					if (isInvalidSymbol)
+					{
+						marketWatchView.adgMarketWatch.selectedItem.SYMBOL="";
+					}
+				}
+				if (selectedIndex >= 6 && selectedIndex <= 11 )
+				{
+					selectedIndex = 1;
+					WindowManager.getInstance().viewManager.marketWatch.addSymbolToWatchFromSymbolBrowser( selectedIndex, index);
+					if(WindowManager.getInstance().viewManager.marketWatch.bondsPage == 2)
+					{
+						WindowManager.getInstance().viewManager.marketWatch.showHideColumns(true);
+					}
+					if (isInvalidSymbol)
+					{
+						marketWatchView.adgMarketWatch.selectedItem.SYMBOL="";
+					}
+				}
+				else
+				{
+//					Alert.show(Messages.MARKET_WATCH_FULL, Messages.TITLE_ERROR);
+				}
+			/*if (symbolObj is BondBO)
+			{
+				var bondBO:BondBO = symbolObj as BondBO;
+			}
+			else if (symbolObj is SymbolBO)
+			{
+				var symbolBO:SymbolBO = symbolObj as SymbolBO;
+			}*/
+			}
+
+			public function addSymbolToQuickOrders(o:Object):void
+			{
+//				var _dCollection:Array = modelManager.quickOrdersModel.quickOrders as Array;
+				var data:SymbolBrowserBO=o as SymbolBrowserBO;
+				var selectedIndex:Number=WindowManager.getInstance().viewManager.quickOrders.selectedIndex;
+				var quickOrders:ArrayCollection=  modelManager.quickOrdersModel.quickOrders[selectedIndex]; //as DedupeArrayCollection
+//				quickOrders = modelManager.quickOrdersModel.quickOrders[selectedIndex] as DedupeArrayCollection;
+//				quickOrders.dedupeProperty = "SYMBOL";
+				var quickOrdersView:QuickOrder=WindowManager.getInstance().viewManager.quickOrders;
+				var index:Number=0;
+				for (var i:int=0; i < Constants.QUICK_ORDERS_DROP_DOWN_LIMIT; ++i)
+				{
+					if (!modelManager.quickOrdersModel.quickOrders[selectedIndex][i].SYMBOL || modelManager.quickOrdersModel.quickOrders[selectedIndex][i].SYMBOL == null)
+					{
+						index=i;
+//						selectedIndex++;
+						break;
+					}
+				}
+				if(data.symbolID != 0)
+				{
+					modelManager.quickOrdersModel.quickOrders[selectedIndex][index].EXCHANGE=data.EXCHANGE_CODE;
+					modelManager.quickOrdersModel.quickOrders[selectedIndex][index].MARKET=data.MARKET_CODE;
+					modelManager.quickOrdersModel.quickOrders[selectedIndex][index].internalExchangeID=data.INTERNAL_EXCHANGE_ID;
+					modelManager.quickOrdersModel.quickOrders[selectedIndex][index].internalMarketID=data.INTERNAL_MARKET_ID;
+					modelManager.quickOrdersModel.quickOrders[selectedIndex][index].SYMBOL=data.SYMBOL_CODE;
+					modelManager.quickOrdersModel.quickOrders[selectedIndex][index].symbolID=data.symbolID;
+				} 
+					if (index >= 0)
+					{ 
+								var firstIndex:int = quickOrdersView.firstSymbolDropDown.selectedIndex;
+								var secondIndex:int = quickOrdersView.secondSymbolDropDown.selectedIndex;
+								var thirdIndex:int = quickOrdersView.thirdSymbolDropDown.selectedIndex;
+								var fourthIndex:int = quickOrdersView.fourthSymbolDropDown.selectedIndex;
+								
+								quickOrdersView.firstSymbolDropDown.initialize();
+								quickOrdersView.firstSymbolDropDown.labelField="SYMBOL";
+								quickOrdersView.firstSymbolDropDown.dataProvider=quickOrders;
+								quickOrdersView.secondSymbolDropDown.dataProvider=quickOrders;
+								quickOrdersView.secondSymbolDropDown.labelField="SYMBOL";
+								quickOrdersView.thirdSymbolDropDown.dataProvider=quickOrders;
+								quickOrdersView.thirdSymbolDropDown.labelField="SYMBOL";
+								quickOrdersView.fourthSymbolDropDown.dataProvider=quickOrders;
+								quickOrdersView.fourthSymbolDropDown.labelField="SYMBOL";
+								
+								
+								quickOrdersView.firstSymbolDropDown.selectedIndex = firstIndex;
+								quickOrdersView.secondSymbolDropDown.selectedIndex = secondIndex;
+								quickOrdersView.thirdSymbolDropDown.selectedIndex = thirdIndex;
+								quickOrdersView.fourthSymbolDropDown.selectedIndex = fourthIndex;
+								
+					}
+				else
+				{
+//					Alert.show('Symbol Already added in Quick Orders.', Messages.TITLE_ERROR);
+				}
+					
+			/*if (symbolObj is BondBO)
+			{
+			var bondBO:BondBO = symbolObj as BondBO;
+			}
+			else if (symbolObj is SymbolBO)
+			{
+			var symbolBO:SymbolBO = symbolObj as SymbolBO;
+			}*/
+//					quickOrders.refresh();
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%"
+					   height="30"
+					   horizontalCenter="0"
+					   top="0">
+		<s:Label text="{resourceManager.getString('marketwatch', 'exchange')}:"
+				 top="7" direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-53':'-108'}"/>
+		<components:EZDropDownTextInput width="49"
+										top="2"
+										height="20"
+										id="txtExchange"
+										editable="false"
+										click="txtExchange_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-108':'-53'}"/>
+		<s:Label text="{resourceManager.getString('marketwatch', 'market')}:"
+				 top="7" direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'47':'1'}"/>
+		<components:EZDropDownTextInput width="49"
+										top="2"
+										height="20"
+										id="txtMarket"
+										editable="false"
+										click="txtMarket_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'1':'47'}"/>
+		<s:Label text="{resourceManager.getString('marketwatch', 'symbol')}:" 
+				 top="7" direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'205':'98'}"/>
+		<s:TextInput width="110"
+					 top="2"
+					 height="20" 
+					 id="txtSymbol"
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'118':'180'}"
+					 keyDown="txtSymbol_keyDownHandler(event)"/>
+	</s:BorderContainer>
+	<mx:DataGrid dataProvider="{ModelManager.getInstance().symbolBrowserModel.symbols}"
+				 right="1"
+				 left="1"
+				 bottom="1"
+				 top="30"
+				 id="dgSymbolBrowser"
+				 width="100%"
+				 height="100%">
+		<mx:columns>
+			<!--mx:DataGridColumn headerText="Exchange" dataField="EXCHANGE_CODE" />
+			<mx:DataGridColumn headerText="Market" dataField="MARKET_CODE" /-->
+			<mx:DataGridColumn editable="false" width="120"
+							   headerText="{resourceManager.getString('marketwatch','addtoWatch')}">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Button label="{resourceManager.getString('marketwatch','addtoWatch')}" width="120"
+								   click="outerDocument.addSymbolToWatch(data);"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn editable="false" width="170"
+							   headerText="{resourceManager.getString('marketwatch','addtoQuickOrders')}">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Button label="{resourceManager.getString('marketwatch','addtoQuickOrders')}" width="170"
+								   click="outerDocument.addSymbolToQuickOrders(data);"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','symbol')}"
+							   dataField="SYMBOL_CODE"/>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','companyName')}"
+							   dataField="company"/>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','state')}"
+							   dataField=""/>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','isSpot')}"
+							   dataField="isspot"/>
+			<mx:DataGridColumn editable="false"
+							   width="60">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Button width="60"
+								   label="{resourceManager.getString('marketwatch','details')}"
+								   enabled="false"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','watch')}"
+							   dataField="SYMBOL_CODE"/>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','quickOrder')}"
+							   dataField="SYMBOL_CODE"/>
+		</mx:columns>
+	</mx:DataGrid>
+</s:Group>

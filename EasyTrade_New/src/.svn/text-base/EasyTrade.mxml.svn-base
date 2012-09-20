@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:flexlib="http://code.google.com/p/flexlib/"
+			   xmlns:components="components.*" xmlns:ticker="components.ticker.*"
+			   backgroundColor="#050000" width="100%" height="100%"
+			   initialize="application1_initializeHandler(event)" creationComplete="assignParams()">
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="YYYY-MM-DD HH:NN:SS " />
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			include "eventhandlers/Menu.as"
+			include "eventhandlers/Ticker.as"			
+			
+			import controller.EasyTradeApp;
+			import controller.ModelManager;
+			import controller.ProfileManager;
+			import controller.ViewManager;
+			import controller.WindowManager;
+			
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			
+			[Bindable]
+			[Embed(source="images/buy.png")]
+			public var ImgBuy:Class;
+			
+			[Bindable]
+			[Embed(source="images/sell.png")]
+			public var ImgSell:Class;
+			
+			[Bindable]
+			[Embed(source="images/cancel.png")]
+			public var ImgCancel:Class;
+			
+			[Bindable]
+			[Embed(source="images/workingorders.png")]
+			public var ImgWorkingOrders:Class;
+			
+			[Bindable]
+			[Embed(source="images/executedorders.png")]
+			public var ImgExecutedOrders:Class;
+			
+			[Bindable]
+			[Embed(source="images/eventlog.png")]
+			public var ImgEventLog:Class;
+			
+			[Bindable]
+			[Embed(source="images/marketschedulecontrol.png")]
+			public var ImgMarketScheduleControl:Class;
+			
+			[Bindable]
+			[Embed(source="images/symbolstatecontrol.png")]
+			public var ImgSymbolStateControl:Class;
+			
+			[Bindable]
+			[Embed(source="images/historical_symbol.png")]
+			public var ImgHistoricalSymbolChart:Class;
+			
+			[Bindable]
+			[Embed(source="images/live_symbol.png")]
+			public var ImgLiveSymbol:Class;
+			
+			[Bindable]
+			[Embed(source="images/historical_index.png")]
+			public var ImgHistoricalIndex:Class;
+			
+			[Bindable]
+			[Embed(source="images/live_index.png")]
+			public var ImgLiveIndex:Class;
+			
+			private function assignParams():void{
+				
+				Constants.SERVICE_URL = FlexGlobals.topLevelApplication.parameters.SERVICE_URL;
+				Constants.SECURE_SERVICE_URL = FlexGlobals.topLevelApplication.parameters.SECURE_SERVICE_URL;
+				Constants.LIGHTSTREAMER_SERVER = FlexGlobals.topLevelApplication.parameters.LIGHTSTREAMER_SERVER;
+				Constants.LIGHTSTREAMER_PORT = FlexGlobals.topLevelApplication.parameters.LIGHTSTREAMER_PORT;
+								
+				Constants.QW_WSDL_END_POINT = Constants.SERVICE_URL + Constants.QW_WSDL_END_POINT;
+				Constants.ORDERER_WSDL_END_POINT = Constants.SERVICE_URL + Constants.ORDERER_WSDL_END_POINT;
+				Constants.ANNOUNCER_WSDL_END_POINT = Constants.SERVICE_URL + Constants.ANNOUNCER_WSDL_END_POINT;
+				Constants.LOGIN_MANAGER_WSDL_END_POINT = Constants.SERVICE_URL + Constants.LOGIN_MANAGER_WSDL_END_POINT;
+			}
+			private function application1_initializeHandler(event:FlexEvent):void
+			{
+				EasyTradeApp.getInstance().init(this);
+				
+				symbolTapeTicker.width = this.screen.width;
+				newsTapeTicker.width = this.screen.width;
+				startTicker(symbolTapeTicker, ModelManager.getInstance().symbolTickerFeedModel.feed);
+				startTicker(newsTapeTicker, ModelManager.getInstance().newsTickerFeedModel.feed);
+				
+				var timer:Timer = new Timer(1000, 0);
+				timer.addEventListener(TimerEvent.TIMER, handleQueueFillTimer);
+				timer.start();
+				
+				this.addEventListener(Event.RESIZE, handleResize); 
+				this.addEventListener(MouseEvent.ROLL_OVER, handleRollOver, true);
+				this.addEventListener(MouseEvent.ROLL_OUT, handleRollOut, true);
+//				// added on 23/12/2010 
+				this.systemManager.stage.addEventListener(KeyboardEvent.KEY_DOWN, app_keyDownHandler,true);
+				// added on 24/12/2010
+				if (ExternalInterface.available)
+				{
+					ExternalInterface.call("function() { document.title = '"+Constants.APPLICATION_TITLE+"'; }");
+					ExternalInterface.call("function() { var link = document.createElement('link');"
+    					+"link.type = 'image/x-icon';" 
+					    +"link.rel = 'shortcut icon';"
+					    +"link.href = 'favicon.ico';"
+					    +"document.getElementsByTagName('head')[0].appendChild(link);; }");
+				}
+				
+				registerCallBacks();
+			}
+			
+			protected function registerCallBacks():void
+			{
+				if (ExternalInterface.available)
+				{
+					ExternalInterface.addCallback("handleOrderConfirmation", handleOrderConfirmation);
+					ExternalInterface.addCallback("updateBestMarketOrderFields", updateBestMarketOrderFields);
+					ExternalInterface.addCallback("updateSymbolStatsOrderFields", updateSymbolStatsOrderFields);
+					ExternalInterface.addCallback("handleMarketMessage", handleMarketMessage);
+					ExternalInterface.addCallback("updateSymbolTradeHistory", updateSymbolTradeHistory);
+				}
+			}
+			
+			public function handleOrderConfirmation(itemName:String, itemPos:Number, updatedFields:Array):void
+			{
+				WindowManager.getInstance().viewManager.marketWatch.handleOrderConfirmation(itemName, itemPos, updatedFields);
+			}
+			
+			public function updateBestMarketOrderFields(itemName:String, itemPos:Number, updatedFields:Array):void
+			{
+				WindowManager.getInstance().viewManager.marketWatch.updateBestMarketOrderFields(itemName, itemPos, updatedFields);
+			}
+			
+			public function updateSymbolStatsOrderFields(itemName:String, itemPos:Number, updatedFields:Array):void
+			{
+				WindowManager.getInstance().viewManager.marketWatch.updateSymbolStatsOrderFields(itemName, itemPos, updatedFields);
+			}
+			
+			public function handleMarketMessage(itemName:String, itemPos:Number, updatedFields:Array):void
+			{
+				WindowManager.getInstance().viewManager.marketSchedule.handleMarketMessage(itemName, itemPos, updatedFields);
+			}
+			
+			public function updateSymbolTradeHistory(itemName:String, itemPos:Number, updatedFields:Array):void
+			{
+				WindowManager.getInstance().viewManager.liveSymbolChart.updateSymbolTradeHistory(itemName, itemPos, updatedFields);
+			}
+			
+			protected function imgBuy_clickHandler(event:MouseEvent):void
+			{
+				menuitemBuyOrder_itemClickHandler(null);
+			}
+
+			protected function imgSell_clickHandler(event:MouseEvent):void
+			{
+				menuitemSellOrder_itemClickHandler(null);
+			}
+
+			protected function imgCancel_clickHandler(event:MouseEvent):void
+			{
+				menuitemCancelOrder_itemClickHandler(null);
+			}
+
+			protected function imgWorkingOrders_clickHandler(event:MouseEvent):void
+			{
+				menuitemReminingOrders_itemClickHandler(null);
+			}
+
+			protected function imgExecutedOrders_clickHandler(event:MouseEvent):void
+			{
+				menuitemUserTradeHistory_itemClickHandler(null);
+			}
+
+			protected function imgEventLog_clickHandler(event:MouseEvent):void
+			{
+				menuitemEventLog_itemClickHandler(null);
+			}
+
+			protected function imgMarketScheduleControl_clickHandler(event:MouseEvent):void
+			{
+				menuitemMarketScheduleControl_itemClickHandler(null);
+			}
+
+			protected function imgSymbolStateControl_clickHandler(event:MouseEvent):void
+			{
+				menuitemSymbolStateControl_itemClickHandler(null);
+			}
+			
+			protected function imgLiveSymbolChart_clickHandler(event:MouseEvent):void
+			{
+				menuitemLiveSymbolChart_itemClickHandler(null);
+			}
+			
+			protected function img_mouseOverHandler(event:MouseEvent):void
+			{
+				var img:Image = event.currentTarget as Image;
+				img.alpha = 0.65;
+				//img.x = img.x - 1;
+				//img.y = img.y - 1;
+				//img.width = img.width + 2;
+				//img.height = img.height + 2;
+			}
+			
+			
+			protected function img_mouseOutHandler(event:MouseEvent):void
+			{
+				var img:Image = event.currentTarget as Image;
+				img.alpha = 1;
+				//img.x = img.x + 1;
+				//img.y = img.y + 1;
+				//img.width = img.width - 2;
+				//img.height = img.height - 2;
+			}
+			
+			// added on 23/12/2010
+			protected function app_keyDownHandler(event:KeyboardEvent):void
+			{
+				if(EasyTradeApp.getInstance().isUserLoggedin()){
+					if(event.keyCode == 115)
+					{
+						imgBuy_clickHandler(null);
+					}
+					else if(event.keyCode == 116)
+					{
+						imgSell_clickHandler(null);
+					}
+				}
+			}
+		]]>
+	</fx:Script>
+	<fx:Style source="EasyTrade.css" />
+	<mx:Canvas id="canvasHeader" backgroundColor="#ADC5ED" width="100%">
+		<mx:VBox verticalAlign="middle" horizontalAlign="center" width="100%">
+			<mx:MenuBar disabledColor="0x888d8d" id="menubarMain" labelField="@label" iconField="@icon" itemClick="menubarMain_itemClickHandler(event)" x="0" y="0" width="100%">
+				<fx:XMLList>
+					<menuitem label="File" >
+						<!--menuitem label="Fonts" />
+						<menuitem label="Unattended Mode" />
+						<menuitem label="Change Password" />
+						<menuitem type="separator"/>
+						<menuitem label="Messages" >
+						<menuitem label="Send Message" />
+						<menuitem label="Save Messages" />
+						</menuitem>
+						<menuitem label="Printing" >
+						<menuitem label="Print Messages" submenu_id="PrintMessages" />
+						<menuitem label="Print History Messages" submenu_id="PrintHistoryMessages" />
+						<menuitem label="Change Printer" submenu_id="ChangePrinter" />
+						</menuitem>
+						<menuitem type="separator"/>
+						<menuitem label="Speak Messages" />
+						<menuitem label="Speach Settings" />
+						<menuitem type="separator"/-->
+						<menuitem label="Log off" />
+						<!-- menuitem label="Exit" / -->
+					</menuitem>
+					<menuitem label="Order" id="menuitemOrder" >
+						<menuitem label="Buy" icon="ImgBuy" />															
+						<menuitem label="Sell" icon="ImgSell" />
+						<menuitem label="Change" />
+						<menuitem label="Cancel" icon="ImgCancel" />
+						<menuitem label="Yield Calculator" />
+						<!--menuitem label="Take" />
+						<menuitem label="Hit" />
+						<menuitem type="separator"/>
+						<menuitem label="Cross Trade" />
+						<menuitem type="separator"/-->
+					</menuitem>
+					<menuitem label="Watch" id="menuitemWatch" >
+						<menuitem label="Market" />
+						<menuitem label="Best Orders" />
+						<menuitem label="Best Price Levels" />
+						<!--menuitem label="Water Fall Ticker" /-->
+						<menuitem type="separator"/>
+						<menuitem label="Exchange Stats" />
+						<menuitem label="Market Schedule" />
+					</menuitem>
+					<menuitem label="Reports" id="menuitemReports" >
+						<menuitem label="Working Orders" icon="ImgWorkingOrders" />						
+						<!--menuitem label="Order Book" /-->
+						<menuitem label="Executed Orders" icon="ImgExecutedOrders" />
+						<menuitem label="Event Log" icon="ImgEventLog" />
+						<menuitem type="separator"/>
+						<menuitem label="Symbol Browser" />
+						<menuitem label="Symbol Summary" /> 
+						<menuitem label="Market Summary" />
+						<!--menuitem label="Symbol Summary" />
+						
+						<menuitem type="separator"/>
+						<menuitem label="Net Position" /-->
+					</menuitem>
+					<menuitem label="Control" enabled="false" >
+						<menuitem label="Market States" icon="ImgMarketScheduleControl" />
+						<!--menuitem type="separator"/-->
+						<menuitem label="Symbol State" icon="ImgSymbolStateControl" />
+						<!--menuitem label="Symbol Spot Status" />
+						<menuitem label="Symbol Freeze Selection" />
+						<menuitem label="Symbol Order Cancelation" />
+						<menuitem type="separator"/>
+						<menuitem label="User State" />
+						<menuitem type="separator"/>
+						<menuitem label="Operational Bulletin" /-->
+						<menuitem label="Bulletin" />
+						<!--menuitem type="separator"/>
+						<menuitem label="Remove Timing Schedule" />
+						<menuitem type="separator"/>
+						<menuitem label="Change Freeze Limits" /-->
+						<menuitem label="Change Order Limits" />
+						<!--menuitem type="separator"/>
+						<menuitem label="Future Session" /-->
+						<menuitem label="Last Day Remaining Orders" enabled="false" />
+						<menuitem label="Cancel All Orders" />
+					</menuitem >
+					<menuitem label="Bond" >
+						<menuitem label="Payment Schedule" enabled="false" />
+						<menuitem label="Summary" enabled="false" />
+						<menuitem label="Historical Data" enabled="false" />
+					</menuitem >
+					<menuitem label="Settings" >
+						<menuitem label="Profile" />
+						<menuitem label="Change Password" />
+						<menuitem label="Printer" enabled="false" />
+					</menuitem >
+					<menuitem label="Charts" >
+						<menuitem label="Real Time" >
+							<menuitem label="Index" enabled="false" icon="ImgLiveIndex" />
+							<menuitem label="Symbol" id="liveSym" icon="ImgLiveSymbol" />
+						</menuitem >
+						<menuitem label="Historical" >
+							<menuitem label="Index" enabled="false" icon="ImgHistoricalIndex" />
+							<menuitem label="Symbol" enabled="false" id="historicalSym" icon="ImgHistoricalSymbolChart" />
+							<menuitem label="Volume Leaders" enabled="false" />
+						</menuitem >
+					</menuitem >
+					<menuitem label="Help">
+						<menuitem label="About Easy Trade" id="about"/>
+					</menuitem >
+				</fx:XMLList>
+			</mx:MenuBar>
+			<mx:ToolBar
+				id="toolbarMain"
+				width="100%" height="26" 
+				borderStyle="none"  verticalScrollPolicy="off" horizontalCenter="0"
+				paddingBottom="5" paddingTop="0"
+				>
+				<mx:Spacer width="5">
+				</mx:Spacer>
+					<mx:Image id="imgBuy" source="{ImgBuy}" toolTip="Buy"
+							  click="imgBuy_clickHandler(event)" width="22" height="22"
+							  mouseOver="img_mouseOverHandler(event)"
+							  mouseOut="img_mouseOutHandler(event)" buttonMode="true"/>
+				
+				<mx:Image id="imgSell" source="{ImgSell}" toolTip="Sell"
+						  click="imgSell_clickHandler(event)" width="22" height="22"
+						  mouseOver="img_mouseOverHandler(event)"
+						  mouseOut="img_mouseOutHandler(event)" buttonMode="true"/>
+				
+				<mx:Image id="imgCancel" source="{ImgCancel}" toolTip="Cancel"
+						  click="imgCancel_clickHandler(event)" width="22" height="22"
+						  mouseOver="img_mouseOverHandler(event)"
+						  mouseOut="img_mouseOutHandler(event)" buttonMode="true"/>
+				
+				<mx:Image id="imgWorkingOrders" source="{ImgWorkingOrders}" toolTip="Working Orders"
+						  click="imgWorkingOrders_clickHandler(event)" width="22" height="22"
+						  mouseOver="img_mouseOverHandler(event)"
+						  mouseOut="img_mouseOutHandler(event)" buttonMode="true"/>
+				
+				<mx:Image id="imgExecutedOrders" source="{ImgExecutedOrders}" toolTip="Executed Orders"
+						  click="imgExecutedOrders_clickHandler(event)" width="22" height="22"
+						  mouseOver="img_mouseOverHandler(event)"
+						  mouseOut="img_mouseOutHandler(event)" buttonMode="true"/>
+				
+				<mx:Image id="imgEventLog" source="{ImgEventLog}" toolTip="Event Log"
+						  click="imgEventLog_clickHandler(event)" width="22" height="22"
+						  mouseOver="img_mouseOverHandler(event)"
+						  mouseOut="img_mouseOutHandler(event)" buttonMode="true"/>
+				
+				<mx:Image id="imgMarketScheduleControl" source="{ImgMarketScheduleControl}" enabled="{ModelManager.getInstance().userProfileModel.isAdminUser}" toolTip="Market Schedule Control"
+						  click="imgMarketScheduleControl_clickHandler(event)" width="22" height="22"
+						  mouseOver="img_mouseOverHandler(event)"
+						  mouseOut="img_mouseOutHandler(event)" mouseEnabled="{ModelManager.getInstance().userProfileModel.isAdminUser}" buttonMode="{ModelManager.getInstance().userProfileModel.isAdminUser}"/>
+				
+				<mx:Image id="imgSymbolStateControl" source="{ImgSymbolStateControl}" enabled="{ModelManager.getInstance().userProfileModel.isAdminUser}" toolTip="Symbol State Control"
+						  click="imgSymbolStateControl_clickHandler(event)" width="22" height="22"
+						  mouseOver="img_mouseOverHandler(event)"
+						  mouseOut="img_mouseOutHandler(event)" mouseEnabled="{ModelManager.getInstance().userProfileModel.isAdminUser}" buttonMode="{ModelManager.getInstance().userProfileModel.isAdminUser}"/>
+				
+				<mx:Image id="imgHistoricalSymbolChart" source="{ImgHistoricalSymbolChart}" toolTip="Historical Symbol Chart"
+						  width="22" height="22"
+						  mouseOver="img_mouseOverHandler(event)"
+						  mouseOut="img_mouseOutHandler(event)" buttonMode="true"/>
+				
+				<mx:Image id="imgLiveSymbol" source="{ImgLiveSymbol}" toolTip="Live Symbol Chart"
+						  click="imgLiveSymbolChart_clickHandler(event)" 
+						  mouseOver="img_mouseOverHandler(event)" width="22" height="22"
+						  mouseOut="img_mouseOutHandler(event)" enabled="false" mouseEnabled="false" buttonMode="true"/>
+				
+				<mx:Image id="imgHistoricalIndex" source="{ImgHistoricalIndex}" toolTip="Historical Index Chart"
+						  mouseOver="img_mouseOverHandler(event)" width="22" height="22"
+						  mouseOut="img_mouseOutHandler(event)" enabled="false" mouseEnabled="false"/>
+				
+				<mx:Image id="imgLiveIndex" source="{ImgLiveIndex}" toolTip="Live Index Chart"
+						  mouseOver="img_mouseOverHandler(event)" width="22" height="22"
+						  mouseOut="img_mouseOutHandler(event)" enabled="false" mouseEnabled="false"  />
+				
+				<mx:Spacer width="420" />
+				<mx:Label styleName="welcomeString"  text=" {ProfileManager.getInstance().userName} :: {dateFormatter.format(new Date())} "/>
+				
+				
+			</mx:ToolBar>
+		</mx:VBox>
+		
+	</mx:Canvas>
+	
+	<flexlib:MDICanvas id="canvas" height="100%" width="100%" x="0" top="{canvasHeader.height}" bottom="{newsTapeTicker.height + symbolTapeTicker.height}" >
+	</flexlib:MDICanvas>
+	<s:BorderContainer 					 left="0" right="0" bottom="21" height="20" x="0" width="100%" styleName="bgNewsTapeTicker"   borderVisible="false" />
+	<ticker:Ticker id="newsTapeTicker"   left="0" right="0" bottom="25" height="20" x="0" width="100%" tickerType="{TickerType.TAPE_TICKER_NEWS}"   ITEM_WIDTH="300"  ITEM_HEIGHT="20" />
+	<s:BorderContainer 					 left="0" right="0" bottom="1"  height="20" x="0" width="100%" styleName="bgSymbolTapeTicker" borderVisible="true" />
+	<ticker:Ticker id="symbolTapeTicker" left="0" right="0" bottom="5"  height="20" x="0" width="100%" tickerType="{TickerType.TAPE_TICKER_SYMBOL}" ITEM_WIDTH="150"  ITEM_HEIGHT="20" />
+</s:Application>

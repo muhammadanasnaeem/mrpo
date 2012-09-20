@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%"
+		 initialize="group1_initializeHandler(event)" xmlns:common="common.*" xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			import model.MarketSummaryModel;
+			
+			import mx.events.DataGridEvent;
+			
+			import spark.events.IndexChangeEvent;
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/MarketSummary.as"
+			
+			
+			
+			[Bindable]
+			public var modelManager:ModelManager = ModelManager.getInstance();
+			protected function adgMarketSummary_headerReleaseHandler(event:DataGridEvent):void
+			{
+				var modelManager:ModelManager = ModelManager.getInstance();
+				event.preventDefault();
+				if(modelManager.marketSummaryModel.sortColumnName == event.dataField)
+					modelManager.marketSummaryModel.decending = !modelManager.marketSummaryModel.decending;
+				else
+					modelManager.marketSummaryModel.decending = false;
+				
+				modelManager.marketSummaryModel.sortColumnName = event.dataField;
+				modelManager.marketSummaryModel.sortMarketSummary();
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="DD/MM/YYYY LL:NN:SS A" />
+		<components:EZCurrencyFormatter id="moneyFormatter" />
+		<components:EZNumberFormatter id="numberFormatter" />
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%" height="30" horizontalCenter="0" top="0">
+		<s:Label text="Exchange:" top="7" horizontalCenter="-132"/>
+		<components:EZDropDownTextInput width="49" top="2" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-79" />
+		<s:Label text="Market:" top="7" horizontalCenter="-27"/>
+		<components:EZDropDownTextInput width="49" top="2" height="20" id="txtMarket" editable="false" click="txtMarket_MarketSumm_clickHandler(event)" horizontalCenter="17" />
+		
+	</s:BorderContainer>
+	<mx:DataGrid 
+		right="1" left="1" bottom="1" top="30"
+		id="adgMarketSummary" 
+		width="100%" height="100%"
+		dataProvider="{ModelManager.getInstance().marketSummaryModel.symbols}" headerRelease="adgMarketSummary_headerReleaseHandler(event)">
+		<mx:columns>
+			<mx:DataGridColumn headerText="Market" dataField="isSummary" sortable="false" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{!data.isSummary ? outerDocument.modelManager.exchangeModel.getMarketCode(outerDocument.internalExchangeID, outerDocument.internalMarketID) : ''}">
+							
+						</mx:Label>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Symbol" dataField="SYMBOL" width="75" draggable="false" />
+				
+			
+			<mx:DataGridColumn headerText="Volume" dataField="TOTAL_SIZE_TRADED" draggable="false">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.TOTAL_SIZE_TRADED)}" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			
+			<mx:DataGridColumn headerText="Value" dataField="VALUE" sortable="false" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.VALUE)}" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			
+			<mx:DataGridColumn headerText="Prev Close" dataField="LAST_DAY_CLOSE_PRICE" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.LAST_DAY_CLOSE_PRICE)}" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="High" dataField="HIGH" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.HIGH)}" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>	
+			<mx:DataGridColumn headerText="Low" dataField="LOW" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.LOW)}" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Open" dataField="OPEN" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.OPEN)}" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Close" dataField="CLOSE" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.CLOSE)}" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Avg" dataField="AVERAGE" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.AVERAGE)}" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Trades" dataField="TRADES" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.TRADES)}" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="%Vol" dataField="" />
+			<mx:DataGridColumn headerText="%Val" dataField="" />
+		</mx:columns>
+	</mx:DataGrid>
+	<s:Button label="Refresh" width="75" height="20" id="btnRefresh" top="2" horizontalCenter="85" click="btnRefresh_clickHandler(event)"/>
+	
+</s:Group>

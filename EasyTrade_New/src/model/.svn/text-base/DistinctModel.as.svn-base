@@ -1,0 +1,75 @@
+package model
+{
+	import common.HashMap;
+	
+	import mx.collections.ArrayList;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+	
+	public class DistinctModel implements IModel
+	{
+		private var exchanges_:HashMap = new HashMap();
+		public function get exchanges():HashMap
+		{
+			return exchanges_;
+		}
+		public function set exchanges(value:HashMap):void
+		{
+			exchanges_ = value;
+		}
+		/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+		
+		private var markets_:HashMap = new HashMap();
+		public function get markets():HashMap
+		{
+			return markets_;
+		}
+		public function set markets(value:HashMap):void
+		{
+			markets_ = value;
+		}
+		/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+		
+		private var symbols_:HashMap = new HashMap();
+		public function get symbols():HashMap
+		{
+			return symbols_;
+		}
+		public function set symbols(value:HashMap):void
+		{
+			symbols_ = value;
+		}
+		/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+		
+		private var brokers_:HashMap = new HashMap();
+		public function get brokers():HashMap
+		{
+			return brokers_;
+		}
+		public function set brokers(value:HashMap):void
+		{
+			brokers_ = value;
+		}
+		/**//**//**//**//**//**//**//**//**//**//**//**//**//**//**//**/
+		
+		public function DistinctModel()
+		{
+		}
+		
+		public function execute():void
+		{
+		}
+		
+		public function onResult(event:ResultEvent):void
+		{
+		}
+		
+		public function onFault(event:FaultEvent):void
+		{
+		}
+		
+		public function set isDirty(value:Boolean):void
+		{
+		}
+	}
+}

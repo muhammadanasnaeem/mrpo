@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%"
+		 height="100%"
+		 initialize="group1_initializeHandler(event)"
+		 xmlns:local="*"
+		 xmlns:components="components.*">
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@namespace local "*";
+		@namespace components "components.*";
+		.myHeaderStyles {
+			color: black;
+			fontWeight: bold;
+		}
+	</fx:Style>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.as3xls.xls.Cell;
+			import com.as3xls.xls.ExcelFile;
+			import com.as3xls.xls.Sheet;
+			
+			import components.FormPrintView;
+			
+			import mx.containers.Form;
+			import mx.core.FlexGlobals;
+			import mx.printing.FlexPrintJob;
+			import mx.printing.FlexPrintJobScaleType;
+			import mx.printing.PrintDataGrid;
+			
+			import spark.events.IndexChangeEvent;
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/EventLog.as"
+			
+			//Created on 16/07/2012 by Anas for the export to excel functionality.
+			[Bindable]
+			private var exchange:TextInput;
+			
+			[Bindable]
+			[Embed(source="images/xls.png")]
+			public var ImgXls:Class;
+			
+			[Bindable]
+			[Embed(source="images/printer-icon.jpg")]
+			public var ImgPrint:Class;
+			
+			[Bindable]
+			[Embed(source="images/refresh.jpg")]
+			public var refresh:Class;
+			
+			[Bindable]
+			private var fields:Array=new Array();
+			
+			protected function btnExport_clickHandler(event:MouseEvent):void
+			{
+				try
+				{
+					var sheet:Sheet = new Sheet();				
+					var dataProviderCollection:ArrayCollection = dgEventLog.dataProvider as ArrayCollection;  
+					var rowCount:int = dataProviderCollection.length;  
+					sheet.resize(rowCount + 1,dgEventLog.columnCount);  
+					var columns:Array = dgEventLog.columns;  
+					var i:int = 0;  
+					for each (var field:DataGridColumn in columns){  
+						if(field.dataField != 'IS_NEGOTIATED')
+						{
+							fields.push(field.dataField.toString());  
+							sheet.setCell(0,i,field.dataField.toString());
+						}
+						i++;  
+					}  
+					
+					for(var r:int=0; r < rowCount; r++)  
+					{  
+						var record:Object = dataProviderCollection.getItemAt(r);  
+						record.IS_NEGOTIATED = null;
+						/*insert record starting from row no 2 else  
+						headers will be overwritten*/ 
+						if(record.ORDER_TYPE == null  )
+						{
+							record.ORDER_TYPE = '';
+						}
+//						if( record.IS_NEGOTIATED == false)
+//						{
+//							record.IS_NEGOTIATED.toString();
+//							record.IS_NEGOTIATED = '';
+//						}
+						if(record.DISCLOSED_VOLUME == 0 || record.DISCLOSED_VOLUME == '0')
+						{
+							record.DISCLOSED_VOLUME.toString();
+							record.DISCLOSED_VOLUME = '';
+						}
+							insertRecordInSheet(r+1,sheet,record);
+					}  
+					var xls:ExcelFile = new ExcelFile();  
+					xls.sheets.addItem(sheet);  
+					
+					var bytes: ByteArray = xls.saveToByteArray();	
+					fr.addEventListener(ProgressEvent.PROGRESS,fileReference_Progress);
+					
+					fr.addEventListener(Event.COMPLETE,fileReference_Complete);
+					fr.save(bytes,"EventLog.xls");	
+				}catch(e:Error)
+				{ 
+					trace(e.message);
+				}
+			}
+			
+			private function fileReference_Progress(event:ProgressEvent):void
+			{
+				progressBar.toolTip = 'Saving';
+				progressBar.visible = true; 
+				progressBar.includeInLayout = true;
+			}
+			
+			private function fileReference_Complete(event:Event):void
+			{
+				progressBar.visible = false;
+				progressBar.includeInLayout =false;
+			}
+			
+			private function insertRecordInSheet(row:int, sheet:Sheet, record:Object):void
+			{
+				var colCount:int=dgEventLog.columnCount;
+				for (var c:int; c < colCount; c++)
+				{
+					var i:int=0;
+					for each (var field:String in fields)
+					{
+//						Alert.show(record[field]);
+//						if (record[field] is Date)
+//						{
+//							sheet.setCell(row, i, record[field]);
+//							var cell:Cell=sheet.getCell(row, i);
+//							cell.format="D-MMM-YY";
+//							cell.dateMode=1;
+//							//cell.
+//						}
+//						else
+							sheet.setCell(row, i, record[field]);
+						i++;
+					}
+				}
+			}
+
+			
+//			private var remVol:Number = windowManager.viewManager.marketWatch.remainedVol;
+			protected function traders_changeHandler(event:IndexChangeEvent):void
+			{
+				modelManager.updateEventLog();
+			}
+			
+			// The function to print the output.
+			public function doPrint():void {
+				
+				setTimeout(launchAlert2, 3000);
+				
+				function launchAlert2():void
+				{
+					trace('eee');
+				}
+				// Create a FlexPrintJob instance.
+				var printJob:FlexPrintJob = new FlexPrintJob();
+				
+				// Start the print job.
+				if (printJob.start()) {
+					// Create a FormPrintView control 
+					// as a child of the application.
+					var thePrintView:FormPrintView = new FormPrintView();
+					addElement(thePrintView);
+					thePrintView.myDataGrid.setStyle('color',0x000000);
+					thePrintView.exchangeLabel.text = (txtExchange.text == '') ?  '<ALL>':txtExchange.text;
+					thePrintView.marketLabel.text = (txtMarket.text == '') ? '<ALL>':txtMarket.text;
+					thePrintView.symbolLabel.text = (txtSymbol.text == '') ? '<ALL>' :txtSymbol.text;
+					thePrintView.traderLabel.text = ((traders.labelDisplay as Label).text == '')?'<ALL>':(traders.labelDisplay as Label).text;
+//					thePrintView.myDataGrid.setStyle('fontSize',12);
+					// Set the print view properties.
+					thePrintView.width=printJob.pageWidth+540;
+					thePrintView.height=printJob.pageHeight;
+					
+					// Set the data provider of the FormPrintView 
+					// component's DataGrid to be the data provider of 
+					// the displayed DataGrid.
+					thePrintView.myDataGrid.dataProvider = 
+						modelManager.eventLogModel.eventLog;
+//					thePrintView.myDataGrid.columns = dgEventLog.columns;
+					thePrintView.myDataGrid.showHeaders = true;
+//					(thePrintView.myDataGrid.columns[4] as DataGridColumn).
+					// Create a single-page image.
+					
+					// If the print image's DataGrid can hold all the  
+					// data provider's rows, add the page to the print job. 
+					if(!thePrintView.myDataGrid.validNextPage)
+					{
+						thePrintView.myDataGrid.setStyle('color',0x000000);
+						printJob.addObject(thePrintView);
+					}
+						// Otherwise, the job requires multiple pages.
+					else
+					{
+						// Create the first page and add it to the print job.
+						thePrintView.myDataGrid.setStyle('color',0x000000);
+						printJob.addObject(thePrintView);
+						thePrintView.pageNumber++;
+						// Loop through the following code 
+						// until all pages are queued.
+						while(true)
+						{
+							// Move the next page of data to the top of 
+							// the PrintDataGrid.
+							thePrintView.myDataGrid.nextPage();
+							
+							// Try creating a last page.
+							
+							// If the page holds the remaining data, or if 
+							// the last page was completely filled by the last  
+							// grid data, queue it for printing.
+							// Test if there is data for another 
+							// PrintDataGrid page.
+							if(!thePrintView.myDataGrid.validNextPage) 
+							{
+								// This is the last page; 
+								// queue it and exit the print loop.
+								thePrintView.myDataGrid.setStyle('color',0x000000);
+								printJob.addObject(thePrintView);
+								break;
+							}
+							else
+								// This is not the last page. Queue a middle page. 
+							{
+								thePrintView.myDataGrid.setStyle('color',0x000000);
+								printJob.addObject(thePrintView);
+								thePrintView.pageNumber++;
+							}
+						}
+					}
+					// All pages are queued; remove the FormPrintView 
+					// control to free memory.
+					thePrintView.myDataGrid.setStyle('color',0x000000);
+					removeElement(thePrintView);
+				}
+				// Send the job to the printer.
+				printJob.send();
+			}
+			
+			// Created on 16/07/2012 by Anas for the print functionality
+			protected function image1_clickHandler(event:MouseEvent):void
+			{
+				try
+				{
+				setTimeout(launchAlert2, 3000);
+				
+				function launchAlert2():void
+				{
+					trace('eee');
+				}
+				
+				const printJob:FlexPrintJob = new FlexPrintJob(); 
+				
+				if ( printJob.start() ) 
+				{ 
+					var printDataGrid:FormPrintView = new FormPrintView(); 
+					printDataGrid.myDataGrid.setStyle("headerStyleName", "myHeaderStyles");
+					printDataGrid.myDataGrid.setStyle('wordWrap',true);
+					printDataGrid.myDataGrid.setStyle('fontSize',14);
+					printDataGrid.myDataGrid.width = printJob.pageWidth+540; 
+					printDataGrid.myDataGrid.height = printJob.pageHeight; 
+					printDataGrid.myDataGrid.dataProvider = modelManager.eventLogModel.eventLog;
+					printDataGrid.myDataGrid.columns = dgEventLog.columns;
+					printDataGrid.myDataGrid.showHeaders = true;
+					addElement(printDataGrid.myDataGrid); 
+					while (printDataGrid.myDataGrid.validNextPage) 
+					{ 
+						printDataGrid.myDataGrid.setStyle("headerStyleName", "myHeaderStyles");
+						printJob.addObject(printDataGrid.myDataGrid);
+					} 
+					printDataGrid.myDataGrid.setStyle("headerStyleName", "myHeaderStyles");
+					removeElement(printDataGrid.myDataGrid); 
+					
+					printJob.send(); 
+				} 
+				}catch(e:Error)
+				{
+					trace('');
+				}
+//					Alert.show('Printed Successfully','Information');	
+			}
+//			(dg.columns[0] as DataGridColumn).headerText = "Something"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter"
+						  formatString="LL:NN:SS A"/>
+		<components:EZCurrencyFormatter id="moneyFormatter"/>
+		<components:EZNumberFormatter id="numberFormatter"/>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<!-- mx:ButtonBar id="toolbar" name="toolbar" y="2" horizontalCenter="0">
+	<mx:dataProvider>
+	<fx:String>Expand All</fx:String>
+	<fx:String>Refresh</fx:String>
+	</mx:dataProvider>
+	</mx:ButtonBar -->
+	<s:BorderContainer width="100%"
+					   height="30"
+					   horizontalCenter="0"
+					   top="0">
+		<s:Image y="-1" click="doPrint()" horizontalCenter="-380" visible="true" layoutDirection="ltr"
+				 source="{ImgPrint}" buttonMode="true" useHandCursor="true" />
+		<s:Image y="-1" buttonMode="true" click="btnExport_clickHandler(event)" visible="true" layoutDirection="ltr"
+				 horizontalCenter="-415" source="{ImgXls}" useHandCursor="true"/>
+		<mx:HBox>
+			<mx:ProgressBar id="progressBar"
+							includeInLayout="false" visible="false"  indeterminate="true"/>
+		</mx:HBox>
+		<s:Label text="{resourceManager.getString('marketwatch','exchange')}:" 
+				 top="9" direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-268':'-321'}"/>
+		<components:EZDropDownTextInput width="49"
+										top="4"
+										height="20"
+										id="txtExchange"
+										editable="false"
+										click="txtExchange_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-321':'-268'}"/>
+		<s:Label text="{resourceManager.getString('marketwatch','market')}:"
+				 top="9" direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-170':'-216'}"/>
+		<components:EZDropDownTextInput width="49"
+										top="4"
+										height="20"
+										id="txtMarket"
+										editable="false"
+										click="txtMarket_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-216':'-170'}"/>
+		<s:Label text="{resourceManager.getString('marketwatch','symbol')}:"
+				 top="9" direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-37':'-113'}"/>
+		<s:TextInput width="110"
+					 top="4"
+					 height="20"
+					 id="txtSymbol"
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-103':'-37'}"
+					 keyDown="txtSymbol_keyDownHandler(event)"/>
+		<s:Image  toolTip="Refresh Event Log"
+				  source="{refresh}"
+				  id="btnRefresh"
+				  top="-1" useHandCursor="true" buttonMode="true"
+				  horizontalCenter="39" layoutDirection="ltr"
+				  click="btnRefresh_clickHandler(event)"/>
+	</s:BorderContainer>
+	
+	<components:EZDataGrid right="1" 
+						   left="1"
+						   bottom="1"
+						   top="30"
+						   id="dgEventLog"
+						   width="100%"
+						   height="100%"
+						   click="dgEventLog_itemClickHandler(event)"
+						   dataProvider="{modelManager.eventLogModel.eventLog}">
+		<components:columns>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','client')}"  minWidth="100"
+							   dataField="CLIENT_CODE">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{data.CLIENT_CODE}"
+								  width="100%"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','symbol')}" minWidth="100"
+							   dataField="SYMBOL">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{data.SYMBOL}"
+								  width="100%"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','operation')}" minWidth="50"
+							   dataField="PUBLIC_ORDER_STATE">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{data.PUBLIC_ORDER_STATE}"
+								  width="100%"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','price')}" minWidth="50"
+							   dataField="PRICE">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.PRICE)}"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','filled')}" minWidth="50"
+							   dataField="FILLED_VOL">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format((data.PUBLIC_ORDER_STATE) == 'Filled' ?data.FILLED_VOL : '')}"
+								  width="100%"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','remaining')}" minWidth="50"
+							   dataField="VOLUME">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format((data.PUBLIC_ORDER_STATE) == 'Submit' ?data.VOLUME:'')}"
+								  width="100%"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','discVol')}" minWidth="50"
+							   dataField="DISCLOSED_VOLUME">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.DISCLOSED_VOLUME) == '0' ? '' : outerDocument.numberFormatter.format(data.DISCLOSED_VOLUME)}"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"
+								  width="100%"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','time')}"
+							   dataField="ENTRY_DATETIME" minWidth="100"
+							   sortDescending="false">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.dateFormatter.format(data.ENTRY_DATETIME)}"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','bid/offer')}" minWidth="50"
+							   dataField="SIDE">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{data.SIDE}"
+								  width="100%"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','orderType')}" minWidth="50"
+							   dataField="ORDER_TYPE">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{data.ORDER_TYPE}"
+								  width="100%"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','orderNumber')}" minWidth="50"
+							   dataField="ORDER_NO">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.ORDER_NO)}"
+								  width="100%"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','ticketId')}" minWidth="50"
+							   dataField="TICKET_ID">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.TICKET_ID)}"
+								  width="100%"
+								  textAlign="right"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Is Negotiated" visible="false" minWidth="50"
+							   dataField="IS_NEGOTIATED">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{(data.IS_NEGOTIATED) ? 'YES' : 'NO'}"
+								  width="100%"
+								  color="{(data.SIDE == 'buy') ? 0x0c70a2 : 0xbe3267}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</components:columns>
+	</components:EZDataGrid>
+	<s:Label text="{resourceManager.getString('marketwatch','trader')}:" 
+			 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'205':'148'}" direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+			 top="7"/>
+	<s:DropDownList change="traders_changeHandler(event)"
+					width="75" layoutDirection="ltr"
+					dataProvider="{tradersList}"
+					height="20"
+					id="traders"
+					horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'150':'205'}"
+					top="2"/>
+</s:Group>
+

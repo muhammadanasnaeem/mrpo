@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%"
+		 initialize="group1_initializeHandler(event)" xmlns:common="common.*" xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/BestPrices.as"
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<components:EZCurrencyFormatter id="moneyFormatter" />
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%" height="30" horizontalCenter="0" top="0">
+		<s:Label text="Exchange:" horizontalCenter="-163" top="7"/>
+		<components:EZDropDownTextInput width="49" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-110" top="2"/>
+		<s:Label text="Market:" horizontalCenter="-60" top="7"/>
+		<components:EZDropDownTextInput width="49" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" horizontalCenter="-14" top="2"/>
+		<s:Label text="Symbol:" horizontalCenter="37" top="7"/>
+		<s:TextInput width="110" height="20" id="txtSymbol" keyDown="txtSymbol_keyDownHandler(event)" horizontalCenter="119" top="2"/>
+		<s:Button label="Refresh" width="75" height="20" id="btnRefresh" top="2" horizontalCenter="219" click="btnRefresh_clickHandler(event)" />
+		<!--s:Label text="Total Buy:" top="8" horizontalCenter="36"/>
+		<s:TextInput id="txtTotalBuy" width="80" text="{ModelManager.getInstance().bestPricesModel.totalBuy}" editable="false" top="3" horizontalCenter="102"/>
+		<s:Label text="Total Sell:" top="8" horizontalCenter="178"/>
+		<s:TextInput id="txtTotalSell" width="80" text="{ModelManager.getInstance().bestPricesModel.totalSell}" editable="false" top="3" horizontalCenter="245"/-->
+	</s:BorderContainer>
+	<mx:DataGrid
+		id="adgBestPrices"
+		right="1" left="1" bottom="1" top="30"
+		rowCount="{Constants.ROW_COUNT_BEST_PRICES}"
+		dataProvider="{ModelManager.getInstance().bestPricesModel.bestPrices}"
+		editable="false"
+		horizontalCenter="0"
+		sortableColumns="false">
+		<mx:columns>
+			<mx:DataGridColumn dataField="BUY_COUNT" headerText="Count" backgroundColor="{Constants.BUY_COLOR_INT}"/>
+			<mx:DataGridColumn dataField="BUY_VOLUME" headerText="Volume" backgroundColor="{Constants.BUY_COLOR_INT}"/>
+			<mx:DataGridColumn dataField="BUY_PRICE" headerText="Price" backgroundColor="{Constants.BUY_COLOR_INT}">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.BUY_PRICE)}" width="100%" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn dataField="SELL_PRICE" headerText="Price" backgroundColor="{Constants.SELL_COLOR_INT}">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.SELL_PRICE)}" width="100%" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>				
+			<mx:DataGridColumn dataField="SELL_VOLUME" headerText="Volume" backgroundColor="{Constants.SELL_COLOR_INT}"/>
+			<mx:DataGridColumn dataField="SELL_COUNT" headerText="Count" backgroundColor="{Constants.SELL_COLOR_INT}"/>
+		</mx:columns>
+	</mx:DataGrid>
+</s:Group>

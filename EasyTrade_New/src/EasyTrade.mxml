@@ -1,0 +1,741 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:flexlib="http://code.google.com/p/flexlib/"
+			   xmlns:components="components.*"
+			   xmlns:ticker="components.ticker.*"
+			   width="100%"
+			   height="100%"
+			   skinClass="assets.skins.ETGradientBackgroundSkin"
+			   initialize="application1_initializeHandler(event)"
+			   creationComplete="addKeyboardListeners();"
+			   xmlns:containers="com.dougmccune.containers.*">
+	<fx:Metadata> 
+		[ResourceBundle("marketwatch")] 
+	</fx:Metadata>
+	<!--Anas Changes-->
+	<fx:Style> 
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@namespace flexlib "http://code.google.com/p/flexlib/";
+		@namespace components "components.*";
+		@namespace ticker "components.ticker.*";
+		mx|Alert {  
+			fontFamily: Verdana;  
+			creationCompleteEffect: alertCreationCompleteEffect;
+			headerColors:#484848,#696969; 
+			backgroundColor:#000000; 
+			borderStyle:solid;
+			headerHeight:20;
+			cornerRadius:5;
+		}
+	</fx:Style>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter"
+						  formatString="YYYY/MM/DD ::: L:NN A"/>
+		<!-- Anas Changes -->
+		<mx:Parallel id="alertCreationCompleteEffect">
+			<mx:Fade duration="500"/>
+			<mx:Move yFrom="0"
+					 easingFunction="Elastic.easeOut"
+					 duration="1000"/>
+		</mx:Parallel>
+		<containers:VistaFlowContainer id="vistaFlow2"/>
+
+		<!--Effects for the top level Application Bar-->
+		<mx:Glow id="glowButton"
+				 alphaFrom="1.0"
+				 alphaTo="0.4"
+				 blurXFrom="0.0"
+				 blurXTo="70.0"
+				 blurYFrom="0.0"
+				 blurYTo="70.0"
+				 color="#13B3AA"
+				 duration="1000"/>
+		<mx:Glow id="unglowButton"
+				 alphaFrom="0.4"
+				 alphaTo="1.0"
+				 blurXFrom="70.0"
+				 blurXTo="0.0"
+				 blurYFrom="70.0"
+				 blurYTo="0.0"
+				 color="#13B3AA"
+				 duration="1000"/>
+
+		<s:Rotate3D id="rotator"
+					angleYFrom="0"
+					angleYTo="360"
+					autoCenterTransform="true"
+					effectEnd="effectEndHandler(event)"/>
+		<s:Move3D id="mover"
+				  duration="200"
+				  zBy="-30"
+				  repeatCount="2" 
+				  repeatBehavior="{RepeatBehavior.REVERSE}"
+				  autoCenterTransform="true"
+				  effectEnd="effectEndHandler(event)"/>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import com.dougmccune.containers.VistaFlowContainer;
+			
+			import controller.EasyTradeApp;
+			import controller.ModelManager;
+			import controller.ProfileManager;
+			import controller.ViewManager;
+			import controller.WindowManager;
+			import controller.windowControls.EasyTradeWindowControl;
+			
+			import flash.filters.BitmapFilterQuality;
+			
+			import flexlib.mdi.effects.effectsLib.MDIVistaEffects;
+			
+			import mx.core.Container;
+			import mx.core.FlexGlobals;
+			import mx.core.UIComponent;
+			import mx.effects.Effect;
+			import mx.effects.easing.*;
+			import mx.events.EffectEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import spark.components.Button;
+			import spark.effects.animation.RepeatBehavior;
+			import spark.filters.GlowFilter;
+
+			include "eventhandlers/Menu.as";
+			include "eventhandlers/Ticker.as";
+
+			private var vistaFlow:VistaFlowContainer;
+
+			private var buyButtonGlowFilter:spark.filters.GlowFilter;
+			private var buyColor:Number=0xfc8c1d;
+
+			private var sellButtonGlowFilter:spark.filters.GlowFilter;
+			private var sellColor:Number=0x0ca2f8;
+
+			private var cancelButtonGlowFilter:spark.filters.GlowFilter;
+			private var cancelColor:Number=0xe72e14;
+
+			private var eventLogButtonGlowFilter:spark.filters.GlowFilter;
+			private var eventLogColor:Number=0x6dbc5e;
+
+			private var executedOrdersButtonGlowFilter:spark.filters.GlowFilter;
+			private var executedOrdersColor:Number=0xa7e1f3;
+
+			private var workingOrdersButtonGlowFilter:spark.filters.GlowFilter;
+			private var workingOrdersColor:Number=0x69bad4;
+			private var animatingTargets:Object=new Object();
+
+
+			[Bindable]
+			[Embed(source="images/buyButton.png")]
+			public var ImgBuy:Class;
+
+			[Bindable]
+			[Embed(source="images/sellButton.png")]
+			public var ImgSell:Class;
+
+			[Bindable]
+			[Embed(source="images/cancelButton.png")]
+			public var ImgCancel:Class;
+
+			[Bindable]
+			[Embed(source="images/workOrdersButton.png")]
+			public var ImgWorkingOrders:Class;
+
+			[Bindable]
+			[Embed(source="images/executedOrdersButton.png")]
+			public var ImgExecutedOrders:Class;
+
+			[Bindable]
+			[Embed(source="images/eventLogButton.png")]
+			public var ImgEventLog:Class;
+
+			[Bindable]
+			[Embed(source="images/marketschedulecontrol.png")]
+			public var ImgMarketScheduleControl:Class;
+
+			[Bindable]
+			[Embed(source="images/symbolstatecontrol.png")]
+			public var ImgSymbolStateControl:Class;
+
+			[Bindable]
+			[Embed(source="images/historical_symbol.png")]
+			public var ImgHistoricalSymbolChart:Class;
+
+			[Bindable]
+			[Embed(source="images/live_symbol.png")]
+			public var ImgLiveSymbol:Class;
+
+			[Bindable]
+			[Embed(source="images/historical_index.png")]
+			public var ImgHistoricalIndex:Class;
+
+			[Bindable]
+			[Embed(source="images/live_index.png")]
+			public var ImgLiveIndex:Class;
+			
+
+			private function animateHover(target:Object):void
+			{
+				if (animatingTargets[target.id] === undefined)
+				{
+					var effect:Effect;
+					effect=rotator;
+					effect.target=target;
+					animatingTargets[target.id]=effect;
+					effect.play();
+				}
+			}
+
+			private function effectEndHandler(event:EffectEvent):void  
+			{
+				delete animatingTargets[event.effectInstance.target.id];
+			}
+
+			private function application1_initializeHandler(event:FlexEvent):void
+			{
+				EasyTradeApp.getInstance().init(this);
+
+				symbolTapeTicker.width=this.screen.width;
+				newsTapeTicker.width=this.screen.width;
+				startTicker(symbolTapeTicker, ModelManager.getInstance().symbolTickerFeedModel.feed);
+				startTicker(newsTapeTicker, ModelManager.getInstance().newsTickerFeedModel.feed);
+
+				var timer:Timer=new Timer(1000, 0);
+				timer.addEventListener(TimerEvent.TIMER, handleQueueFillTimer);
+				timer.start();
+
+				this.addEventListener(Event.RESIZE, handleResize);
+				this.addEventListener(MouseEvent.ROLL_OVER, handleRollOver, true);
+				this.addEventListener(MouseEvent.ROLL_OUT, handleRollOut, true);
+//				// added on 23/12/2010 
+				this.systemManager.stage.addEventListener(KeyboardEvent.KEY_DOWN, app_keyDownHandler, true);
+				// added on 24/12/2010
+				if (ExternalInterface.available)
+				{
+					ExternalInterface.call("function() { document.title = '" + Constants.APPLICATION_TITLE + "'; }");
+					ExternalInterface.call("function() { var link = document.createElement('link');" + "link.type = 'image/x-icon';" + "link.rel = 'shortcut icon';" + "link.href = 'favicon.ico';" + "document.getElementsByTagName('head')[0].appendChild(link);; }");
+				}
+			}
+						
+			protected function imgBuy_clickHandler(event:MouseEvent):void
+			{
+				try
+				{
+					menuitemBuyOrder_itemClickHandler(null);
+				}
+				catch (e:Error)
+				{
+					trace('Exception Caught');
+				}
+			}
+
+			protected function imgSell_clickHandler(event:MouseEvent):void
+			{
+				try
+				{
+					menuitemSellOrder_itemClickHandler(null);
+				}
+				catch (e:Error)
+				{
+					trace('Exception Caught');
+				}
+			}
+
+			protected function imgCancel_clickHandler(event:MouseEvent):void
+			{
+				menuitemCancelOrder_itemClickHandler(null);
+			}
+
+			protected function imgWorkingOrders_clickHandler(event:MouseEvent):void
+			{
+				menuitemReminingOrders_itemClickHandler(null);
+			}
+
+			protected function imgExecutedOrders_clickHandler(event:MouseEvent):void
+			{
+				menuitemUserTradeHistory_itemClickHandler(null);
+			}
+
+			protected function imgEventLog_clickHandler(event:MouseEvent):void
+			{
+				menuitemEventLog_itemClickHandler(null);
+			}
+
+			protected function imgMarketScheduleControl_clickHandler(event:MouseEvent):void
+			{
+				menuitemMarketScheduleControl_itemClickHandler(null);
+			}
+
+			protected function imgSymbolStateControl_clickHandler(event:MouseEvent):void
+			{
+				menuitemMarketScheduleControl_itemClickHandler(null);
+			}
+
+			protected function imgLiveSymbolChart_clickHandler(event:MouseEvent):void
+			{
+				menuitemLiveSymbolChart_itemClickHandler(null);
+			}
+
+
+			// added on 23/12/2010
+			protected function app_keyDownHandler(event:KeyboardEvent):void
+			{
+				if (EasyTradeApp.getInstance().isUserLoggedin())
+				{
+					if (event.keyCode == 115)
+					{
+						imgBuy_clickHandler(null);
+					}
+					else if (event.keyCode == 116)
+					{
+						imgSell_clickHandler(null);
+					}
+				}
+			}
+
+			private function addKeyboardListeners():void
+			{
+				Constants.SERVICE_URL=FlexGlobals.topLevelApplication.parameters.SERVICE_URL;
+				Constants.SECURE_SERVICE_URL=FlexGlobals.topLevelApplication.parameters.SECURE_SERVICE_URL;
+				Constants.LIGHTSTREAMER_SERVER=FlexGlobals.topLevelApplication.parameters.LIGHTSTREAMER_SERVER;
+				Constants.LIGHTSTREAMER_PORT=FlexGlobals.topLevelApplication.parameters.LIGHTSTREAMER_PORT;
+				Constants.QW_WSDL_END_POINT=Constants.SERVICE_URL + Constants.QW_WSDL_END_POINT;
+				Constants.ORDERER_WSDL_END_POINT=Constants.SERVICE_URL + Constants.ORDERER_WSDL_END_POINT;
+				Constants.ANNOUNCER_WSDL_END_POINT=Constants.SERVICE_URL + Constants.ANNOUNCER_WSDL_END_POINT;
+				Constants.LOGIN_MANAGER_WSDL_END_POINT=Constants.SERVICE_URL + Constants.LOGIN_MANAGER_WSDL_END_POINT;
+				Constants.RS_WSDL_END_POINT=Constants.SERVICE_URL + Constants.RS_WSDL_END_POINT;
+				
+				if (FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')
+				{
+					menubarMain.layoutDirection='rtl';
+				}
+				
+				menubarMain.menuBarItems[0].data.(@label == "File").@label=resourceManager.getString('marketwatch', 'file');
+				menubarMain.menuBarItems[0].data.menuitem.(@id == "logof").@label=resourceManager.getString('marketwatch', 'logOff');
+				menubarMain.menuBarItems[1].data.(@label == "Order").@label=resourceManager.getString('marketwatch', 'order');
+				menubarMain.menuBarItems[1].data.menuitem.(@label == "Sell       F5").@label=resourceManager.getString('marketwatch', 'sell');
+				menubarMain.menuBarItems[1].data.menuitem.(@label == "Buy       F4").@label=resourceManager.getString('marketwatch', 'buy');
+				menubarMain.menuBarItems[1].data.menuitem.(@label == "Change").@label=resourceManager.getString('marketwatch', 'change');
+				menubarMain.menuBarItems[1].data.menuitem.(@label == "Cancel").@label=resourceManager.getString('marketwatch', 'cancel');
+				menubarMain.menuBarItems[1].data.menuitem.(@label == "Yield Calculator").@label=resourceManager.getString('marketwatch', 'yieldCalculator');
+				menubarMain.menuBarItems[1].data.menuitem.(@label == "Quick Orders").@label=resourceManager.getString('marketwatch', 'quickOrder');
+				menubarMain.menuBarItems[2].data.(@id == "menuitemWatch").@label=resourceManager.getString('marketwatch', 'watch');
+				menubarMain.menuBarItems[2].data.menuitem.(@label == "Market").@label=resourceManager.getString('marketwatch', 'market');
+				menubarMain.menuBarItems[2].data.menuitem.(@id == "bo").@label=resourceManager.getString('marketwatch', 'bestOrders');
+				menubarMain.menuBarItems[2].data.menuitem.(@id == "bpl").@label=resourceManager.getString('marketwatch', 'bestPriceLevels');
+				menubarMain.menuBarItems[2].data.menuitem.(@id == "msg").@label=resourceManager.getString('marketwatch', 'messages');
+				menubarMain.menuBarItems[2].data.menuitem.(@id == "es").@label=resourceManager.getString('marketwatch', 'exchangeStats');
+				menubarMain.menuBarItems[2].data.menuitem.(@id == "ms").@label=resourceManager.getString('marketwatch', 'marketSummary');
+				menubarMain.menuBarItems[3].data.(@id == "menuitemReports").@label=resourceManager.getString('marketwatch', 'reports');
+				menubarMain.menuBarItems[3].data.menuitem.(@label == "Working Orders").@label=resourceManager.getString('marketwatch', 'workingOrders');
+				menubarMain.menuBarItems[3].data.menuitem.(@label == "Executed Orders").@label=resourceManager.getString('marketwatch', 'executedOrders');
+				menubarMain.menuBarItems[3].data.menuitem.(@label == "Event Log").@label=resourceManager.getString('marketwatch', 'eventLog');
+				menubarMain.menuBarItems[3].data.menuitem.(@label == "Symbol Summary").@label=resourceManager.getString('marketwatch', 'symbolSummary');
+				menubarMain.menuBarItems[3].data.menuitem.(@label == "Market Summary").@label=resourceManager.getString('marketwatch', 'marketSummary');
+				menubarMain.menuBarItems[3].data.menuitem.(@label == "Symbol Browser").@label=resourceManager.getString('marketwatch', 'symbolBrowser');
+				menubarMain.menuBarItems[3].data.menuitem.(@label == "Risk Information").@label=resourceManager.getString('marketwatch', 'riskInformation');
+				menubarMain.menuBarItems[4].data.(@id == "cntrl").@label=resourceManager.getString('marketwatch', 'control');
+				menubarMain.menuBarItems[4].data.menuitem.(@label == "Market States").@label=resourceManager.getString('marketwatch', 'marketStates');
+				menubarMain.menuBarItems[4].data.menuitem.(@label == "Symbol State").@label=resourceManager.getString('marketwatch', 'symbolState');
+				menubarMain.menuBarItems[4].data.menuitem.(@label == "Bulletin").@label=resourceManager.getString('marketwatch', 'bulletin');
+				menubarMain.menuBarItems[4].data.menuitem.(@label == "Change Order Limits").@label=resourceManager.getString('marketwatch', 'changeOrderLimit');
+				menubarMain.menuBarItems[4].data.menuitem.(@label == "Last Day Remaining Orders").@label=resourceManager.getString('marketwatch', 'lastDayRemainingOrders');
+				menubarMain.menuBarItems[4].data.menuitem.(@label == "Cancel All Orders").@label=resourceManager.getString('marketwatch', 'cancelAllOrders');
+				menubarMain.menuBarItems[5].data.(@id == "bnd").@label=resourceManager.getString('marketwatch', 'bond');
+				menubarMain.menuBarItems[5].data.menuitem.(@label == "Payment Schedule").@label=resourceManager.getString('marketwatch', 'paymentSchedule');
+				menubarMain.menuBarItems[5].data.menuitem.(@label == "Summary").@label=resourceManager.getString('marketwatch', 'summary');
+				menubarMain.menuBarItems[5].data.menuitem.(@label == "Historical Data").@label=resourceManager.getString('marketwatch', 'historicalData');
+				menubarMain.menuBarItems[6].data.(@id == "setting").@label=resourceManager.getString('marketwatch', 'settings');
+				menubarMain.menuBarItems[6].data.menuitem.(@label == "Profile").@label=resourceManager.getString('marketwatch', 'profileSettings');
+				menubarMain.menuBarItems[6].data.menuitem.(@label == "Change Password").@label=resourceManager.getString('marketwatch', 'changePassword');
+				menubarMain.menuBarItems[6].data.menuitem.(@label == "Printer").@label=resourceManager.getString('marketwatch', 'printer');
+				menubarMain.menuBarItems[7].data.(@id == "chrt").@label=resourceManager.getString('marketwatch', 'charts');
+				menubarMain.menuBarItems[7].data.menuitem.(@label == "Real Time Symbol").@label=resourceManager.getString('marketwatch', 'realTime');
+				menubarMain.menuBarItems[8].data.(@id == "hlp").@label=resourceManager.getString('marketwatch', 'help');
+				menubarMain.menuBarItems[8].data.menuitem.(@label == "About Easy Trade").@label=resourceManager.getString('marketwatch', 'aboutEasyTrade'); //resourceManager.getString('marketwatch', 'quickOrder');
+				////Ended
+				
+			}
+
+
+		]]>
+	</fx:Script>
+
+	<fx:Style source="EasyTrade.css"/>
+	<mx:Canvas left="0"
+			   top="1"
+			   width="100%"
+			   backgroundColor="#000000"
+			   height="27"
+			   id="headerCanvas">
+		<s:Image left="-38"
+				 top="0"
+				 width="100%"
+				 source="@Embed('assets/Header-main.jpg')"/>
+	</mx:Canvas>
+	<mx:Canvas id="canvasHeader"
+			   left="0"
+			   top="27"
+			   width="100%"
+			   height="46">
+		<mx:MenuBar id="menubarMain"
+					labelField="@label"
+					iconField="@icon"
+					height="21"
+					itemClick="menubarMain_itemClickHandler(event)"
+					x="0"
+					y="0"
+					width="100%">
+			<fx:XMLList>
+				<root label="File"
+					  id="file">
+					<!--menuitem label="Fonts" />
+					<menuitem label="Unattended Mode" />
+					<menuitem label="Change Password" />
+					<menuitem type="separator"/>
+					<menuitem label="Messages" >
+					<menuitem label="Send Message" />
+					<menuitem label="Save Messages" />
+					</menuitem>
+					<menuitem label="Printing" >
+					<menuitem label="Print Messages" submenu_id="PrintMessages" />
+					<menuitem label="Print History Messages" submenu_id="PrintHistoryMessages" />
+					<menuitem label="Change Printer" submenu_id="ChangePrinter" />
+					</menuitem>
+					<menuitem type="separator"/>
+					<menuitem label="Speak Messages" />
+					<menuitem label="Speach Settings" />
+					<menuitem type="separator"/-->
+					<menuitem label="Log off"
+							  id="logof"/>
+					<!-- menuitem label="Exit" / -->
+				</root>
+				<menuitem label="Order"
+						  id="menuitemOrder">
+					<menuitem label="Sell       F5"
+							  icon="ImgBuy"/>
+					<menuitem label="Buy       F4"
+							  icon="ImgSell"/>
+					<menuitem label="Change"/>
+					<menuitem label="Cancel"
+							  icon="ImgCancel"/>
+					<menuitem label="Yield Calculator"/>
+					<menuitem label="Quick Orders"/>
+					<!--menuitem label="Take" />
+					<menuitem label="Hit" />
+					<menuitem type="separator"/>
+					<menuitem label="Cross Trade" />
+					<menuitem type="separator"/-->
+				</menuitem>
+				<root label="Watch"
+					  id="menuitemWatch">
+					<menuitem label="Market"
+							  id="mrkt"/>
+					<menuitem label="Best Orders"
+							  id="bo"/>
+					<menuitem label="Best Price Levels"
+							  id="bpl"/>
+					<menuitem label="Messages"
+							  id="msg"/>
+					<!--menuitem label="Water Fall Ticker" /-->
+					<!--menuitem type="separator"/-->
+					<menuitem label="Exchange Stats"
+							  id="es"/>
+					<menuitem label="Market Schedule"
+							  id="ms"/>
+				</root>
+				<menuitem label="Reports"
+						  id="menuitemReports">
+					<menuitem label="Working Orders"
+							  icon="ImgWorkingOrders"/>
+					<!--menuitem label="Order Book" /-->
+					<menuitem label="Executed Orders"
+							  icon="ImgExecutedOrders"/>
+					<menuitem label="Event Log"
+							  icon="ImgEventLog"/>
+					<!--menuitem type="separator"/-->
+					<menuitem label="Symbol Browser"/>
+					<menuitem label="Symbol Summary"/>
+					<menuitem label="Market Summary"/>
+					<!--menuitem type="separator"/-->
+					<menuitem label="Risk Information"/>
+					<!--menuitem label="Symbol Summary" />
+					
+					<menuitem type="separator"/>
+					<menuitem label="Net Position" /-->
+				</menuitem>
+				<menuitem label="Control"
+						  id="cntrl"
+						  enabled="false">
+					<menuitem label="Market States"
+							  icon="ImgMarketScheduleControl"/>
+					<!--menuitem type="separator"/-->
+					<menuitem label="Symbol State"
+							  icon="changeSymbolState"/>
+					<!--menuitem label="Symbol Spot Status" />
+					<menuitem label="Symbol Freeze Selection" />
+					<menuitem label="Symbol Order Cancelation" />
+					<menuitem type="separator"/>
+					<menuitem label="User State" />
+					<menuitem type="separator"/>
+					<menuitem label="Operational Bulletin" /-->
+					<menuitem label="Bulletin"/>
+					<!--menuitem type="separator"/>
+					<menuitem label="Remove Timing Schedule" />
+					<menuitem type="separator"/>
+					<menuitem label="Change Freeze Limits" /-->
+					<menuitem label="Change Order Limits"/>
+					<!--menuitem type="separator"/>
+					<menuitem label="Future Session" /-->
+					<menuitem label="Last Day Remaining Orders"
+							  enabled="false"/>
+					<menuitem label="Cancel All Orders"/>
+				</menuitem>
+				<menuitem label="Bond"
+						  id="bnd">
+					<menuitem label="Payment Schedule"
+							  enabled="false"/>
+					<menuitem label="Summary"
+							  enabled="false"/>
+					<menuitem label="Historical Data"
+							  enabled="false"/>
+				</menuitem>
+				<menuitem label="Settings"
+						  id="setting">
+					<menuitem label="Profile"/>
+					<menuitem label="Change Password"/>
+					<menuitem label="Printer"
+							  enabled="false"/>
+				</menuitem>
+				<menuitem label="Charts"
+						  id="chrt">
+					<menuitem label="Real Time Symbol"
+							  id="liveSym"
+							  icon="ImgLiveSymbol">
+						<!--submenuitem label="Index"
+						id="indx"
+						enabled="false"
+						icon="ImgLiveIndex"/>
+						<submenuitem label="Symbol"
+						id="liveSym"
+						icon="ImgLiveSymbol"/-->
+					</menuitem>
+					<!--menuitem label="Historical"
+					id="history">
+					<submenuitem label="Index"
+					enabled="false"
+					icon="ImgHistoricalIndex"/>
+					<submenuitem label="Symbol"
+					enabled="false"
+					id="historicalSym"
+					icon="ImgHistoricalSymbolChart"/>
+					<submenuitem label="Volume Leaders"
+					enabled="false"/>
+					</menuitem-->
+				</menuitem>
+				<menuitem label="Help"
+						  id="hlp">
+					<menuitem label="About Easy Trade"
+							  id="about"/>
+					<!--menuitem label="Change Language"
+					id="changeLang"/-->
+				</menuitem>
+			</fx:XMLList>
+		</mx:MenuBar>
+		<!--<mx:ToolBar x="0" y="20" width="100%" paddingBottom="0" paddingTop="0" verticalScrollPolicy="off">-->
+		<mx:ApplicationControlBar id="toolbarMain"
+								  top="20"
+								  width="100%"
+								  height="25"
+								  horizontalCenter="0"
+								  paddingBottom="5"
+								  paddingTop="0"
+								  verticalScrollPolicy="off"
+								  horizontalGap="0"
+								  verticalGap="0">
+			<mx:Spacer width="5">
+			</mx:Spacer>
+		</mx:ApplicationControlBar>
+		<!--</mx:ToolBar>-->
+		<components:buttonBuy 
+			horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'590':'-590'}"
+								left="25"
+							  top="27"
+							  buttonMode="true"
+							  click="imgSell_clickHandler(event)"
+							  toolTip="{resourceManager.getString('marketwatch','sell')}"
+							  rollOverEffect="{glowButton}"
+							  id="buyButton"
+							  rollOutEffect="{unglowButton}"
+							  mouseOver="animateHover(buyButton)"
+							  useHandCursor="true"/>
+		<components:buttonSell id="imgSell"
+							   left="51"
+							   top="27"
+							   buttonMode="true"
+							   click="imgBuy_clickHandler(event)"
+							   rollOverEffect="{glowButton}"
+							   rollOutEffect="{unglowButton}"
+							   mouseOver="animateHover(imgSell)"
+							   toolTip="{resourceManager.getString('marketwatch','buy')}"
+							   useHandCursor="true"
+							   horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'560':'-560'}"
+							   />
+
+		<components:cancelButton id="imgCancel"
+								 left="77"
+								 top="27"
+								 buttonMode="true"
+								 mouseOver="animateHover(imgCancel)"
+								 click="imgCancel_clickHandler(event)"
+								 useHandCursor="true"
+								 rollOverEffect="{glowButton}"
+								 rollOutEffect="{unglowButton}"
+								 toolTip="{resourceManager.getString('marketwatch','cancel')}"
+								 horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'530':'-530'}"
+								 />
+		<components:buttonWorkingOrders id="imgWorkingOrders"
+										left="105"
+										top="27"
+										buttonMode="true"
+										mouseOver="animateHover(imgWorkingOrders)"
+										click="imgWorkingOrders_clickHandler(event)"
+										useHandCursor="true"
+										rollOverEffect="{glowButton}"
+										rollOutEffect="{unglowButton}"
+										toolTip="{resourceManager.getString('marketwatch','workingOrders')}"
+										horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'500':'-500'}"
+										/>
+		<components:buttonExecutedOrders id="imgExecutedOrders"
+										 left="135"
+										 top="28"
+										 buttonMode="true"
+										 mouseOver="animateHover(imgExecutedOrders)"
+										 click="imgExecutedOrders_clickHandler(event)"
+										 useHandCursor="true"
+										 rollOverEffect="{glowButton}"
+										 rollOutEffect="{unglowButton}"
+										 toolTip="{resourceManager.getString('marketwatch','executedOrders')}"
+										 horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'470':'-470'}"
+										 />
+		<components:buttonEventLog id="imgEventLog"
+								   left="162"
+								   top="27"
+								   buttonMode="true"
+								   click="imgEventLog_clickHandler(event)"
+								   mouseOver="animateHover(imgEventLog)"
+								   rollOverEffect="{glowButton}"
+								   rollOutEffect="{unglowButton}"
+								   toolTip="{resourceManager.getString('marketwatch','eventLog')}"
+								   horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'440':'-440'}"
+								   />
+		<components:buttonMarketSchdeuleControl id="imgMarketScheduleControl"
+												left="192"
+												top="27"
+												mouseOver="animateHover(imgMarketScheduleControl)"
+												buttonMode="{ModelManager.getInstance().userProfileModel.isAdminUser}"
+												click="imgSymbolStateControl_clickHandler(event)"
+												enabled="{ModelManager.getInstance().userProfileModel.isAdminUser}"
+												mouseEnabled="{ModelManager.getInstance().userProfileModel.isAdminUser}"
+												rollOverEffect="{glowButton}"
+												rollOutEffect="{unglowButton}"
+												toolTip="{resourceManager.getString('marketwatch','marketSchedule')}"
+												horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'410':'-410'}"
+												/>
+		<components:Indexes id="imgHistoricalSymbolChart"
+							left="222"
+							top="27"
+							rollOverEffect="{glowButton}"
+							rollOutEffect="{unglowButton}"
+							buttonMode="{ModelManager.getInstance().userProfileModel.isAdminUser}"
+							click="imgSymbolStateControl_clickHandler(event)"
+							mouseOver="animateHover(imgHistoricalSymbolChart)"
+							enabled="{ModelManager.getInstance().userProfileModel.isAdminUser}"
+							mouseEnabled="{ModelManager.getInstance().userProfileModel.isAdminUser}"
+							toolTip="{resourceManager.getString('marketwatch','liveChart')}"
+							horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'380':'-380'}"
+							/>
+		<components:liveCharts id="imgLiveSymbol"
+							   left="254"
+							   top="27"
+							   mouseOver="animateHover(imgLiveSymbol)"
+							   rollOverEffect="{glowButton}"
+							   rollOutEffect="{unglowButton}"
+							   buttonMode="true"
+							   enabled="false"
+							   mouseEnabled="true"
+							   toolTip="{resourceManager.getString('marketwatch','liveChart')}"
+							   horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'350':'-350'}"
+							   />
+		<components:realTimeIndexCharts id="imgLiveIndex"
+										left="285"
+										top="27"
+										enabled="false"
+										mouseOver="animateHover(imgLiveIndex)"
+										rollOverEffect="{glowButton}"
+										rollOutEffect="{unglowButton}"
+										mouseEnabled="true"
+										toolTip="Live Index Chart"
+										horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'320':'-320'}"
+										/>
+		<mx:Label left="697" horizontalCenter="{FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA'?'-310':'340'}"
+				  top="24"
+				  id="loginLabel"
+				  styleName="welcomeString"
+				  text="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?ProfileManager.getInstance().userName + ' :' + resourceManager.getString('marketwatch', 'loggedinuser') + '               ' + dateFormatter.format(new Date()) + ' :' + resourceManager.getString('marketwatch', 'logindatetime'):resourceManager.getString('marketwatch', 'loggedinuser') + ': ' + ProfileManager.getInstance().userName + '               ' + resourceManager.getString('marketwatch', 'logindatetime') + ': ' + dateFormatter.format(new Date())}"
+				  layoutDirection="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				  fontSize="11"/>
+	</mx:Canvas>
+
+	<flexlib:MDICanvas id="canvas"
+					   x="0"
+					   width="100%"
+					   top="73"
+					   bottom="41"
+					   effectsLib="{MDIVistaEffects}"
+					   horizontalScrollPolicy="off"
+					   verticalScrollPolicy="off">
+	</flexlib:MDICanvas>
+	<s:BorderContainer left="0"
+					   right="0"
+					   bottom="21"
+					   height="20"
+					   x="0"
+					   width="100%"
+					   styleName="bgNewsTapeTicker"
+					   borderVisible="false"/>
+	<ticker:Ticker id="newsTapeTicker"
+				   left="0"
+				   right="0"
+				   bottom="25"
+				   height="20"
+				   x="0"
+				   width="100%"
+				   tickerType="{TickerType.TAPE_TICKER_NEWS}"
+				   ITEM_WIDTH="300"
+				   ITEM_HEIGHT="20"/>
+	<s:BorderContainer left="0"
+					   right="0"
+					   bottom="1"
+					   height="20"
+					   x="0"
+					   width="100%"
+					   styleName="bgSymbolTapeTicker"
+					   borderVisible="true"/>
+	<ticker:Ticker id="symbolTapeTicker"
+				   left="0"
+				   right="0"
+				   bottom="5"
+				   height="20"
+				   x="0"
+				   width="100%"
+				   tickerType="{TickerType.TAPE_TICKER_SYMBOL}"
+				   ITEM_WIDTH="260"
+				   ITEM_HEIGHT="20"/>
+</s:Application>
+
+<!--top="73" bottom="41" top="{headerCanvas.height}" bottom="{newsTapeTicker.height + symbolTapeTicker.height}"-->

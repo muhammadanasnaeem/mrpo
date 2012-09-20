@@ -1,0 +1,47 @@
+package model
+{
+	import common.Messages;
+	
+	import components.EZNumberFormatter;
+	
+	import controller.WindowManager;
+	
+	import mx.controls.Alert;
+	import mx.managers.CursorManager;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+	
+	public class YieldModel implements IModel
+	{
+		public function YieldModel()
+		{
+		}
+		
+		public function execute():void
+		{
+		}
+		
+		public function onResult(event:ResultEvent):void
+		{
+			if (!event.result)
+			{
+				return;
+			}
+			var numberFormatter:EZNumberFormatter = new EZNumberFormatter();
+			numberFormatter.precision = 2;
+			WindowManager.getInstance().viewManager.yieldCalculator.txtRate.text =
+				numberFormatter.format(event.result.rate * 100);
+			CursorManager.removeBusyCursor();
+		}
+		
+		public function onFault(event:FaultEvent):void
+		{
+			Alert.show(event.fault.faultDetail, Messages.TITLE_ERROR);
+			CursorManager.removeBusyCursor();
+		}
+		
+		public function set isDirty(value:Boolean):void
+		{
+		}
+	}
+}

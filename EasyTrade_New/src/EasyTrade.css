@@ -1,0 +1,513 @@
+/* CSS file 
+
+@ Author Anas Naeem
+
+Project ATS (Easy Trade)
+
+Version 1.0 
+
+*/
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace mx "library://ns.adobe.com/flex/mx";
+@namespace mdi "http://code.google.com/p/flexlib/";
+@namespace components "components.*";
+@namespace skins "assets.skins.*";
+
+/*Global CSS*/
+global
+{
+	fontFamily:Verdana;
+	content-background-color: #FFFFFF;
+	color: #000202;
+	chrome-color: #718DAA;
+	selection-color: #3B98F7;
+	roll-over-color: #ADD0F3;
+	focus-color: #B6B786;
+	symbol-color: #635D5D;
+}
+
+.bgNewsTapeTicker
+{
+	background-color		: #ADC5ED;
+}
+
+.bgSymbolTapeTicker
+{
+	background-color		: #000000;
+}
+
+.welcomeString
+{
+	font-weight:bold;
+	font-size : 12;
+}
+mx|MenuBar {
+	backgroundAlpha: 0.18;
+	backgroundColor: #767676 !important;
+	highlightAlphas: 0.64, 0.14;
+	fillAlphas: 0.5, 0.5;
+	fillColors: #e6eeee, #e6eeee;
+	color:#000000;
+	fontFamily:Verdana;
+	fontSize:11;
+	fontWeight:bold;
+	textRollOverColor: #ffffff;
+	rollOverColor:#000000;
+	themeColor:#000000;
+}
+/*#2a2a2a   #1e1e1e  #1e1e19*/
+mx|DataGrid {
+	backgroundAlpha: 1;
+	backgroundColor: #000000;
+	alternatingItemColors: #000000, #1e1e1e;
+	headerColors: #cecece, #898989;
+	horizontalGridLines: false;
+	letterSpacing: 0;
+	horizontalGridLineColor: #993366;
+	verticalGridLines: true;
+	verticalGridLineColor: #292929;
+	rollOverColor: #cccccc;
+	borderThickness: 0;
+	iconColor: #00cc00;
+	selectionColor: #4f4f50;
+	color: #ffffff;
+	textSelectedColor: #ffffff;
+	textIndent: 0;
+	fontFamily: Verdana;
+	fontSize: 11;
+	fontWeight: normal;
+	headerStyleName: "mydataGridHeaderStyle";
+}
+
+.mydataGridHeaderStyle {
+	color: #262626;
+	letterSpacing: 0;
+	textAlign: left;
+}
+
+mx|ToolTip {
+	backgroundAlpha: 1;
+	cornerRadius: 6;
+	backgroundColor: #000000;
+	color: #ffffff;
+}
+
+/*MDI Window CSS*/
+mdi|MDIWindow
+{
+	/*windowControlsClass: ClassReference("controller.windowControls.EasyTradeWindowControl");*/
+	titleStyleName: "easyTradeTitleStyle";
+	
+	minimizeBtnStyleNameNoFocus: "mdiWindowMinimizeBtnNoFocus";
+	maximizeBtnStyleNameNoFocus: "mdiWindowMaximizeBtnNoFocus";
+	restoreBtnStyleNameNoFocus: "mdiWindowRestoreBtnNoFocus";
+	closeBtnStyleNameNoFocus: "mdiWindowCloseBtnNoFocus";
+}
+.easyTradeTitleStyle
+{
+	fontFamily: Verdana;
+	fontSize: 12;
+	fontWeight: normal;
+	color: #000000;
+	fontWeight:bold;
+}
+
+.mdiWindowFocus
+{
+	borderColor: #ccccce;
+	borderAlpha: 1;
+	borderThicknessLeft: 2;
+	borderThicknessTop: 2;
+	borderThicknessBottom: 2;
+	borderThicknessRight: 2;
+	borderVisible:true;
+	borderWeight:2;
+	roundedBottomCorners: false;
+	cornerRadius:0;
+	headerHeight: 29;
+	backgroundAlpha: 1; 
+	titleBackgroundSkin:ClassReference("assets.skins.MDITitleBackgroundSkin")
+	
+}
+.mdiWindowNoFocus
+{
+	borderColor: #ccccce;
+	borderAlpha: 1;
+	borderThicknessLeft: 2;
+	borderThicknessTop: 2;
+	borderThicknessBottom: 2;
+	borderThicknessRight: 2;
+	borderVisible:true;
+	borderWeight:2;
+	roundedBottomCorners: false;
+	cornerRadius:0;
+	headerHeight: 29;
+	backgroundAlpha: 1; 
+	titleBackgroundSkin:ClassReference("assets.skins.MDITitleBackgroundSkin")
+		
+}
+.mdiWindowMinimizeBtn
+{
+	upSkin:        ClassReference("components.buttonMinimize");
+	overSkin:      ClassReference("components.buttonMinimize");
+	downSkin:      ClassReference("components.buttonMinimize");
+	disabledSkin:  ClassReference("components.buttonMinimize");
+}
+
+.mdiWindowMinimizeBtnNoFocus
+{
+	upSkin:        ClassReference("components.buttonMinimize");
+	overSkin:      ClassReference("components.buttonMinimize");
+	downSkin:      ClassReference("components.buttonMinimize");
+	disabledSkin:  ClassReference("components.buttonMinimize");
+}
+
+.mdiWindowMaximizeBtn
+{
+	upSkin:        ClassReference("components.buttonMaximize");
+	overSkin:      ClassReference("components.buttonMaximize");
+	downSkin:      ClassReference("components.buttonMaximize");
+	disabledSkin:  ClassReference("components.buttonMaximize");
+}
+
+.mdiWindowMaximizeBtnNoFocus
+{
+	upSkin:        ClassReference("components.buttonMaximize");
+	overSkin:      ClassReference("components.buttonMaximize");
+	downSkin:      ClassReference("components.buttonMaximize");
+	disabledSkin:  ClassReference("components.buttonMaximize");
+}
+
+.mdiWindowRestoreBtn
+{
+	upSkin:        ClassReference("components.buttonMaximize");
+	overSkin:      ClassReference("components.buttonMaximize");
+	downSkin:      ClassReference("components.buttonMaximize");
+	disabledSkin:  ClassReference("components.buttonMaximize");
+}
+
+.mdiWindowRestoreBtnNoFocus
+{
+	upSkin:        ClassReference("components.buttonMaximize");
+	overSkin:      ClassReference("components.buttonMaximize");
+	downSkin:      ClassReference("components.buttonMaximize");
+	disabledSkin:  ClassReference("components.buttonMaximize");
+}
+
+.mdiWindowCloseBtn
+{
+	upSkin:        ClassReference("components.buttonClose");
+	overSkin:      ClassReference("components.buttonClose");
+	downSkin:      ClassReference("components.buttonClose");
+	disabledSkin:  ClassReference("components.buttonClose");
+}
+
+.mdiWindowCloseBtnNoFocus
+{
+	upSkin:        ClassReference("components.buttonClose");
+	overSkin:      ClassReference("components.buttonClose");
+	downSkin:      ClassReference("components.buttonClose");
+	disabledSkin:  ClassReference("components.buttonClose");
+}
+
+/*other CSS*/
+mx|HScrollBar {
+	cornerRadius: 0;
+	highlightAlphas: 0, 0;
+	fillAlphas: 0.6, 0.4, 0.75, 0.65;
+	fillColors: #f3f3f3, #f3f3f3, #eaeaea, #cacacc;
+	themeColor: #d8edfa;
+	borderColor: #ffffff;
+	iconColor: #212121;
+	thumbOffset: 0;
+}
+s|HScrollBar {
+	cornerRadius: 0;
+	highlightAlphas: 0, 0;
+	fillAlphas: 0.6, 0.4, 0.75, 0.65;
+	fillColors: #f3f3f3, #f3f3f3, #eaeaea, #cacacc;
+	borderColor: #ffffff;
+	iconColor: #212121;
+	thumbOffset: 0;
+}
+
+mx|VScrollBar {
+	cornerRadius: 0;
+	highlightAlphas: 0, 0;
+	fillAlphas: 0.6, 0.4, 0.75, 0.65;
+	fillColors: #f3f3f3, #f3f3f3, #eaeaea, #cacacc;
+	themeColor: #d8edfa;
+	borderColor: #ffffff;
+	iconColor: #212121;
+	thumbOffset: 0;
+}
+s|VScrollBar {
+	cornerRadius: 0;
+	highlightAlphas: 0, 0;
+	fillAlphas: 0.6, 0.4, 0.75, 0.65;
+	fillColors: #f3f3f3, #f3f3f3, #eaeaea, #cacacc;
+	borderColor: #ffffff;
+	iconColor: #212121;
+	thumbOffset: 0;
+}
+
+mx|CheckBox {
+	textIndent: 0;
+	letterSpacing: 0;
+	highlightAlphas: 0.3, 0.26;
+	fillAlphas: 0.24, 0.4, 0.75, 0.65;
+	fillColors: #000000, #000066, #cc3366, #9966ff;
+	borderColor: #cccccc;
+	iconColor: #0000cc;;
+}
+s|Button {
+	
+	highlightAlphas: 0.3, 0.14;
+	fillColors: #7ba7d5, #7ba7d5, #4e86c1, #4e86c1;
+	textRollOverColor: #ffffff;
+	textSelectedColor: #cccccc;
+	borderColor: #548dc9;
+}
+mx|ApplicationControlBar {
+	highlightAlphas: 0, 0;
+	fillAlphas: 1, 1;
+	fillColors: #1e1e1e, #e0e0e0;
+	cornerRadius: 0;
+}
+mx|TabNavigator{
+	tabHeight: 22;
+	tabWidth: 127;
+	cornerRadius: 0;
+	horizontalAlign: left;
+	tabOffset: 0;
+	backgroundAlpha: 0;
+	backgroundColor: #ffffff;
+	borderStyle: none;
+	borderColor: #fb6506;
+	borderThickness: 14;
+	dropShadowEnabled: false;
+	tabStyleName: "myTabs";
+	firstTabStyleName: "myTabs";
+	lastTabStyleName: "myTabs";
+	selectedTabTextStyleName: "mySelectedTabs";
+}
+
+.myTabs {
+	cornerRadius: 5;
+	highlightAlphas: 0, 0;
+	letterSpacing: 0;
+	fillAlphas: 1, 1;
+	fillColors: #e3e3e5, #e3e3e5;
+	backgroundAlpha: 1;
+	backgroundColor: #fb6506;
+	borderColor: #9e9e9e;
+	color: #2c2c2c;
+	textRollOverColor: #2c2c2c;
+	
+}
+
+.mySelectedTabs {
+	color: #ffffff;
+	textRollOverColor: #2c2c2c;
+	textAlign: left;
+}
+
+mx|Panel {
+	borderStyle: none;
+	borderAlpha: 0.5;
+	borderThicknessLeft: 1;
+	borderThicknessTop: 10;
+	borderThicknessBottom: 1;
+	borderThicknessRight: 1;
+	roundedBottomCorners: false;
+	cornerRadius: 0;
+	headerHeight: 0;
+	backgroundAlpha: 1;
+	highlightAlphas: 0, 0;
+	headerColors: #cecece, #919191;
+	backgroundColor: #e3dfde;
+	dropShadowEnabled: false;
+
+}
+
+.quickOrderButton
+{
+	cornerRadius: 0;
+	paddingLeft: 10;
+	highlightAlphas: 0, 0;
+	fillAlphas: 1, 1, 1, 1;
+	fillColors: #cecece, #919191, #cecece, #919191;
+}
+
+.firstComboBox {
+	cornerRadius: 0;
+	color: #f8f8f8;
+	borderColor: #b7babc;
+	iconColor: #003300;
+	highlightAlphas: 0.35, 0;
+	fillAlphas: 1, 1, 1, 1;
+	fillColors: #858585, #303030, #858585, #303030;
+	arrowButtonWidth: 0;
+	backgroundAlpha: 1;
+	useRollOver: true;
+	alternatingItemColors: #cccccc, #666666;
+	/*openDuration: 753;
+	closeDuration: 753;*/
+	dropdownStyleName: "myComboBoxDropDowns";
+}
+
+.myComboBoxDropDowns {
+	cornerRadius: 20;
+	dropShadowEnabled: false;
+}
+
+.blueCustomButtonStyle {
+	cornerRadii: 13, 12, 13, 13;
+	borderColors: #72C9FE, #0B6FA1;
+	overBorderColors: #003399,#003399;
+	selectedBorderColors: #72C9FE, #0B6FA1;
+	borderThickness: 1;
+	borderAlpha: 1;
+	fillColors: #72C9FE, #0B6FA1;
+	fillAlphas: 1, 1;
+	fillColorRatios: 0, 200;
+	overFillColors: #0B6FA1 #72C9FE;
+	overFillAlphas: 0.7, 1;
+	overFillColorRatios: 0, 200;
+	selectedFillColors: #72C9FE, #0B6FA1;
+	selectedFillAlphas: 1, 1;
+	selectedFillColorRatios: 0, 200;
+	highlightAlphas: 0, 0;
+	color: #FFFFFF;
+	textRollOverColor: #FFFFFF;
+	fontSize: 11;
+}
+
+.pinkCustomButtonStyle {
+	cornerRadii: 13, 12, 13, 13;
+	borderColors: #FF99C0, #BE3166;
+	overBorderColors: #003399,#003399;
+	selectedBorderColors: #FF99C0, #BE3166;
+	borderThickness: 1;
+	borderAlpha: 1;
+	fillColors: #FF99C0, #BE3166;
+	fillAlphas: 1, 1;
+	fillColorRatios: 0, 200;
+	overFillColors: #BE3166,#FF99C0;
+	overFillAlphas: 1, 1;
+	overFillColorRatios: 200, 0;
+	selectedFillColors: #FF99C0, #BE3166;
+	selectedFillAlphas: 1, 1;
+	selectedFillColorRatios: 0, 200;
+	highlightAlphas: 0, 0;
+	color: #FFFFFF;
+	textRollOverColor: #FFFFFF;
+	fontSize: 11;
+}
+
+mx|NumericStepper
+{	
+	backgroundColor:#dfdee4;
+	borderStyle:solid;
+	borderSides:left,top,bottom,right;
+	borderThickness:1;
+	color:#333244;
+	fontFamily:Verdana;
+	fontSize:11;
+	borderColor:#8a8896;
+	iconColor:#373646;
+	themeColor:#dfdee4;
+}
+
+.greyComboBox {
+	cornerRadius: 0;
+	color: #000000;
+	backgroundColor:#FFFFFF;
+	borderColor: #b7babc;
+	iconColor: #003300;
+	highlightAlphas: 0.35, 0;
+	fillAlphas: 1, 1, 1, 1;
+	fillColors: #414141, #858585, #858585, #404040;
+	arrowButtonWidth: 0;
+	backgroundAlpha: 1;
+	useRollOver: true;
+	alternatingItemColors: #d0d0d0, #6e6e6e;
+	/*openDuration: 753;
+	closeDuration: 753;*/
+	dropdownStyleName: "myComboBoxDropDowns";
+}
+
+.mygreyComboBoxDropDowns {
+	cornerRadius: 20;
+	dropShadowEnabled: false;
+}
+
+.yellowComboBox {
+	cornerRadius: 0;
+	color: #f8f8f8;
+	borderColor: #b7babc;
+	iconColor: #003300;
+	highlightAlphas: 0.35, 0;
+	fillAlphas: 1, 1, 1, 1;
+	fillColors: #858585, #303030, #858585, #303030;
+	arrowButtonWidth: 0;
+	backgroundAlpha: 1;
+	useRollOver: true;
+	alternatingItemColors: #cccccc, #666666;
+	openDuration: 753;
+	closeDuration: 753;
+	dropdownStyleName: "myComboBoxDropDowns";
+}
+
+.myyellowComboBoxDropDowns {
+	cornerRadius: 20;
+	dropShadowEnabled: false;
+}
+
+.chartBackGroundStyle {
+	horizontalShowOrigin:true;
+	horizontalTickAligned:false;
+	horizontalChangeCount:1; 
+	verticalShowOrigin:false;
+	verticalTickAligned:true; 
+	verticalChangeCount:1;
+	horizontalFill:#121117;
+	horizontalAlternateFill:#121117; 
+	backgroundColor:#121117;
+}  
+.columnChartBorder{
+	
+}
+
+.buyOrdersMessage
+{
+	backgroundColor:#1684b9;
+}
+
+.sellOrdersMessages{
+	backgroundColor:#c036a5;
+}
+
+.orderBorders
+{
+	borderThicknessTop:1;
+	borderThicknessLeft:1;
+	borderThicknessRight:1;
+	borderThicknessBottom:1;
+	borderStyle:solid;
+}
+
+.myList {
+	alternatingItemColors: #000000, #222222;
+}
+mx|LinkBar
+{
+	textRollOverColor: #fca91c;
+	textSelectedColor: #c74009;
+}
+
+/*
+.errorTip { borderColor: #0000FF}
+openDuration: 753;
+	closeDuration: 753;*/
+

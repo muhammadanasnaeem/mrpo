@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin name="CustomApplicationSkin"
+		xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		alpha.disabled="0.5"
+		width="507"
+		height="22">
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="disabled"/>
+		<s:State name="disabledWithPrompt"/>
+		<s:State name="normalWithPrompt"/>
+	</s:states>
+
+	<fx:Metadata>
+		<![CDATA[ 
+		[HostComponent("spark.components.TextInput")]
+		]]>
+	</fx:Metadata>
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+	<s:Rect id="bg"
+			width="507"
+			height="22">
+		<s:fill>
+			<s:LinearGradient rotation="-270">
+				<s:entries>
+					<s:GradientEntry color="0x52baef"
+									 ratio="0.00"/>
+					<s:GradientEntry color="0x92d6f9"
+									 ratio="1.0"/>
+				</s:entries>
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+</s:Skin>

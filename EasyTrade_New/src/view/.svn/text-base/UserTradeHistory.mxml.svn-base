@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%"
+		 initialize="group1_initializeHandler(event)" xmlns:common="common.*" xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			import businessobjects.UserTradeBO;
+			
+			import mx.events.DataGridEvent;
+			
+			import spark.events.IndexChangeEvent;
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/UserTradeHistory.as"
+
+			
+
+			protected function traders_changeHandler(event:IndexChangeEvent):void
+			{
+				ModelManager.getInstance().updateUserTradeHistory();
+			}
+			
+			public function formatNegotiatedTrade(data:Object):String
+			{
+				var utBO:UserTradeBO = data as UserTradeBO;
+				if (utBO)
+				{
+					if (utBO.SYMBOL_CODE.length > 0)
+					{
+						return utBO.IS_NEGOTIATED ? 'YES' : 'NO';
+					}
+				}
+				return "";
+			}
+
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="DD/MM/YYYY LL:NN:SS A" />
+		<components:EZCurrencyFormatter id="moneyFormatter" />
+		<components:EZNumberFormatter id="numberFormatter" />
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%" height="30" horizontalCenter="0" top="0">
+		<s:Label text="Exchange:" top="7" horizontalCenter="-252"/>
+		<components:EZDropDownTextInput width="49" top="2" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-199" />
+		<s:Label text="Market:" top="7" horizontalCenter="-147"/>
+		<components:EZDropDownTextInput width="49" top="2" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" horizontalCenter="-103" />
+		<s:Label text="Symbol:" top="7" horizontalCenter="-50"/>
+		<s:TextInput width="110" top="2" height="20" id="txtSymbol" horizontalCenter="33" keyDown="txtSymbol_keyDownHandler(event)" />
+	</s:BorderContainer>
+	<components:EZDataGrid 
+		right="1" left="1" bottom="1" top="30"
+		id="adgUserTradeHistory" 
+		width="100%" height="100%"
+		dataProvider="{ModelManager.getInstance().userTradeHistoryModel.userTradeHistoryGroups}" headerRelease="adgUserTradeHistory_headerReleaseHandler(event)" >
+		<components:columns>
+			<mx:DataGridColumn headerText="Symbol" dataField="SYMBOL_CODE" draggable="false" />
+			<mx:DataGridColumn headerText="User" dataField="USER" sortable="false" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{data.summary ? data.totalTxt : data.USER}" width="100%" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>	
+
+			<mx:DataGridColumn headerText="Client" dataField="CLIENT_CODE" draggable="false">
+				<!--<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.CLIENT_CODE)}" width="100%" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>-->
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="Order Number" dataField="ORDER_ID" sortable="false" >
+				<mx:itemRenderer>
+					<fx:Component>
+						
+						<mx:Label width="100%" color="{(data.summary) ? 0x3767e0: 0x000000}" text="{getBuyPriceSummaryValue(data)}" textAlign="right" >
+							<fx:Script>
+								<![CDATA[
+																		
+									public function getBuyPriceSummaryValue(data:Object):String{
+										if(data.mainSummary)
+										{
+											if(data.buyValueGrandTotal == "0")
+											{
+												return "";
+											}
+											return  outerDocument.numberFormatter.format(data.buyValueGrandTotal);
+										}
+										else if(data.summary)
+										{
+											if(data.buyValueTotal == "0")
+											{
+												return "";
+											}
+											return  outerDocument.numberFormatter.format(data.buyValueTotal);
+										}
+										else
+										{
+											return  outerDocument.numberFormatter.format(data.ORDER_ID);									
+										}
+									}
+								]]>
+							</fx:Script>
+						</mx:Label>	
+						
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<!--mx:DataGridColumn headerText="Exchange" dataField="EXCHANGE_CODE" />
+			<mx:DataGridColumn headerText="Market" dataField="MARKET_CODE" /-->
+			
+			<mx:DataGridColumn headerText="Price" dataField="PRICE" sortable="false">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label color="{(data.summary) ? 0x3767e0: 0x000000}" text="{getBuyValueSummaryValue(data)}" width="100%" textAlign="right" >
+							<fx:Script>
+								<![CDATA[
+									
+									public function getBuyValueSummaryValue(data:Object):String{
+										
+										
+										if(data.mainSummary)
+										{
+											if(data.buyPriceGrandTotal == "0")
+											{
+												return "";
+											}
+											return  outerDocument.moneyFormatter.format(data.buyPriceGrandTotal);
+										}
+										else if(data.summary)
+										{
+											if(data.buyPriceTotal == "0")
+											{
+												return "";
+											}
+											return  outerDocument.moneyFormatter.format(data.buyPriceTotal);
+										}
+										else
+										{
+											return  outerDocument.moneyFormatter.format(data.PRICE);									
+										}
+									}
+								]]>
+							</fx:Script>
+						</mx:Label>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="Volume" dataField="VOLUME" sortable="false" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label color="{(data.summary) ? 0xe65cd4: 0x000000}" text="{getSellPriceSummaryValue(data)}" width="100%" textAlign="right" >
+							<fx:Script>
+								<![CDATA[
+									
+									public function getSellPriceSummaryValue(data:Object):String{
+										if(data.mainSummary)
+										{
+											if(data.sellValueGrandTotal == "0")
+											{
+												return "";
+											}
+											return  outerDocument.numberFormatter.format(data.sellValueGrandTotal);
+										}
+										else if(data.summary)
+										{
+											if(data.sellValueTotal == "0")
+											{
+												return "";
+											}
+											return  outerDocument.numberFormatter.format(data.sellValueTotal);
+										}
+										else
+										{
+											return  outerDocument.numberFormatter.format(data.VOLUME);									
+										}
+									}
+								]]>
+							</fx:Script>
+						</mx:Label>						
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="Ticket ID" dataField="TICKET_ID" sortable="false" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label color="{(data.summary) ? 0xe65cd4: 0x000000}" text="{getSellValueSummaryValue(data)}" width="100%" textAlign="right" >
+							<fx:Script>
+								<![CDATA[
+									
+									public function getSellValueSummaryValue(data:Object):String{
+										
+										if(data.mainSummary)
+										{
+											if(data.sellPriceGrandTotal == "0")
+											{
+												return "";
+											}
+											return  outerDocument.moneyFormatter.format(data.sellPriceGrandTotal);
+										}
+										else if(data.summary)
+										{
+											if(data.sellPriceTotal == "0")
+											{
+												return "";
+											}
+											return  outerDocument.moneyFormatter.format(data.sellPriceTotal);
+										}
+										else
+										{
+											return  outerDocument.numberFormatter.format(data.TICKET_ID);									
+										}
+									}
+								]]>
+							</fx:Script>
+						</mx:Label>						
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="Time" dataField="ENTRY_DATETIME" width="150" sortable="false">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.dateFormatter.format(data.ENTRY_DATETIME)}" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Is Negotiated" dataField="IS_NEGOTIATED" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.formatNegotiatedTrade(data)}" width="100%" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</components:columns>
+	</components:EZDataGrid>
+	<s:Button label="Refresh" width="75" height="20" id="btnRefresh" top="2" horizontalCenter="133" click="btnRefresh_clickHandler(event)"/>
+	<s:Label text="Trader:" horizontalCenter="195" top="7"/>
+	<s:DropDownList width="75" change="traders_changeHandler(event)" dataProvider="{tradersList}" height="20" id="traders" horizontalCenter="255" top="2"/>
+</s:Group>

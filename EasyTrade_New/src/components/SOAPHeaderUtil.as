@@ -1,0 +1,60 @@
+package components
+{
+	import com.adobe.crypto.WSSEUsernameToken;
+
+	import mx.rpc.soap.SOAPHeader;
+
+	public class SOAPHeaderUtil
+	{
+		private static const WSSE_SECURITY:QName=new QName("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "Security");
+
+		public static function returnWSSEHeaderWithNonceAndTimestamp(username:String, password:String, nonce:String=null, timestamp:Date=null):SOAPHeader
+		{
+			var timestampToken:String="Timestamp-" + Math.round(Math.random() * 999999).toString();
+			var userToken:String="UsernameToken-" + Math.round(Math.random() * 999999).toString();
+			var wsseToken:Array=WSSEUsernameToken.getUsernameTokenAsArray(username, password, nonce, timestamp);
+			//<wsse:Username>{wsseToken[0]}</wsse:Username>
+			//<wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">{wsseToken[1]}</wsse:Password>
+			var headerXML:XML=<wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" >
+					<wsse:UsernameToken wsu:Id={userToken}>
+						<wsse:Username>{username}</wsse:Username>
+						<wsse:Password>{password}</wsse:Password>
+						<wsse:Nonce>{wsseToken[2]}</wsse:Nonce>
+						<wsu:Created>{wsseToken[3]}</wsu:Created>
+					</wsse:UsernameToken>
+				</wsse:Security>;
+
+			var header:SOAPHeader=new SOAPHeader(WSSE_SECURITY, headerXML);
+			header.qname=WSSE_SECURITY
+			return header;
+		}
+
+		public static function returnWSSEHeaderWithoutNonceAndTimestamp(username:String, password:String):SOAPHeader
+		{
+			var userToken:String="UsernameToken-" + Math.round(Math.random() * 999999).toString();
+			var wsseToken:Array=WSSEUsernameToken.getUsernameTokenAsArray(username, password);
+			var headerXML:XML=<wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+					<wsse:UsernameToken wsu:Id={userToken} xmlns:wsu='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'>
+						<wsse:Username>{username}</wsse:Username>
+						<wsse:Password>{password}</wsse:Password>
+					</wsse:UsernameToken>
+				</wsse:Security>;
+			var header:SOAPHeader=new SOAPHeader(WSSE_SECURITY, headerXML);
+			return header;
+		}
+
+		public static function getTimestampedHeader(username:String, password:String):SOAPHeader
+		{
+			var timestamp:String="Timestamp-" + Math.round(Math.random() * 999999).toString();
+			var usernameToken:String="UsernameToken-" + Math.round(Math.random() * 999999).toString();
+			var wsseToken:Array=WSSEUsernameToken.getUsernameTokenAsArray(username, password);
+
+			var wsseSecurity:QName=new QName("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "Security");
+			var header:SOAPHeader=new SOAPHeader(wsseSecurity, {});
+
+			header.content="<wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\" soapenv:mustUnderstand=\"1\">"
+			"<wsu:Timestamp xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\" wsu:Id=\"" + timestamp + "\">" + "<wsu:Created>2010-09-12T10:00:29.483Z</wsu:Created>" + "<wsu:Expires>2011-09-12T10:59:29.483Z</wsu:Expires>" + "</wsu:Timestamp>" + "<wsse:UsernameToken xmlns:wsu=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd\" wsu:Id=\"" + usernameToken + "\">" + "<wsse:Username>" + username + "</wsse:Username>" + "<wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">" + password + "</wsse:Password>" + "</wsse:UsernameToken>" + "</wsse:Security>";
+			return header;
+		}
+	}
+}

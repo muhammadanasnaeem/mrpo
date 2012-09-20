@@ -1,0 +1,678 @@
+package model
+{
+	import businessobjects.BestMarketAndSymbolSummaryBO;
+	import businessobjects.BestMarketBO;
+	import businessobjects.MarketWatchBO;
+	import businessobjects.SymbolBO;
+	import businessobjects.SymbolSummaryBO;
+	
+	import common.Constants;
+	import common.HashMap;
+	import common.Messages;
+	
+	import components.ComboBoxItem;
+	import components.EZCurrencyFormatter;
+	import components.EZNumberFormatter;
+	
+	import controller.ModelManager;
+	import controller.ProfileManager;
+	import controller.ViewManager;
+	import controller.WindowManager;
+	
+	import flash.external.ExternalInterface;
+	
+	import mx.collections.ArrayCollection;
+	import mx.collections.ArrayList;
+	import mx.controls.Alert;
+	import mx.core.mx_internal;
+	import mx.managers.CursorManager;
+	import mx.resources.ResourceManager;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+	
+	import services.LSListener;
+	import services.QWClient;
+
+	public class BestMarketAndSymbolSummaryModel implements IModel
+	{
+		/////////////////////////////////////////////////////////
+		private var isDirty_:Boolean=true;
+		public  var symbolSummary1:SymbolSummaryBO;
+		public function get isDirty():Boolean
+		{
+			return isDirty_;
+		}
+
+		public function set isDirty(value:Boolean):void
+		{
+			isDirty_=value;
+		}
+		/////////////////////////////////////////////////////////
+
+		private var exchangeID_:Number=-1;
+
+		public function get exchangeID():Number
+		{
+			return exchangeID_;
+		}
+
+		public function set exchangeID(value:Number):void
+		{
+			exchangeID_=value;
+		}
+		/////////////////////////////////////////////////////////
+
+		private var marketID_:Number=-1;
+
+		public function get marketID():Number
+		{
+			return marketID_;
+		}
+
+		public function set marketID(value:Number):void
+		{
+			marketID_=value;
+		}
+		/////////////////////////////////////////////////////////
+
+		private var symbolID_:Number=-1;
+
+		public function get symbolID():Number
+		{
+			return symbolID_;
+		}
+
+		public function set symbolID(value:Number):void
+		{
+			symbolID_=value;
+		}
+		/////////////////////////////////////////////////////////
+
+		private var symbolName_:String="";
+
+		public function get symbolName():String
+		{
+			return symbolName_;
+		}
+
+		public function set symbolName(value:String):void
+		{
+			symbolName_=value;
+		}
+		/////////////////////////////////////////////////////////
+
+		//[Bindable]
+		private var bestMarketAndSymbolSummaryMap_:HashMap=new HashMap();
+
+		[Bindable]
+		public function get bestMarketAndSymbolSummaryMap():HashMap
+		{
+			return bestMarketAndSymbolSummaryMap_;
+		}
+
+		public function set bestMarketAndSymbolSummaryMap(value:HashMap):void
+		{
+			bestMarketAndSymbolSummaryMap_=value;
+		}
+
+		/////////////////////////////////////////////////////////
+
+		public function BestMarketAndSymbolSummaryModel()
+		{
+		}
+
+		/////////////////////////////////////////////////////////
+
+		public function execute():void
+		{
+			//var key:String = exchangeID.toString() + "_" + marketID.toString() + "_" + symbolName;
+			if (exchangeID > -1 && marketID > -1 && symbolID > -1)
+			{
+				QWClient.getInstance().getBestMarketAndSymbolSummary(exchangeID, marketID, symbolID);
+			}
+		}
+
+		/////////////////////////////////////////////////////////
+
+		public function onResult(event:ResultEvent):void
+		{
+			if (!event.result)
+			{
+				return;
+			}
+			
+			var ezNumberFormatter:EZNumberFormatter=new EZNumberFormatter();
+			var ezCurrencyFormatter:EZCurrencyFormatter=new EZCurrencyFormatter();
+
+			var bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO=new BestMarketAndSymbolSummaryBO();
+			//var key:String = event.result.exchangeId.toString() + "_" + event.result.marketId.toString() + "_" + event.result.symbolName;
+			//var key:String = event.result.exchangeId.toString() + "_" + event.result.marketId.toString() + "_" + event.result.symbolID;
+			//var key:String = event.result.exchangeId.toString() + "_" + event.result.marketId.toString() + "_" + symbolID;
+			var key:String=event.result.exchangeId.toString() + "_" + event.result.marketId.toString() + "_" + event.result.symbolId;
+
+			bestMarketAndSymbolSummary.exchangeId=event.result.exchangeId;
+			bestMarketAndSymbolSummary.marketId=event.result.marketId;
+			bestMarketAndSymbolSummary.symbolName=event.result.symbolName;
+			
+			//Start: to cater method name change of getBestMarketAndSymbolSummary
+			bestMarketAndSymbolSummary.symbolID=event.result.symbolId;
+			var symbolBO:SymbolBO=ModelManager.getInstance().exchangeModel.getSymbolDetail(bestMarketAndSymbolSummary.exchangeId, bestMarketAndSymbolSummary.marketId, bestMarketAndSymbolSummary.symbolID) as SymbolBO;
+			if (symbolBO)
+				bestMarketAndSymbolSummary.symbolName=symbolBO.SYMBOL;
+			//End: to cater method name change of getBestMarketAndSymbolSummary
+
+			var symbolSummary:SymbolSummaryBO=new SymbolSummaryBO();
+			var bestMarket:BestMarketBO=new BestMarketBO();
+			symbolSummary1 = new SymbolSummaryBO();
+			
+			symbolSummary.stats.lastDayClosePrice = "";
+			symbolSummary1.stats.lastDayClosePrice = symbolSummary.stats.lastDayClosePrice;
+			if (event.result.symbolSummary_)
+			{
+				if (event.result.symbolSummary_.browser)
+				{
+					symbolID=event.result.symbolSummary_.browser.actualID_;
+					symbolSummary.browser.symbolID=event.result.symbolSummary_.browser.actualID_;
+					symbolSummary.browser.INTERNAL_SYMBOL_ID=event.result.symbolSummary_.browser.internalID_;
+
+					symbolSummary.browser.company=event.result.symbolSummary_.browser.symbolCompanyDetails_.company_;
+					symbolSummary.browser.sector=event.result.symbolSummary_.browser.symbolCompanyDetails_.sector_;
+					symbolSummary.browser.clearingType=event.result.symbolSummary_.browser.symbolCompanyDetails_.clearingType_;
+
+					symbolSummary.browser.tickSize=event.result.symbolSummary_.browser.tickSize_;
+					symbolSummary.browser.fiftyTwoWeekHigh=event.result.symbolSummary_.browser.fiftyTwoWeekHigh_;
+					symbolSummary.browser.fiftyTwoWeekLow=event.result.symbolSummary_.browser.fiftyTwoWeekLow_;
+					symbolSummary.browser.earningPerShare=event.result.symbolSummary_.browser.earningPerShare_;
+					symbolSummary.browser.priceEarningRatio=event.result.symbolSummary_.browser.priceEarningRatio_;
+					symbolSummary.browser.lotSize=event.result.symbolSummary_.browser.lotSize_;
+					symbolSummary.browser.upperVolumeLimit=event.result.symbolSummary_.browser.upperVolumeLimit_;
+					symbolSummary.browser.lowerVolumeLimit=event.result.symbolSummary_.browser.lowerVolumeLimit_;
+					symbolSummary.browser.upperValueLimit=event.result.symbolSummary_.browser.upperValueLimit_;
+					symbolSummary.browser.lowerValueLimit=event.result.symbolSummary_.browser.lowerValueLimit_;
+
+					symbolSummary.browser.orderWindowUp=event.result.symbolSummary_.browser.orderWindow_.up_;
+					symbolSummary.browser.orderWindowDown=event.result.symbolSummary_.browser.orderWindow_.down_;
+					symbolSummary.browser.circuitBreakerUp=event.result.symbolSummary_.browser.circuitBreaker_.up_;
+					symbolSummary.browser.circuitBreakerDown=event.result.symbolSummary_.browser.circuitBreaker_.down_;
+					symbolSummary.browser.spotPriceUp=event.result.symbolSummary_.browser.spotPrice_.up_;
+					symbolSummary.browser.spotPriceDown=event.result.symbolSummary_.browser.spotPrice_.down_;
+
+					symbolSummary.browser.spotScheduleStart=event.result.symbolSummary_.browser.spotSchedule_.start_;
+					symbolSummary.browser.spotScheduleEnd=event.result.symbolSummary_.browser.spotSchedule_.end_;
+				}
+				else
+				{
+					symbolSummary.browser=null;
+				}
+
+				if (event.result.symbolSummary_.stats)
+				{
+					symbolSummary.stats.totalSizeTraded=event.result.symbolSummary_.stats.totalSizeTraded_;
+					symbolSummary.stats.totalNoOfTrades=event.result.symbolSummary_.stats.totalNoOfTrades_;
+					symbolSummary.stats.lastTradeSize=event.result.symbolSummary_.stats.lastTradeSize_;
+					symbolSummary.stats.fiftyTwoWeekHigh=event.result.symbolSummary_.stats.fiftyTwoWeekHigh_;
+					symbolSummary.stats.fiftyTwoWeekLow=event.result.symbolSummary_.stats.fiftyTwoWeekLow_;
+					symbolSummary.stats.turnover=event.result.symbolSummary_.stats.turnover_;
+					symbolSummary.stats.lastTradePrice=event.result.symbolSummary_.stats.lastTradePrice_;
+					symbolSummary.stats.averagePrice=event.result.symbolSummary_.stats.averagePrice_;
+					symbolSummary.stats.netChange=event.result.symbolSummary_.stats.netChange_;
+					symbolSummary.stats.lastDayClosePrice = event.result.symbolSummary_.stats.lastDayClosePrice_.toString();
+					symbolSummary1.stats.lastDayClosePrice = event.result.symbolSummary_.stats.lastDayClosePrice_.toString();
+					
+					symbolSummary.stats.open=event.result.symbolSummary_.stats.ohlc_.open_;
+					symbolSummary.stats.high=event.result.symbolSummary_.stats.ohlc_.high_;
+					symbolSummary.stats.low=event.result.symbolSummary_.stats.ohlc_.low_;
+					symbolSummary.stats.close=event.result.symbolSummary_.stats.ohlc_.close_;
+					try
+					{
+						windowManager.viewManager.symbolSumm.lastDayField.text = event.result.symbolSummary_.stats.lastDayClosePrice_;
+					}catch(e:Error)
+					{
+						trace(e.message);
+					}
+					// modified on 6/1/2011
+					//ModelManager.getInstance().symbolTickerFeedModel.addFeedItem(event.result.symbolName, symbolSummary.stats.netChange, symbolSummary.stats.lastTradePrice, symbolSummary.stats.lastTradeSize);
+					ModelManager.getInstance().symbolTickerFeedModel.addFeedItem(bestMarketAndSymbolSummary.symbolName, symbolSummary.stats.netChange, symbolSummary.stats.lastTradePrice, symbolSummary.stats.lastTradeSize);
+
+				}
+				else
+				{
+					symbolSummary.stats=null;
+				}
+			}
+			else
+			{
+				symbolSummary=null;
+			}
+
+			if (event.result.bestMarket_)
+			{
+				if (event.result.bestMarket_.buyPriceLevel_)
+				{
+					if (event.result.bestMarket_.buyPriceLevel_.PRICE)
+					{
+						bestMarket.buyOrderBO.PRICE=event.result.bestMarket_.buyPriceLevel_.PRICE;
+					}
+					if (event.result.bestMarket_.buyPriceLevel_.VOLUME)
+					{
+						bestMarket.buyOrderBO.VOLUME=event.result.bestMarket_.buyPriceLevel_.VOLUME;
+					}
+				}
+				else
+				{
+					bestMarket.buyOrderBO=null;
+				}
+				if (event.result.bestMarket_.sellPriceLevel_)
+				{
+					if (event.result.bestMarket_.sellPriceLevel_.PRICE)
+					{
+						bestMarket.sellOrderBO.PRICE=event.result.bestMarket_.sellPriceLevel_.PRICE;
+					}
+					if (event.result.bestMarket_.sellPriceLevel_.VOLUME)
+					{
+						bestMarket.sellOrderBO.VOLUME=event.result.bestMarket_.sellPriceLevel_.VOLUME;
+					}
+
+				}
+				else
+				{
+					bestMarket.sellOrderBO=null;
+				}
+				if (event.result.bestMarket_.symbol_)
+				{
+					bestMarket.symbolBO
+				}
+				else
+				{
+					bestMarket.symbolBO=null;
+				}
+
+			}
+			else
+			{
+				bestMarket=null;
+			}
+			bestMarketAndSymbolSummary.symbolSummary=symbolSummary;
+			bestMarketAndSymbolSummary.bestMarket=bestMarket;
+
+			if (!bestMarketAndSymbolSummaryMap_.hasKey(key))
+			{
+				bestMarketAndSymbolSummaryMap_.put(key, bestMarketAndSymbolSummary);
+			}
+
+			//update market watch window
+			var windowManager:WindowManager=WindowManager.getInstance();
+			windowManager.viewManager.marketWatch.updateMarketWatchView(bestMarketAndSymbolSummary);
+			windowManager.viewManager.buyOrder.updateOrderView(bestMarketAndSymbolSummary);
+			windowManager.viewManager.sellOrder.updateOrderView(bestMarketAndSymbolSummary);
+			
+			
+//			windowManager.viewManager.quickOrders.updateQuickOrderView(bestMarketAndSymbolSummary, event.result.bestMarket_.buyPriceLevel_.PRICE, event.result.bestMarket_.sellPriceLevel_.PRICE);
+//			windowManager.viewManager.quickOrders.secondupdateQuickOrderView(bestMarketAndSymbolSummary, event.result.bestMarket_.buyPriceLevel_.PRICE, event.result.bestMarket_.sellPriceLevel_.PRICE);
+//			windowManager.viewManager.quickOrders.thirdupdateQuickOrderView(bestMarketAndSymbolSummary, event.result.bestMarket_.buyPriceLevel_.PRICE, event.result.bestMarket_.sellPriceLevel_.PRICE);
+//			windowManager.viewManager.quickOrders.fourthupdateQuickOrderView(bestMarketAndSymbolSummary, event.result.bestMarket_.buyPriceLevel_.PRICE, event.result.bestMarket_.sellPriceLevel_.PRICE);
+			
+			// added on 23/2/2011
+			windowManager.viewManager.symbolSumm.updateSymbolSummView(bestMarketAndSymbolSummary);
+
+			// Start Modified on 28/1/2011 to fix market watch update issue on relogin 
+//			var itemName:String = symbolName + "_" + marketID;
+//			LSListener.getInstance().subscribeItem(
+//				itemName,
+//				LSListener.fieldSchemaBestMarket,
+//				LSListener.getInstance().lsClientBestMarket,
+//				windowManager.viewManager.marketWatch.updateBestMarketOrderFields
+//			);
+
+			// Start : modified on 4/4/2011 after discussion with usman 
+//			var itemName:String = bestMarketAndSymbolSummary.symbolName + "_" + bestMarketAndSymbolSummary.marketId;
+			var itemName:String="BMEMS_" + key;
+			// End : modified on 4/4/2011 after discussion with usman
+			LSListener.getInstance().subscribeItem(
+				itemName,
+				LSListener.fieldSchemaBestMarket,
+				LSListener.getInstance().lsClientBestMarket,
+				windowManager.viewManager.marketWatch.updateBestMarketOrderFields
+			);
+			// End Modified on 28/1/2011 to fix market watch update issue on relogin
+			//Start :  modified on 03/01/2011
+			//itemName = "Symbol_" + symbolID.toString();
+			itemName = "STEMS_" + key;
+			//End :  modified on 03/01/2011
+			LSListener.getInstance().subscribeItem(
+				itemName,
+				LSListener.fieldSchemaSymbolStat,
+				LSListener.getInstance().lsClientSymbolStats,
+				windowManager.viewManager.marketWatch.updateSymbolStatsOrderFields
+			);
+
+			//update buy order window
+			/*
+			WindowManager.getInstance().viewManager.buyOrder.updateOrderView(bestMarketAndSymbolSummary);
+			var itemName:String = symbolName + "_" + marketID;
+			LSListener.getInstance().subscribeItem(itemName, LSListener.fieldSchemaBestMarket, LSListener.getInstance().lsClientBestMarket, WindowManager.getInstance().viewManager.buyOrder.updateBestMarketOrderFields);
+			itemName = "Symbol_" + symbolID.toString();
+			LSListener.getInstance().subscribeItem(itemName, LSListener.fieldSchemaSymbolStat, LSListener.getInstance().lsClientSymbolStats, WindowManager.getInstance().viewManager.buyOrder.updateSymbolStatsOrderFields);
+
+			//update sell order window
+			WindowManager.getInstance().viewManager.sellOrder.updateOrderView(bestMarketAndSymbolSummary);
+			itemName = symbolName + "_" + marketID;
+			LSListener.getInstance().subscribeItem(itemName, LSListener.fieldSchemaBestMarket, LSListener.getInstance().lsClientBestMarket, WindowManager.getInstance().viewManager.sellOrder.updateBestMarketOrderFields);
+			itemName = "Symbol_" + symbolID.toString();
+			LSListener.getInstance().subscribeItem(itemName, LSListener.fieldSchemaSymbolStat, LSListener.getInstance().lsClientSymbolStats, WindowManager.getInstance().viewManager.sellOrder.updateSymbolStatsOrderFields);
+			*/
+
+			// added on 1/2/2011
+			var symbolSummaryModel:SymbolSummaryModel=ModelManager.getInstance().symbolSummaryModel;
+			if (bestMarketAndSymbolSummary.exchangeId == symbolSummaryModel.exchangeID && bestMarketAndSymbolSummary.symbolName == symbolSummaryModel.symbol && !symbolSummaryModel.isSymbolSummaryUpdate)
+			{
+				ViewManager.getInstance().symbolSumm.fillSymbolSummaryByMWBO(fillMarketWatchBO(bestMarketAndSymbolSummary));
+				symbolSummaryModel.exchangeID=-1;
+				symbolSummaryModel.symbol="";
+				symbolSummaryModel.isSymbolSummaryUpdate=true;
+			}
+
+			CursorManager.removeBusyCursor();
+		}
+		
+		////////////////////////////////////////////////////////
+		public function onResult2(event:ResultEvent):void
+		{
+			if (!event.result)
+			{
+				return;
+			}
+			
+			var ezNumberFormatter:EZNumberFormatter=new EZNumberFormatter();
+			var ezCurrencyFormatter:EZCurrencyFormatter=new EZCurrencyFormatter();
+			
+			var bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO=new BestMarketAndSymbolSummaryBO();
+			//var key:String = event.result.exchangeId.toString() + "_" + event.result.marketId.toString() + "_" + event.result.symbolName;
+			//var key:String = event.result.exchangeId.toString() + "_" + event.result.marketId.toString() + "_" + event.result.symbolID;
+			//var key:String = event.result.exchangeId.toString() + "_" + event.result.marketId.toString() + "_" + symbolID;
+			var key:String=event.result.exchangeId.toString() + "_" + event.result.marketId.toString() + "_" + event.result.symbolId;
+			
+			bestMarketAndSymbolSummary.exchangeId=event.result.exchangeId;
+			bestMarketAndSymbolSummary.marketId=event.result.marketId;
+			bestMarketAndSymbolSummary.symbolName=event.result.symbolName;
+			
+			//Start: to cater method name change of getBestMarketAndSymbolSummary
+			bestMarketAndSymbolSummary.symbolID=event.result.symbolId;
+			var symbolBO:SymbolBO=ModelManager.getInstance().exchangeModel.getSymbolDetail(bestMarketAndSymbolSummary.exchangeId, bestMarketAndSymbolSummary.marketId, bestMarketAndSymbolSummary.symbolID) as SymbolBO;
+			if (symbolBO)
+				bestMarketAndSymbolSummary.symbolName=symbolBO.SYMBOL;
+			//End: to cater method name change of getBestMarketAndSymbolSummary
+			
+			var symbolSummary:SymbolSummaryBO=new SymbolSummaryBO();
+			var bestMarket:BestMarketBO=new BestMarketBO();
+			
+			if (event.result.symbolSummary_)
+			{
+				if (event.result.symbolSummary_.browser)
+				{
+//					symbolID=event.result.symbolSummary_.browser.actualID_;
+//					symbolSummary.browser.symbolID=event.result.symbolSummary_.browser.actualID_;
+//					symbolSummary.browser.INTERNAL_SYMBOL_ID=event.result.symbolSummary_.browser.internalID_;
+//					
+//					symbolSummary.browser.company=event.result.symbolSummary_.browser.symbolCompanyDetails_.company_;
+//					symbolSummary.browser.sector=event.result.symbolSummary_.browser.symbolCompanyDetails_.sector_;
+//					symbolSummary.browser.clearingType=event.result.symbolSummary_.browser.symbolCompanyDetails_.clearingType_;
+//					
+//					symbolSummary.browser.tickSize=event.result.symbolSummary_.browser.tickSize_;
+//					symbolSummary.browser.fiftyTwoWeekHigh=event.result.symbolSummary_.browser.fiftyTwoWeekHigh_;
+//					symbolSummary.browser.fiftyTwoWeekLow=event.result.symbolSummary_.browser.fiftyTwoWeekLow_;
+//					symbolSummary.browser.earningPerShare=event.result.symbolSummary_.browser.earningPerShare_;
+//					symbolSummary.browser.priceEarningRatio=event.result.symbolSummary_.browser.priceEarningRatio_;
+//					symbolSummary.browser.lotSize=event.result.symbolSummary_.browser.lotSize_;
+//					symbolSummary.browser.upperVolumeLimit=event.result.symbolSummary_.browser.upperVolumeLimit_;
+//					symbolSummary.browser.lowerVolumeLimit=event.result.symbolSummary_.browser.lowerVolumeLimit_;
+//					symbolSummary.browser.upperValueLimit=event.result.symbolSummary_.browser.upperValueLimit_;
+//					symbolSummary.browser.lowerValueLimit=event.result.symbolSummary_.browser.lowerValueLimit_;
+//					
+//					symbolSummary.browser.orderWindowUp=event.result.symbolSummary_.browser.orderWindow_.up_;
+//					symbolSummary.browser.orderWindowDown=event.result.symbolSummary_.browser.orderWindow_.down_;
+//					symbolSummary.browser.circuitBreakerUp=event.result.symbolSummary_.browser.circuitBreaker_.up_;
+//					symbolSummary.browser.circuitBreakerDown=event.result.symbolSummary_.browser.circuitBreaker_.down_;
+//					symbolSummary.browser.spotPriceUp=event.result.symbolSummary_.browser.spotPrice_.up_;
+//					symbolSummary.browser.spotPriceDown=event.result.symbolSummary_.browser.spotPrice_.down_;
+//					
+//					symbolSummary.browser.spotScheduleStart=event.result.symbolSummary_.browser.spotSchedule_.start_;
+//					symbolSummary.browser.spotScheduleEnd=event.result.symbolSummary_.browser.spotSchedule_.end_;
+				}
+				else
+				{
+//					symbolSummary.browser=null;
+				}
+				
+				if (event.result.symbolSummary_.stats)
+				{
+//					symbolSummary.stats.totalSizeTraded=event.result.symbolSummary_.stats.totalSizeTraded_;
+//					symbolSummary.stats.totalNoOfTrades=event.result.symbolSummary_.stats.totalNoOfTrades_;
+//					symbolSummary.stats.lastTradeSize=event.result.symbolSummary_.stats.lastTradeSize_;
+//					symbolSummary.stats.fiftyTwoWeekHigh=event.result.symbolSummary_.stats.fiftyTwoWeekHigh_;
+//					symbolSummary.stats.fiftyTwoWeekLow=event.result.symbolSummary_.stats.fiftyTwoWeekLow_;
+//					symbolSummary.stats.turnover=event.result.symbolSummary_.stats.turnover_;
+//					symbolSummary.stats.lastTradePrice=event.result.symbolSummary_.stats.lastTradePrice_;
+//					symbolSummary.stats.averagePrice=event.result.symbolSummary_.stats.averagePrice_;
+					symbolSummary.stats.netChange=event.result.symbolSummary_.stats.netChange_;
+//					symbolSummary.stats.lastDayClosePrice=event.result.symbolSummary_.stats.lastDayClosePrice_;
+//					
+					symbolSummary.stats.open=event.result.symbolSummary_.stats.ohlc_.open_;
+					symbolSummary.stats.high=event.result.symbolSummary_.stats.ohlc_.high_;
+					symbolSummary.stats.low=event.result.symbolSummary_.stats.ohlc_.low_;
+					symbolSummary.stats.close=event.result.symbolSummary_.stats.ohlc_.close_;
+					
+					// modified on 6/1/2011
+					//ModelManager.getInstance().symbolTickerFeedModel.addFeedItem(event.result.symbolName, symbolSummary.stats.netChange, symbolSummary.stats.lastTradePrice, symbolSummary.stats.lastTradeSize);
+//					ModelManager.getInstance().symbolTickerFeedModel.addFeedItem(bestMarketAndSymbolSummary.symbolName, symbolSummary.stats.netChange, symbolSummary.stats.lastTradePrice, symbolSummary.stats.lastTradeSize);
+					
+				}
+				else
+				{
+//					symbolSummary.stats=null;
+				}
+			}
+			else
+			{
+//				symbolSummary=null;
+			}
+			
+			if (event.result.bestMarket_)
+			{
+				if (event.result.bestMarket_.buyPriceLevel_)
+				{
+					if (event.result.bestMarket_.buyPriceLevel_.PRICE)
+					{
+						bestMarket.buyOrderBO.PRICE=event.result.bestMarket_.buyPriceLevel_.PRICE;
+					}
+					if (event.result.bestMarket_.buyPriceLevel_.VOLUME)
+					{
+						bestMarket.buyOrderBO.VOLUME=event.result.bestMarket_.buyPriceLevel_.VOLUME;
+					}
+				}
+				else
+				{
+					bestMarket.buyOrderBO=null;
+				}
+				if (event.result.bestMarket_.sellPriceLevel_)
+				{
+					if (event.result.bestMarket_.sellPriceLevel_.PRICE)
+					{
+						bestMarket.sellOrderBO.PRICE=event.result.bestMarket_.sellPriceLevel_.PRICE;
+					}
+					if (event.result.bestMarket_.sellPriceLevel_.VOLUME)
+					{
+						bestMarket.sellOrderBO.VOLUME=event.result.bestMarket_.sellPriceLevel_.VOLUME;
+					}
+					
+				}
+				else
+				{
+					bestMarket.sellOrderBO=null;
+				}
+				if (event.result.bestMarket_.symbol_)
+				{
+					bestMarket.symbolBO
+				}
+				else
+				{
+					bestMarket.symbolBO=null;
+				}
+				
+			}
+			else
+			{
+				bestMarket=null;
+			}
+			bestMarketAndSymbolSummary.symbolSummary=symbolSummary;
+			bestMarketAndSymbolSummary.bestMarket=bestMarket;
+			
+			if (!bestMarketAndSymbolSummaryMap_.hasKey(key))
+			{
+				bestMarketAndSymbolSummaryMap_.put(key, bestMarketAndSymbolSummary);
+			}
+			var windowManager:WindowManager=WindowManager.getInstance();
+			
+			windowManager.viewManager.quickOrders.updateQuickOrderView(bestMarketAndSymbolSummary, event.result.bestMarket_.buyPriceLevel_.PRICE, event.result.bestMarket_.sellPriceLevel_.PRICE,true);
+			windowManager.viewManager.quickOrders.secondupdateQuickOrderView(bestMarketAndSymbolSummary, event.result.bestMarket_.buyPriceLevel_.PRICE, event.result.bestMarket_.sellPriceLevel_.PRICE,true);
+			windowManager.viewManager.quickOrders.thirdupdateQuickOrderView(bestMarketAndSymbolSummary, event.result.bestMarket_.buyPriceLevel_.PRICE, event.result.bestMarket_.sellPriceLevel_.PRICE,true);
+			windowManager.viewManager.quickOrders.fourthupdateQuickOrderView(bestMarketAndSymbolSummary, event.result.bestMarket_.buyPriceLevel_.PRICE, event.result.bestMarket_.sellPriceLevel_.PRICE,true);
+//			windowManager.viewManager.quickOrders.resultHandler(bestMarketAndSymbolSummary, event.result.bestMarket_.buyPriceLevel_.PRICE, event.result.bestMarket_.sellPriceLevel_.PRICE);
+			// Start Modified on 28/1/2011 to fix market watch update issue on relogin 
+			//			var itemName:String = symbolName + "_" + marketID;
+			//			LSListener.getInstance().subscribeItem(
+			//				itemName,
+			//				LSListener.fieldSchemaBestMarket,
+			//				LSListener.getInstance().lsClientBestMarket,
+			//				windowManager.viewManager.marketWatch.updateBestMarketOrderFields
+			//			);
+			
+			// Start : modified on 4/4/2011 after discussion with usman 
+			//			var itemName:String = bestMarketAndSymbolSummary.symbolName + "_" + bestMarketAndSymbolSummary.marketId;
+//			var itemName:String="BMEMS_" + key;
+			// End : modified on 4/4/2011 after discussion with usman
+			/*LSListener.getInstance().subscribeItem(
+			itemName,
+			LSListener.fieldSchemaBestMarket,
+			LSListener.getInstance().lsClientBestMarket,
+			windowManager.viewManager.marketWatch.updateBestMarketOrderFields
+			);*/
+//			if (!ModelManager.getInstance().subscribedItems.hasKey(itemName))
+//			{
+//				ModelManager.getInstance().subscribedItems.put(itemName, itemName);
+//				//ExternalInterface.call("subscribeItem", Constants.BEST_MARKET_DATA_ADAPTER, "tblBestMarket_1" + itemName, itemName, "fieldSchemaBestMarket", "updateBestMarketOrderFields", ProfileManager.getInstance().userName, ProfileManager.getInstance().password);
+//				//}
+//				
+//				// End Modified on 28/1/2011 to fix market watch update issue on relogin
+//				//Start :  modified on 03/01/2011
+//				//itemName = "Symbol_" + symbolID.toString();
+//				itemName="STEMS_" + key;
+//				//End :  modified on 03/01/2011
+//				/*LSListener.getInstance().subscribeItem(
+//				itemName,
+//				LSListener.fieldSchemaSymbolStat,
+//				LSListener.getInstance().lsClientSymbolStats,
+//				windowManager.viewManager.marketWatch.updateSymbolStatsOrderFields
+//				);*/
+//				//if (!ModelManager.getInstance().subscribedItems.hasKey(itemName))
+//				//{
+//				//ModelManager.getInstance().subscribedItems.put(itemName, itemName);
+//				//ExternalInterface.call("subscribeItem", Constants.SYMBOL_STAT_DATA_ADAPTER, "tblSymbolStat_" + itemName, itemName, "fieldSchemaSymbolStat", "updateSymbolStatsOrderFields", ProfileManager.getInstance().userName, ProfileManager.getInstance().password);
+//			}
+			
+			//update buy order window
+			/*
+			WindowManager.getInstance().viewManager.buyOrder.updateOrderView(bestMarketAndSymbolSummary);
+			var itemName:String = symbolName + "_" + marketID;
+			LSListener.getInstance().subscribeItem(itemName, LSListener.fieldSchemaBestMarket, LSListener.getInstance().lsClientBestMarket, WindowManager.getInstance().viewManager.buyOrder.updateBestMarketOrderFields);
+			itemName = "Symbol_" + symbolID.toString();
+			LSListener.getInstance().subscribeItem(itemName, LSListener.fieldSchemaSymbolStat, LSListener.getInstance().lsClientSymbolStats, WindowManager.getInstance().viewManager.buyOrder.updateSymbolStatsOrderFields);
+			
+			//update sell order window
+			WindowManager.getInstance().viewManager.sellOrder.updateOrderView(bestMarketAndSymbolSummary);
+			itemName = symbolName + "_" + marketID;
+			LSListener.getInstance().subscribeItem(itemName, LSListener.fieldSchemaBestMarket, LSListener.getInstance().lsClientBestMarket, WindowManager.getInstance().viewManager.sellOrder.updateBestMarketOrderFields);
+			itemName = "Symbol_" + symbolID.toString();
+			LSListener.getInstance().subscribeItem(itemName, LSListener.fieldSchemaSymbolStat, LSListener.getInstance().lsClientSymbolStats, WindowManager.getInstance().viewManager.sellOrder.updateSymbolStatsOrderFields);
+			*/
+			
+			// added on 1/2/2011
+//			var symbolSummaryModel:SymbolSummaryModel=ModelManager.getInstance().symbolSummaryModel;
+//			if (bestMarketAndSymbolSummary.exchangeId == symbolSummaryModel.exchangeID && bestMarketAndSymbolSummary.symbolName == symbolSummaryModel.symbol && !symbolSummaryModel.isSymbolSummaryUpdate)
+//			{
+//				ViewManager.getInstance().symbolSumm.fillSymbolSummaryByMWBO(fillMarketWatchBO(bestMarketAndSymbolSummary));
+//				symbolSummaryModel.exchangeID=-1;
+//				symbolSummaryModel.symbol="";
+//				symbolSummaryModel.isSymbolSummaryUpdate=true;
+//			}
+			
+			CursorManager.removeBusyCursor();
+
+		}
+
+		/////////////////////////////////////////////////////////
+
+		public function onFault(event:FaultEvent):void
+		{
+			isDirty=true;
+			Alert.show(event.fault.faultDetail, ResourceManager.getInstance().getString('marketwatch','error'));
+			CursorManager.removeBusyCursor();
+		}
+
+		/////////////////////////////////////////////////////////
+
+		private function fillMarketWatchBO(bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO):MarketWatchBO
+		{
+			var mwBO:MarketWatchBO=new MarketWatchBO();
+			// added on 22/2/2011
+			if (bestMarketAndSymbolSummary.symbolSummary.browser)
+			{
+				mwBO.SECTOR=bestMarketAndSymbolSummary.symbolSummary.browser.sector;
+			}
+			if (bestMarketAndSymbolSummary.symbolSummary && bestMarketAndSymbolSummary.symbolSummary.stats)
+			{
+				mwBO.LAST=bestMarketAndSymbolSummary.symbolSummary.stats.lastTradePrice.toString();
+				mwBO.CHANGE=bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+				mwBO.TURN_OVER=bestMarketAndSymbolSummary.symbolSummary.stats.turnover.toString();
+				mwBO.LAST_VOLUME=bestMarketAndSymbolSummary.symbolSummary.stats.lastTradeSize.toString();
+				mwBO.LAST=bestMarketAndSymbolSummary.symbolSummary.stats.lastTradePrice.toString();
+				mwBO.TURN_OVER=bestMarketAndSymbolSummary.symbolSummary.stats.turnover.toString();
+				mwBO.TRADES=bestMarketAndSymbolSummary.symbolSummary.stats.totalNoOfTrades.toString();
+				mwBO.OPEN=bestMarketAndSymbolSummary.symbolSummary.stats.open.toString();
+				mwBO.AVERAGE=bestMarketAndSymbolSummary.symbolSummary.stats.averagePrice.toString();
+				mwBO.HIGH=bestMarketAndSymbolSummary.symbolSummary.stats.high.toString();
+				mwBO.LOW=bestMarketAndSymbolSummary.symbolSummary.stats.low.toString();
+				mwBO.CHANGE=bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+
+				// added on 4/3/2011
+				mwBO.CLOSE=bestMarketAndSymbolSummary.symbolSummary.stats.close.toString();
+				mwBO.LAST_DAY_CLOSE_PRICE=bestMarketAndSymbolSummary.symbolSummary.stats.lastDayClosePrice.toString();
+
+//				if(bestMarketAndSymbolSummary.symbolSummary.browser)
+//				{
+//					mwBO.SECTOR = bestMarketAndSymbolSummary.symbolSummary.browser.sector;
+//				}
+			}
+			if (bestMarketAndSymbolSummary.bestMarket)
+			{
+				if (bestMarketAndSymbolSummary.bestMarket.buyOrderBO)
+				{
+					if (bestMarketAndSymbolSummary.bestMarket.buyOrderBO.PRICE > 0 && bestMarketAndSymbolSummary.bestMarket.buyOrderBO.VOLUME > 0)
+					{
+						mwBO.BUY=bestMarketAndSymbolSummary.bestMarket.buyOrderBO.PRICE.toString();
+						mwBO.BUY_VOLUME=bestMarketAndSymbolSummary.bestMarket.buyOrderBO.VOLUME.toString();
+					}
+				}
+				if (bestMarketAndSymbolSummary.bestMarket.sellOrderBO)
+				{
+					if (bestMarketAndSymbolSummary.bestMarket.sellOrderBO.PRICE > 0 && bestMarketAndSymbolSummary.bestMarket.sellOrderBO.VOLUME > 0)
+					{
+						mwBO.SELL=bestMarketAndSymbolSummary.bestMarket.sellOrderBO.PRICE.toString();
+						mwBO.SELL_VOLUME=bestMarketAndSymbolSummary.bestMarket.sellOrderBO.VOLUME.toString();
+					}
+				}
+			}
+			return mwBO;
+		}
+	}
+}

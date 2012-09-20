@@ -1,0 +1,185 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/view
+END
+BestPrices.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/BestPrices.mxml
+END
+ExchangeStatsSectors.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/ExchangeStatsSectors.mxml
+END
+LiveSymbolChart.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/view/LiveSymbolChart.mxml
+END
+SymbolStateControl.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/SymbolStateControl.mxml
+END
+SymbolSumm.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/SymbolSumm.mxml
+END
+ChangePassword.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/view/ChangePassword.mxml
+END
+ExchangeStatsAdvDec.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/rome/!svn/ver/1523/trunk/flex/EasyTradeWeb_JS/src/view/ExchangeStatsAdvDec.mxml
+END
+HistoricalSymbolChart.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/HistoricalSymbolChart.mxml
+END
+SymbolBrowser.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/SymbolBrowser.mxml
+END
+MarketWatch.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/MarketWatch.mxml
+END
+LastDayRemainingOrders.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/LastDayRemainingOrders.mxml
+END
+SelectionMenu.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/SelectionMenu.mxml
+END
+Order.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/Order.mxml
+END
+OrderLimitControl.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/OrderLimitControl.mxml
+END
+BestOrders.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/BestOrders.mxml
+END
+BulletinControl.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/BulletinControl.mxml
+END
+UserTradeHistory.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/UserTradeHistory.mxml
+END
+YieldCalculator.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/YieldCalculator.mxml
+END
+ProfileSettings.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/ProfileSettings.mxml
+END
+EventLog.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/EventLog.mxml
+END
+SymbolSummary.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/SymbolSummary.mxml
+END
+RemainingOrders.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/RemainingOrders.mxml
+END
+BondPaymentSchedule.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/BondPaymentSchedule.mxml
+END
+CancelAllOrders.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/view/CancelAllOrders.mxml
+END
+MarketSchedule.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/MarketSchedule.mxml
+END
+ExchangeStatsIndices.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/rome/!svn/ver/1523/trunk/flex/EasyTradeWeb_JS/src/view/ExchangeStatsIndices.mxml
+END
+MarketSummary.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/MarketSummary.mxml
+END
+MarketScheduleControl.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/view/MarketScheduleControl.mxml
+END
+ExchangeStats.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/rome/!svn/ver/1523/trunk/flex/EasyTradeWeb_JS/src/view/ExchangeStats.mxml
+END
+BestMarket.mxml
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/view/BestMarket.mxml
+END

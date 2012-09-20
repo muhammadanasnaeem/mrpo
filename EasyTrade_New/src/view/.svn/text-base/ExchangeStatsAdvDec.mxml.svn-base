@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%"
+		 >
+	<fx:Script>
+		<![CDATA[
+			import controller.ConfigurationManager;
+			import controller.ModelManager;
+			
+			protected function group1_initializeHandler():void
+			{
+				/*var total:Number = 0;
+				for (var i:int = 0; i < 4; ++i)
+				{
+					var advDecStatsBO:AdvDecStatsBO = new AdvDecStatsBO();
+					advDecStatsBO.STAT = stat_id[i];
+					advDecStatsBO.VALUE = Math.ceil( (Math.random() * 10) );
+					total += advDecStatsBO.VALUE;
+					values_.addItem(advDecStatsBO);
+				}
+				//values_.sort = new Sort();
+				//values_.sort.compareFunction = compareSectors;
+				//values_.refresh();
+				for each(var ss:AdvDecStatsBO in values_)
+				{
+					ss.STAT = ss.STAT + " " + " (" + (ss.VALUE / total * 100).toFixed(2) + " %)";
+				}*/
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:HGroup x="10" y="10" width="100%" height="100%">
+		<s:VGroup x="0" y="0" width="30%" height="100%">
+			<mx:PieChart
+				id="pcAdvDec"
+				dataProvider="{ModelManager.getInstance().exchangeStatsModel.exchangeStats.advdecStats}"
+				showDataTips="false"
+				width="90%" height="90%">
+				<mx:series>
+					<mx:PieSeries
+						field="VALUE"
+						nameField="STAT"
+						labelPosition="insideWithCallout"
+						/>
+				</mx:series>
+			</mx:PieChart>
+			<mx:Legend dataProvider="{pcAdvDec}" id="lgndAdvDec" bottom="0" right="0"/>
+		</s:VGroup>
+		<s:VGroup x="0" y="0" width="70%" height="98%">
+			<s:Label text="Top Advances (By Volume)" width="100%" textAlign="center" fontWeight="bold" />
+			<mx:DataGrid
+				sortableColumns="false"
+				id="dgTopAdvances" 
+				width="98%" height="50%" verticalScrollPolicy="auto"
+				rowCount="{ConfigurationManager.getInstance().exchangeStatsConf.ROW_COUNT_TOP_ADVANCES}"
+				dataProvider="{ModelManager.getInstance().exchangeStatsModel.exchangeStats.advancedSymbols}"
+				>
+				<mx:columns>
+					<mx:DataGridColumn headerText="Symbol" dataField="SYMBOL_CODE" />
+					<mx:DataGridColumn headerText="Last Price" dataField="lastTradePrice" />
+					<mx:DataGridColumn headerText="Change" dataField="netChange" />
+					<mx:DataGridColumn headerText="Volume" dataField="lastTradeSize" />
+				</mx:columns>
+			</mx:DataGrid>
+			<s:Label text="Top Decliners (By Volume)" width="100%" textAlign="center" fontWeight="bold" />
+			<mx:DataGrid
+				sortableColumns="false"
+				id="dgTopDecliners" 
+				width="98%" height="50%" verticalScrollPolicy="auto"
+				rowCount="{ConfigurationManager.getInstance().exchangeStatsConf.ROW_COUNT_TOP_DECLINERS}"
+				dataProvider="{ModelManager.getInstance().exchangeStatsModel.exchangeStats.declinedSymbols}"
+				>
+				<mx:columns>
+					<mx:DataGridColumn headerText="Symbol" dataField="SYMBOL_CODE" />
+					<mx:DataGridColumn headerText="Last Price" dataField="lastTradePrice" />
+					<mx:DataGridColumn headerText="Change" dataField="netChange" />
+					<mx:DataGridColumn headerText="Volume" dataField="lastTradeSize" />
+				</mx:columns>
+			</mx:DataGrid>
+		</s:VGroup>
+	</s:HGroup>
+</s:Group>

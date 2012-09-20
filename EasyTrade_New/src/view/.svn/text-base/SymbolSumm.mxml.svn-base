@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" xmlns:components="components.*"
+		 initialize="group1_initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/SymbolSumm.as"
+		]]>
+	</fx:Script>	
+	<fx:Declarations>
+		<components:EZCurrencyFormatter id="moneyFormatter" />
+		<components:EZNumberFormatter id="numberFormatter" />
+		
+	</fx:Declarations>
+	<s:Label text="  Exchange:" horizontalCenter="-163" top="7"/>
+	<components:EZDropDownTextInput width="49" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-110" top="2"/>
+	<s:Label text="Market:" horizontalCenter="-60" top="7"/>
+	<components:EZDropDownTextInput width="49" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandlerForSymbol(event)" horizontalCenter="-14" top="2"/>
+	<s:Label text="Symbol:" horizontalCenter="37" top="7"/>
+	<s:TextInput width="110" height="20" id="txtSymbol" keyDown="txtSymbol_keyDownHandler(event)" horizontalCenter="119" top="2"/>
+	
+	
+	<!-- <mx:Grid dataProvider="{ModelManager.getInstance().symbolBrowserModel.symbols}" 
+				 right="1" left="1" bottom="1" top="30"
+				 id="dgSymbolBrowser" 
+				 width="100%" height="100%"
+				 >
+		<mx:columns>
+			mx:DataGridColumn headerText="Exchange" dataField="EXCHANGE_CODE" />
+			<mx:DataGridColumn headerText="Market" dataField="MARKET_CODE" /
+			<mx:gridColum headerText="Symbol" dataField="SYMBOL_CODE" />
+			<mx:DataGridColumn headerText="Company Name" dataField="company"  />
+			<mx:DataGridColumn headerText="State" dataField="state"  />
+			<mx:DataGridColumn headerText="Is Spot" dataField="ispost"  />
+		</mx:columns> 
+	</mx:Grid> -->
+	<s:BorderContainer  top="30" horizontalCenter="0" bottom="2" id="mainContainer" >
+		<s:layout>
+			<s:VerticalLayout/>
+		</s:layout>
+
+		<mx:Grid verticalGap="3" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4" id="dgSymbolSummary" width="100%" height="105">
+			<mx:GridRow>
+				<mx:GridItem verticalAlign="middle" width="102">
+					<s:Label text="Symbol" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" text="{symbol.SYMBOL}" />
+				</mx:GridItem>
+				<mx:GridItem verticalAlign="middle" width="102">
+					<s:Label text="High" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" textAlign="right"  text="{moneyFormatter.format(symbol.HIGH)}" />
+				</mx:GridItem>
+				<mx:GridItem  verticalAlign="middle" width="102" >
+					<s:Label text="Trades" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" textAlign="right"  text="{symbol.TRADES}" />
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem verticalAlign="middle">
+					<s:Label text="Sector" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" text="{symbol.SECTOR}" toolTip="{symbol.SECTOR}" />
+				</mx:GridItem>
+				<mx:GridItem verticalAlign="middle">
+					<s:Label text="Low" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false"  textAlign="right" text="{moneyFormatter.format(symbol.LOW)}" />
+				</mx:GridItem>
+				<mx:GridItem verticalAlign="middle">
+					<s:Label text="Last Day" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" textAlign="right"  text="{moneyFormatter.format(symbol.LAST_DAY_CLOSE_PRICE)}" />
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem verticalAlign="middle">
+					<s:Label text="State" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" text="{symbol.STATE}" />
+				</mx:GridItem>
+				<mx:GridItem verticalAlign="middle">
+					<s:Label text="Open" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" textAlign="right" text="{moneyFormatter.format(symbol.OPEN)}" />
+				</mx:GridItem>
+				<mx:GridItem verticalAlign="middle">
+					<s:Label text="Volume" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" textAlign="right"  text="{numberFormatter.format(symbol.LAST_VOLUME)}" />
+				</mx:GridItem>
+			</mx:GridRow>
+			<mx:GridRow>
+				<mx:GridItem verticalAlign="middle">
+					<s:Label text="Last Trade" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" textAlign="right" text="{moneyFormatter.format(moneyFormatter.format(symbol.LAST))}" />
+				</mx:GridItem>
+				<mx:GridItem verticalAlign="middle">
+					<s:Label text="Change" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" textAlign="right" text="{moneyFormatter.format(symbol.CHANGE)}" />
+				</mx:GridItem>
+				<mx:GridItem colSpan="2" verticalAlign="middle">
+					
+				<!-- </mx:GridItem>
+				<mx:GridItem> -->
+					
+				</mx:GridItem>
+			</mx:GridRow>
+			
+		<!--	<mx:GridRow> -->
+				
+				<!-- <mx:GridItem verticalAlign="middle">
+					<s:Label text="Offer Yield" />
+				</mx:GridItem>
+				<mx:GridItem>
+					<s:TextInput editable="false" text="{symbol.bondAskYield}" />
+				</mx:GridItem> -->
+		<!--	</mx:GridRow> -->
+			</mx:Grid>
+		<s:BorderContainer height="31">
+			<mx:Grid verticalGap="3" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4"  width="100%" height="100%">
+				<mx:GridRow>
+					<mx:GridItem verticalAlign="middle" width="102">
+						<s:Label color="{Constants.BUY_COLOR_INT}" text="Bid" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput contentBackgroundColor="#FFFF87" editable="false" textAlign="right" text="{symbol.BUY}" width="60"/>
+						<s:TextInput contentBackgroundColor="#FFFF87" editable="false" textAlign="right" text="{symbol.BUY_VOLUME}" width="60"/>
+					</mx:GridItem>
+					
+					<mx:GridItem verticalAlign="middle" width="102">
+						<s:Label color="{Constants.SELL_COLOR_INT}" text="Offer" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput contentBackgroundColor="#FFFF87" editable="false" textAlign="right" text="{symbol.SELL}" width="60"/>
+						<s:TextInput contentBackgroundColor="#FFFF87" editable="false" textAlign="right" text="{symbol.SELL_VOLUME}" width="60"/>
+					</mx:GridItem>
+					
+					<mx:GridItem verticalAlign="middle" width="238" />
+						
+					<!-- <mx:GridItem verticalAlign="middle">
+					<s:Label text="Bid Yield" />
+					</mx:GridItem>
+					<mx:GridItem>
+					<s:TextInput editable="false" text="{symbol.bondBidYield}" />
+					</mx:GridItem> -->
+					
+				</mx:GridRow>
+			</mx:Grid>
+		</s:BorderContainer>
+			
+		<s:Label text="Limits" fontSize="12" fontWeight="bold" paddingLeft="5" />
+		<s:BorderContainer height="81">
+			
+			<mx:Grid verticalGap="3" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4"  width="100%" height="100%" borderVisible="true">	
+				<mx:GridRow>
+					<mx:GridItem verticalAlign="middle" width="102">
+						<s:Label text="High Order Limit"  />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right" text="{moneyFormatter.format(symbol.UPPER_CIRCUIT_BREAKER_LIMIT)}" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle" width="102">
+						<s:Label text="Max Order Volume" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right" text="{numberFormatter.format(symbol.UPPER_ORDER_VOLUME_LIMIT)}" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle" width="102">
+						<s:Label text="Max Order Value" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right"  text="{numberFormatter.format(symbol.UPPER_ORDER_VALUE_LIMIT)}" />
+					</mx:GridItem>
+				</mx:GridRow>
+				<mx:GridRow>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Low Order Limit" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right"  text="{moneyFormatter.format(symbol.LOWER_CIRCUIT_BREAKER_LIMIT)}" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Min Order Volume" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right"  text="{numberFormatter.format(symbol.LOWER_ORDER_VOLUME_LIMIT)}" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Min Order Value" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right"  text="{numberFormatter.format(symbol.LOWER_ORDER_VALUE_LIMIT)}" />
+					</mx:GridItem>
+				</mx:GridRow>
+				<mx:GridRow>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Lot Size" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right"  text="{numberFormatter.format(symbol.BOARD_LOT)}" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Status" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" text="{symbol.STATUS}" />
+					</mx:GridItem>			
+				</mx:GridRow>
+			</mx:Grid>
+		</s:BorderContainer>	
+			<s:Label text="Instrument Specific Info" fontSize="12" fontWeight="bold" paddingLeft="5" visible="{displayBondPanel}" includeInLayout="{displayBondPanel}" />
+		<s:BorderContainer visible="{displayBondPanel}" includeInLayout="{displayBondPanel}">
+			<mx:Grid verticalGap="3" paddingLeft="4" paddingRight="4" paddingTop="4" paddingBottom="4"  width="100%" height="100%">		
+				<mx:GridRow>
+					<mx:GridItem verticalAlign="middle" width="102">
+						<s:Label text="Issue Date" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" text="" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle" width="102">
+						<s:Label text="Discount Rate" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false"  textAlign="right" text="{symbol.DISCOUNT_RATE}" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle" width="102">
+						
+					</mx:GridItem>
+					<mx:GridItem >
+						<s:TextInput visible="false"  />
+					</mx:GridItem>
+				</mx:GridRow>
+				
+				<mx:GridRow>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Next Coupon Date" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" text="{symbol.NEXT_COUPON}" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="IRR" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false"  textAlign="right"  text="{symbol.IRR}" />
+					</mx:GridItem>
+				</mx:GridRow>
+				
+				<mx:GridRow>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Maturity Date" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" text="{symbol.MATURITY_DATE}" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="AIRR" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right"  text="{symbol.AIRR}" />
+					</mx:GridItem>
+				</mx:GridRow>
+				
+				<mx:GridRow>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Maturity Days" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false"  textAlign="right"  text="" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Base Rate" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right"  text="{symbol.BASE_RATE}" />
+					</mx:GridItem>
+				</mx:GridRow>
+				
+				<mx:GridRow>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Year Days" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right"  text="" />
+					</mx:GridItem>
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Spread Rate" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false" textAlign="right"  text="{symbol.SPREAD_RATE}" />
+					</mx:GridItem>
+				</mx:GridRow>
+				
+				<mx:GridRow>
+					<mx:GridItem colSpan="2">
+						
+					</mx:GridItem>
+					
+					<mx:GridItem verticalAlign="middle">
+						<s:Label text="Coupon Rate" />
+					</mx:GridItem>
+					<mx:GridItem>
+						<s:TextInput editable="false"  textAlign="right" text="{symbol.COUPON_RATE}" />
+					</mx:GridItem>
+				</mx:GridRow>
+			</mx:Grid>
+		</s:BorderContainer>		
+	</s:BorderContainer>
+</s:Group>

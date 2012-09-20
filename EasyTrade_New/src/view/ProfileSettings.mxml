@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%"
+		 height="100%"
+		 xmlns:components="components.*"
+		 initialize="group1_initializeHandler(event)"
+		 creationComplete="group1_creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/ProfileSettings.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+
+	</fx:Declarations>
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@namespace components "components.*";
+		.lableClass{
+			padding-top:5;
+			padding-right:15;
+		}
+	</fx:Style>
+
+	<mx:TabNavigator width="100%"
+					 height="100%">
+		<s:NavigatorContent label="{resourceManager.getString('marketwatch','defaultExchangeandMarket')}">
+
+
+
+			<s:BorderContainer width="100%"
+							   height="100%"  
+							   borderVisible="false">
+				<s:Label text="{resourceManager.getString('marketwatch','defaultExchangeandMarket')}"
+						 fontWeight="bold"
+						 horizontalCenter="-90"
+						 top="16"/>
+				<s:Label text="{resourceManager.getString('marketwatch','exchange')} :"
+						 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'47':'-90'}" direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+						 top="41"/>
+				<components:EZDropDownTextInput width="128"
+												top="36"
+												height="22"
+												id="txtExchange"
+												editable="false"
+												click="txtExchange_clickHandler(event)"
+												horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-90':'47'}"/>
+				<s:Label text="{resourceManager.getString('marketwatch','market')} :"
+						 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'47':'-90'}" direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+						 top="66"/>
+				<components:EZDropDownTextInput width="128"
+												top="61"
+												height="22"
+												id="txtMarket"
+												editable="false"
+												click="txtMarket_clickHandler(event)"
+												horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-90':'47'}"/>
+
+				<s:Button label="{resourceManager.getString('marketwatch','update')}"
+						  id="btnUpdate"
+						  horizontalCenter="-38"
+						  top="121"
+						  click="btnUpdate_clickHandler(event)"/>
+				<s:Button label="{resourceManager.getString('marketwatch','reset')}"
+						  id="btnReset"
+						  click="btnCancel_clickHandler(event)"
+						  horizontalCenter="40"
+						  top="121"/>
+			</s:BorderContainer>
+		</s:NavigatorContent>
+		<mx:VBox label="{resourceManager.getString('marketwatch','marketWatchSettings')}">
+			<s:BorderContainer width="100%" layoutDirection="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+							   height="100%"
+							   borderVisible="false">
+				<s:CheckBox label="{resourceManager.getString('marketwatch','select/deselectAll')}"
+							click="selectDeselectAll(event)"
+							left="15"/>
+				<mx:Grid paddingLeft="15"
+						 id="marketWatchGrid"
+						 top="25">
+					<mx:GridRow>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','exchange')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispExchangeCol}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','market')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispMarktetCol}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','turnover')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispTurnOverCol}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','flags')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispFlagsCol}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','trades')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispTradesCol}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:Label styleName="lableClass"
+									 text="IRR"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispIRRCol}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','bidsize')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispBidVolumeCol}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','open')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispOpenCol}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:Label styleName="lableClass"
+									 text="AIRR"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispAIRRCol}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','bid')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispBidCol}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','average')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispAverageCol}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','baseRate')}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispBaseRateCol}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','ask')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispOfferCol}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','high')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispHighCol}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','spreadrate')}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispSpreadRateCol}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','askSize')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispOfferVolumeCol}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','low')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispLowCol}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','couponrate')}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispCouponRateCol}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','last')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispLastCol}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','change')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispChangeCol}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','nextcoupondate')}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispNextCouponCol}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+					<mx:GridRow>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','lastVolume')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispLastVolumeCol}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="%{resourceManager.getString('marketwatch','change')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispPercChangeCol}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','maturityDate')}"/>
+						</mx:GridItem>
+						<mx:GridItem visible="{Constants.BOND_ENABLED}">
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispMaturityDateCol}"/>
+						</mx:GridItem>
+					</mx:GridRow>
+
+					<mx:GridRow>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','bidYield')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispBuyYield}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:Label styleName="lableClass"
+									 text="{resourceManager.getString('marketwatch','offerYield')}"/>
+						</mx:GridItem>
+						<mx:GridItem>
+							<s:CheckBox selected="@{modelManager.marketWatchModel.marketWatchCols.dispSellYield}"/>
+						</mx:GridItem>
+
+					</mx:GridRow>
+
+				</mx:Grid>
+
+
+				<!--	<s:Button label="Update" id="btnUpdate" horizontalCenter="-38" top="156" click="btnUpdate_clickHandler(event)"/>
+				<s:Button label="Reset" id="btnReset" click="btnCancel_clickHandler(event)" horizontalCenter="40" top="156"/>
+				-->
+			</s:BorderContainer>
+		</mx:VBox>
+	</mx:TabNavigator>
+
+</s:Group>

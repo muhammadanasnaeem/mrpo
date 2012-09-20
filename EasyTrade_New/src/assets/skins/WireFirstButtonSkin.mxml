@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SparkSkin xmlns:fx="http://ns.adobe.com/mxml/2009"
+			 xmlns:s="library://ns.adobe.com/flex/spark"
+			 minWidth="90"
+			 minHeight="29"
+			 alpha.disabledStates="0.5"
+			 width.up="90"
+			 height.up="29">
+	<fx:Metadata>
+		<![CDATA[
+		[HostComponent("spark.components.ButtonBarButton")]
+		]]>
+	</fx:Metadata>
+	<s:states>
+		<s:State name="up"/>
+		<s:State name="over"
+				 stateGroups="overStates"/>
+		<s:State name="down"
+				 stateGroups="downStates"/>
+		<s:State name="disabled"
+				 stateGroups="disabledStates"/>
+		<s:State name="upAndSelected"
+				 stateGroups="selectedStates, selectedUpStates"/>
+		<s:State name="overAndSelected"
+				 stateGroups="overStates, selectedStates"/>
+		<s:State name="downAndSelected"
+				 stateGroups="downStates, selectedStates"/>
+		<s:State name="disabledAndSelected"
+				 stateGroups="selectedUpStates, disabledStates, selectedStates"/>
+	</s:states>
+	<fx:Declarations>
+		<s:SolidColor id="fillColor"
+					  color="#FFFFFF"
+					  color.selectedStates="#fb6506"/>
+		<s:SolidColorStroke id="strokeColor"
+							color="#000000"
+							color.selectedStates="#FFFFFF"
+							weight="0"/>
+	</fx:Declarations>
+	<s:Rect top="0"
+			left="0"
+			bottom="0"
+			right="0"
+			rotationX="-125"
+			bottomLeftRadiusX="3"
+			bottomLeftRadiusY="5"
+			topLeftRadiusX="-3"
+			topLeftRadiusY="50"
+			fill="{fillColor}"
+			stroke="{strokeColor}"/>
+	<s:Label id="labelDisplay"
+			 textAlign="center"
+			 left="25"
+			 right="25"
+			 top="4"
+			 bottom="3"
+			 color="{strokeColor.color}"
+			 fontWeight="bold"
+			 left.up="25"
+			 right.up="25"
+			 top.up="4"
+			 bottom.up="3">
+	</s:Label>
+</s:SparkSkin>
+
+<!--rotationY="-42" rotationX="-90"-->

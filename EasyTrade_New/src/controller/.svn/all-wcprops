@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/controller
+END
+ConfigurationManager.as
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/controller/ConfigurationManager.as
+END
+EasyTradeApp.as
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/controller/EasyTradeApp.as
+END
+WindowManager.as
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/controller/WindowManager.as
+END
+SoundManager.as
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/src/controller/SoundManager.as
+END
+ViewManager.as
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/controller/ViewManager.as
+END
+ModelManager.as
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/controller/ModelManager.as
+END
+ProfileManager.as
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/rome/!svn/ver/1250/trunk/flex/EasyTradeWeb_JS/src/controller/ProfileManager.as
+END

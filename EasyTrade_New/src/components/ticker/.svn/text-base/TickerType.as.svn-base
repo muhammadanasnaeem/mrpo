@@ -1,0 +1,10 @@
+package components.ticker
+{
+	public class TickerType
+	{
+		public static const UNDEFINED:String = "undefiend";
+		public static const TAPE_TICKER_NEWS:String = "TAPE_TICKER_NEWS";
+		public static const TAPE_TICKER_SYMBOL:String = "TAPE_TICKER_SYMBOL";
+		public static const WATER_FALL_TICKER_SYMBOL:String = "WATER_FALL_TICKER_SYMBOL";
+	}
+}

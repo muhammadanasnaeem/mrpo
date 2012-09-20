@@ -1,0 +1,246 @@
+import businessobjects.MarketScheduleBO;
+import businessobjects.MarketStateInfo;
+import businessobjects.SymbolOrderLimitBO;
+
+import common.States;
+import common.Type;
+
+import components.EZCurrencyFormatter;
+import components.EZNumberFormatter;
+
+import controller.ModelManager;
+import controller.SoundManager;
+import controller.WindowManager;
+
+import mx.controls.Alert;
+import mx.formatters.NumberFormatter;
+import mx.messaging.events.MessageEvent;
+import mx.messaging.events.MessageFaultEvent;
+import mx.preloaders.Preloader;
+
+import services.LSListener;
+
+[Bindable]
+private var modelManager:ModelManager = ModelManager.getInstance();
+
+//public function handleMarketMessage(event:NonVisualItemUpdateEvent):void
+public function handleMarketMessage(itemName:String, itemPos:Number, updatedFields:Array):void
+{
+	var index:Number = LSListener.getActualUpdateCount(updatedFields, 0);
+	handleMarketMessage1(itemName, itemPos, updatedFields, index - 1);
+}
+
+public function handleMarketMessage1(itemName:String, itemPos:Number, updatedFields:Array, index:Number):void
+{
+	if (index < 0)
+	{
+		return;
+	}
+	//var event:NonVisualItemUpdateEvent = new NonVisualItemUpdateEvent(null, null, null, null);
+	var itemNameUser:String = "USER_" + modelManager.userID;
+	var itemNameMarketMessage:String = "Market_Message";
+	var statusMsg:String = "";
+
+	var updateType:String = LSListener.extractFieldData(updatedFields, 0, index);
+	if (itemName == itemNameMarketMessage)
+	{
+		if (updateType == "2") // Market schedule update
+		{
+			var marketSchedule:MarketScheduleBO = new MarketScheduleBO();
+			
+			marketSchedule.INTERNAL_EXCHANGE_ID = new Number(LSListener.extractFieldData(updatedFields, 1, index));
+			marketSchedule.INTERNAL_MARKET_ID = new Number(LSListener.extractFieldData(updatedFields, 2, index));
+			
+			var stateInfo:MarketStateInfo = new MarketStateInfo();
+			stateInfo.state_ = LSListener.extractFieldData(updatedFields, 6, index);
+			
+			var strDateTime:String = LSListener.extractFieldData(updatedFields, 7, index);
+			var arrDateTime:Array = strDateTime.split("T");
+			if (arrDateTime.length < 2)
+			{
+				stateInfo.startDateTime_ = new Date();
+			}
+			else
+			{
+				var arrDate:Array = (arrDateTime[0] as String).split("-");
+				var arrTime:Array = (arrDateTime[1] as String).split(":");
+				
+				stateInfo.startDateTime_.setFullYear(new Number(arrDate[0]));
+				stateInfo.startDateTime_.setMonth(new Number(arrDate[1]));
+				stateInfo.startDateTime_.setDate(new Number(arrDate[2]));
+				stateInfo.startDateTime_.setHours(new Number(arrTime[0]));
+				stateInfo.startDateTime_.setMinutes(new Number(arrTime[1]));
+				
+				var arrSeconds:Array = (arrTime[2] as String).split(",");
+				
+				stateInfo.startDateTime_.setSeconds(new Number(arrSeconds[0]));
+			}
+			marketSchedule.SCHEDULE.addItem( stateInfo );
+			modelManager.exchangeScheduleModel.updateMarketSchedule(marketSchedule);
+			statusMsg = LSListener.extractFieldData(updatedFields, 8, index).replace("T", " ");
+			var strMarketCode:String = modelManager.exchangeModel.getMarketCode(marketSchedule.INTERNAL_EXCHANGE_ID,
+				marketSchedule.INTERNAL_MARKET_ID);
+			var strExchangeCode:String = modelManager.exchangeModel.getExchangeCode(marketSchedule.INTERNAL_EXCHANGE_ID);
+			statusMsg += " Market state of "+strMarketCode+" in Exchange "+strExchangeCode+" is " + States.getMarketState(stateInfo.state_);
+			WindowManager.getInstance().viewManager.marketScheduleControl.updateStatus(statusMsg);
+			modelManager.exchangeModel.setMarketState(
+				marketSchedule.INTERNAL_EXCHANGE_ID,
+				marketSchedule.INTERNAL_MARKET_ID,
+				new Number(stateInfo.state_)
+			);
+			WindowManager.getInstance().viewManager.marketScheduleControl.resetFields(false);
+			WindowManager.getInstance().viewManager.marketWatch.updateStatus(statusMsg);
+			SoundManager.getInstance().playMarketStateSound();
+		}
+		else if (updateType == "3") // Symbol state changed
+		{
+			statusMsg = LSListener.extractFieldData(updatedFields, 8, index).replace("T", " ");
+			var symbolState:String = LSListener.extractFieldData(updatedFields, 6, index);
+			
+			var symbolCode:String = modelManager.exchangeModel.getSymbolCode(
+				new Number(LSListener.extractFieldData(updatedFields, 1, index)), // internal exchange id
+				new Number(LSListener.extractFieldData(updatedFields, 2, index)), // internal market id
+				new Number(LSListener.extractFieldData(updatedFields, 17, index)) // internal symbol id
+				);
+			statusMsg += " Symbol state of "+ symbolCode +" is " + States.getSymbolState(symbolState);
+			modelManager.exchangeModel.setSymbolState(
+				new Number(LSListener.extractFieldData(updatedFields, 1, index)), // internal exchange id
+				new Number(LSListener.extractFieldData(updatedFields, 2, index)), // internal market id
+				new Number(LSListener.extractFieldData(updatedFields, 17, index)), // internal symbol id
+				symbolState);
+			WindowManager.getInstance().viewManager.symbolStateControl.resetFields(false);
+			WindowManager.getInstance().viewManager.marketWatch.updateStatus(statusMsg);
+		}
+		else if (updateType == "5") // Bulletin for all exchanges
+		{
+			//statusMsg = LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[8]).replace("T", " ");
+			statusMsg += "Bulletin: " + LSListener.extractFieldData(updatedFields, 9, index);
+			WindowManager.getInstance().viewManager.marketWatch.updateBulletin(statusMsg);
+		}
+		else if (updateType == "6") // Symbol Order Limit Change
+		{
+			var symbolOrderLimit:SymbolOrderLimitBO = new SymbolOrderLimitBO();
+			symbolOrderLimit.INTERNAL_EXCHANGE_ID = new Number(LSListener.extractFieldData(updatedFields, 11, index));
+			symbolOrderLimit.INTERNAL_MARKET_ID = new Number(LSListener.extractFieldData(updatedFields, 12, index));
+			symbolOrderLimit.INTERNAL_SYMBOL_ID = new Number(LSListener.extractFieldData(updatedFields, 13, index));
+			symbolOrderLimit.LIMIT_TYPE = LSListener.extractFieldData(updatedFields, 14, index);
+			symbolOrderLimit.UPPER_LIMIT = new Number(LSListener.extractFieldData(updatedFields, 15, index));
+			symbolOrderLimit.LOWER_LIMIT = new Number(LSListener.extractFieldData(updatedFields, 16, index));
+
+			modelManager.exchangeModel.setSymbolOrderLimit(symbolOrderLimit);
+			//statusMsg = LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[8]).replace("T", " ");
+			var marketCode:String = modelManager.exchangeModel.getMarketCode(symbolOrderLimit.INTERNAL_EXCHANGE_ID, symbolOrderLimit.INTERNAL_MARKET_ID); 
+			var symbol:String = modelManager.exchangeModel.getSymbolCode(symbolOrderLimit.INTERNAL_EXCHANGE_ID, symbolOrderLimit.INTERNAL_MARKET_ID,symbolOrderLimit.INTERNAL_SYMBOL_ID);
+			statusMsg += "Order limit for symbol "+symbol+" in market "+marketCode+" for ";
+			statusMsg += Type.OrderLimitType[symbolOrderLimit.LIMIT_TYPE];
+			statusMsg += " changed to ";
+			var ezNumberFormatter:EZNumberFormatter = new EZNumberFormatter();
+			//var upperLmtStr:String = new Number(LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[15]));
+			//var lowerLmtStr:String = new Number(LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[16])); 
+			statusMsg += new Number(LSListener.extractFieldData(updatedFields, 16, index)) + " - "+ new Number(LSListener.extractFieldData(updatedFields, 15, index));
+//			if(Type.OrderLimitType[symbolOrderLimit.LIMIT_TYPE] == 'VALUE' || Type.OrderLimitType[symbolOrderLimit.LIMIT_TYPE] == 'VOLUME' )
+//			{
+//				var ezNumberFormatter:EZNumberFormatter = new EZNumberFormatter();
+//				statusMsg += ezNumberFormatter.format(LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[16])) + " - "+ ezNumberFormatter.format(LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[15]));	
+//			}
+//			else
+//			{
+//				var ezCurrencyFormatter:EZCurrencyFormatter = new EZCurrencyFormatter()
+//				statusMsg += ezCurrencyFormatter.format(LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[16])) + " - "+ ezCurrencyFormatter.format(LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[15]));
+//			}
+			
+			
+			WindowManager.getInstance().viewManager.marketWatch.updateStatus(statusMsg);
+		}
+	}
+	else if (itemName == itemNameUser)
+	{
+		if (updateType == "2") // Market Schedule Update
+		{
+			WindowManager.getInstance().viewManager.marketWatch.updateStatus(statusMsg);
+		}
+	}
+	else if (itemName.indexOf("EXCHANGE_") == 0) // Exchange specific message
+	{
+		if (updateType == "5") // Bulletin
+		{
+			//statusMsg = LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[8]).replace("T", " ");
+			var exchangeCode:String = modelManager.exchangeModel.getExchangeByID(new Number(LSListener.extractFieldData(updatedFields, 1, index)));
+			statusMsg += "Bulletin for exchange " + exchangeCode ;
+			statusMsg += ": " + LSListener.extractFieldData(updatedFields, 9, index);
+			WindowManager.getInstance().viewManager.marketWatch.updateBulletin(statusMsg);
+		}
+	}
+	else
+	{
+		return;
+	}
+	//WindowManager.getInstance().viewManager.marketWatch.updateStatus(statusMsg);
+	handleMarketMessage1(itemName, itemPos, updatedFields, index - 1);
+}
+
+// Start : temp added for BlazeDS
+//public function handleMarketMessageBlazeDS(event:MessageEvent):void
+//{
+//	var itemNameUser:String = "USER_" + modelManager.userID;
+//	var itemNameMarketMessage:String = "Market_Message";
+//	var statusMsg:String = "";
+//	
+//	var updateType:String = LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[0]);
+//	if (event.item == itemNameMarketMessage)
+//	{
+//		if (updateType == "2") // Market schedule update
+//		{
+//			var marketSchedule:MarketScheduleBO = new MarketScheduleBO();
+//			
+//			marketSchedule.INTERNAL_EXCHANGE_ID = new Number(LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[1]));
+//			marketSchedule.INTERNAL_MARKET_ID = new Number(LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[2]));
+//			
+//			var stateInfo:MarketStateInfo = new MarketStateInfo();
+//			stateInfo.state_ = LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[6]);
+//			
+//			var strDateTime:String = LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[7]);
+//			var arrDateTime:Array = strDateTime.split("T");
+//			if (arrDateTime.length < 2)
+//			{
+//				stateInfo.startDateTime_ = new Date();
+//			}
+//			else
+//			{
+//				var arrDate:Array = (arrDateTime[0] as String).split("-");
+//				var arrTime:Array = (arrDateTime[1] as String).split(":");
+//				
+//				stateInfo.startDateTime_.setFullYear(new Number(arrDate[0]));
+//				stateInfo.startDateTime_.setMonth(new Number(arrDate[1]));
+//				stateInfo.startDateTime_.setDate(new Number(arrDate[2]));
+//				stateInfo.startDateTime_.setHours(new Number(arrTime[0]));
+//				stateInfo.startDateTime_.setMinutes(new Number(arrTime[1]));
+//				
+//				var arrSeconds:Array = (arrTime[2] as String).split(",");
+//				
+//				stateInfo.startDateTime_.setSeconds(new Number(arrSeconds[0]));
+//			}
+//			marketSchedule.SCHEDULE.addItem( stateInfo );
+//			modelManager.exchangeScheduleModel.updateMarketSchedule(marketSchedule);
+//			statusMsg = LSListener.extractFieldData(event, LSListener.fieldSchemaMarketMessage[8]).replace("T", " ");
+//			statusMsg += " Market state is " + States.getMarketState(stateInfo.state_);
+//			WindowManager.getInstance().viewManager.marketScheduleControl.updateStatus(statusMsg);
+//			modelManager.exchangeModel.setMarketState(
+//				marketSchedule.INTERNAL_EXCHANGE_ID,
+//				marketSchedule.INTERNAL_MARKET_ID,
+//				new Number(stateInfo.state_)
+//			);
+//			WindowManager.getInstance().viewManager.marketScheduleControl.resetFields(false);
+//			WindowManager.getInstance().viewManager.marketWatch.updateStatus(statusMsg);
+//			SoundManager.getInstance().playMarketStateSound();
+//		}
+//		
+//	}
+//	
+//}
+//
+//public function handleMarketMessageFaultBlazeDS(event:MessageFaultEvent):void
+//{
+//	Alert.show("Message Fault : "+event.faultDetail);
+//}
+// End : temp added for BlazeDS

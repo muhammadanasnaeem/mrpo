@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin name="CustomApplicationSkin"
+		xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		alpha.disabled="0.5">
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="disabled"/>
+		<s:State name="open"/>
+	</s:states>
+
+	<fx:Metadata>
+		<![CDATA[ 
+		[HostComponent("spark.components.TextInput")]
+		]]>
+	</fx:Metadata>
+
+	<!-- fill -->
+	<s:Group id="backgroundRect">
+		<s:BitmapImage source="@Embed('../../../images/order-drop-down.png')"
+					   left="0"
+					   right="0"
+					   top="0"
+					   bottom="0"
+					   scaleMode="stretch"/>
+	</s:Group>
+
+</s:Skin>

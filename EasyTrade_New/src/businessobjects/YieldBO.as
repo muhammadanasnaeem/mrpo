@@ -1,0 +1,23 @@
+package businessobjects
+{
+
+	public class YieldBO
+	{
+		public var exchangeId:Number=-1;
+		public var marketId:Number=-1;
+		public var symbolId:Number=-1;
+
+		public var currentRate:Number=-1;
+		public var couponRate:Number=-1;
+		public var discountRate:Number=-1;
+		public var spread:Number=-1;
+		public var effectiveBaseRate:Number=-1;
+
+		public var nextCouponDate:Date;
+		public var issueDate:Date;
+		public var maturityDate:Date;
+
+		public var rate:Number=-1;
+		public var currentYield:Number=-1;
+	}
+}

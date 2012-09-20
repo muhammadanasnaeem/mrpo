@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:yahoo="http://www.yahoo.com/astra/2006/mxml"
+		 xmlns:components="components.*"
+		 xmlns:common="common.*"
+		 width="100%" height="100%"
+		 initialize="group1_initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/MarketScheduleControl.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="JJ:NN:SS" />
+		<!--mx:DateFormatter id="dateFormatter" formatString="EEE MMM DD JJ:NN:SS YYYY" /-->
+	</fx:Declarations>
+	<s:BorderContainer x="0" y="0" width="100%" height="100%">
+		<s:Label text="Exchange:" horizontalCenter="-180" top="22"/>
+		<components:EZDropDownTextInput width="115" top="17" height="22" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-55"/>
+		<s:Label text="Market:" horizontalCenter="-189" top="47"/>
+		<components:EZDropDownTextInput width="115" top="42" height="22" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" horizontalCenter="-55"/>
+		<s:Label text="Current State:" horizontalCenter="-173" top="72"/>
+		<s:TextInput width="115" height="22" id="txtCurrentState" editable="false" horizontalCenter="-55" top="67" />
+		<s:Label text="Requested State:" horizontalCenter="-163" top="98"/>
+		<components:EZDropDownTextInput width="115" height="22" id="txtRequestedMarketState" editable="false" horizontalCenter="-55" top="93" click="txtRequestedMarketState_clickHandler(event)"/>
+		<s:Label text="Requested Time:" horizontalCenter="-163" top="124"/>
+		<yahoo:TimeInput showSeconds="true" showAMPM="true" width="115" height="22" horizontalCenter="-55" top="119" id="txtTimeInput" change="txtTimeInput_changeHandler(event)" />
+		
+		<mx:DataGrid
+			dataProvider="{marketSchedule.SCHEDULE}"
+			click="dgMarketStates_clickHandler(event)"
+			horizontalCenter="107"
+			top="8"
+			resizableColumns="false"
+			sortableColumns="false"
+			id="dgMarketStates"
+			height="182">
+			<mx:columns>
+				<mx:DataGridColumn headerText="State" draggable="false" >
+					<mx:itemRenderer>
+						<fx:Component>
+							<mx:Label text="{data.state_}" />
+						</fx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+				<mx:DataGridColumn headerText="Time" draggable="false" >
+					<mx:itemRenderer>
+						<fx:Component>
+							<mx:Label text="{outerDocument.dateFormatter.format(data.startDateTime_)}" />					</fx:Component>
+					</mx:itemRenderer>
+				</mx:DataGridColumn>
+			</mx:columns>
+		</mx:DataGrid>
+		<s:Button label="Update" id="btnUpdate" horizontalCenter="-142" top="167" click="btnUpdate_clickHandler(event)"/>
+		<s:Button label="Reset" id="btnReset" click="btnReset_clickHandler(event)" horizontalCenter="-64" top="167"/>
+		<s:TextInput id="txtStatus" width="420" editable="false" top="196" horizontalCenter="-2"/>
+	</s:BorderContainer>
+</s:Group>

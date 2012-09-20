@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/rome/!svn/ver/1251/trunk/flex/EasyTradeWeb_JS/libs
+END
+flexlib.swc
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/libs/flexlib.swc
+END
+astra-flex.swc
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/rome/!svn/ver/1218/trunk/flex/EasyTradeWeb_JS/libs/astra-flex.swc
+END
+EasyTradeSkin.swc
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/rome/!svn/ver/1220/trunk/flex/EasyTradeWeb_JS/libs/EasyTradeSkin.swc
+END
+as3xls-1.0.swc
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/libs/as3xls-1.0.swc
+END
+Lightstreamer_as_client.swc
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/rome/!svn/ver/872/trunk/flex/EasyTradeWeb_JS/libs/Lightstreamer_as_client.swc
+END

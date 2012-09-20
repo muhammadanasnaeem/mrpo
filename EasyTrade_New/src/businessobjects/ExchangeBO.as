@@ -1,0 +1,75 @@
+package businessobjects
+{
+	import mx.collections.ArrayList;
+
+	public class ExchangeBO
+	{
+		private var EXCHANGE_ID_:Number;
+		private var INTERNAL_EXCHANGE_ID_:Number;
+		private var EXCHANGE_CODE_:String;
+		private var EXCHANGE_NAME_:String;
+		private var STATE_:Number;
+		private var markets_:ArrayList=new ArrayList();
+
+		public function get markets():ArrayList
+		{
+			return markets_;
+		}
+
+		public function set markets(value:ArrayList):void
+		{
+			markets_=value;
+		}
+
+		public function get EXCHANGE_NAME():String
+		{
+			return EXCHANGE_NAME_;
+		}
+
+		public function set EXCHANGE_NAME(value:String):void
+		{
+			EXCHANGE_NAME_=value;
+		}
+
+		public function get EXCHANGE_CODE():String
+		{
+			return EXCHANGE_CODE_;
+		}
+
+		public function set EXCHANGE_CODE(value:String):void
+		{
+			EXCHANGE_CODE_=value;
+		}
+
+		public function get INTERNAL_EXCHANGE_ID():Number
+		{
+			return INTERNAL_EXCHANGE_ID_;
+		}
+
+		public function set INTERNAL_EXCHANGE_ID(value:Number):void
+		{
+			INTERNAL_EXCHANGE_ID_=value;
+		}
+
+		public function get EXCHANGE_ID():Number
+		{
+			return EXCHANGE_ID_;
+		}
+
+		public function set EXCHANGE_ID(value:Number):void
+		{
+			EXCHANGE_ID_=value;
+		}
+
+		public function get STATE():Number
+		{
+			return STATE_;
+		}
+
+		public function set STATE(value:Number):void
+		{
+			STATE_=value;
+		}
+
+	}
+}

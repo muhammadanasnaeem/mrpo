@@ -1,0 +1,36 @@
+package businessobjects
+{
+
+	public class ID
+	{
+		private var actualID:Number=-1;
+
+		public function get actualID_():Number
+		{
+			return actualID;
+		}
+
+		public function set actualID_(value:Number):void
+		{
+			actualID=value;
+		}
+
+		private var internalID:Number=-1;
+
+		public function get internalID_():Number
+		{
+			return internalID;
+		}
+
+		public function set internalID_(value:Number):void
+		{
+			internalID=value;
+		}
+
+		public function ID(actual_:Number, internal_:Number)
+		{
+			actualID_=actual_;
+			internalID_=internal_;
+		}
+	}
+}

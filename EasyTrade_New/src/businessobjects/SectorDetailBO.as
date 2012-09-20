@@ -1,0 +1,14 @@
+package businessobjects
+{
+
+	[Bindable]
+	public class SectorDetailBO
+	{
+		public var SECTOR_ID:Number;
+		public var SECTOR_CODE:String;
+		public var SECTOR_NAME:String;
+		public var DESC:String;
+		public var VALUE:Number;
+		public var LEGEND_TIP:String="";
+	}
+}

@@ -1,0 +1,121 @@
+package renderer
+{
+	import businessobjects.MarketWatchBO;
+	
+	import components.EZCurrencyFormatter;
+	
+	import controller.ModelManager;
+	import controller.WindowManager;
+	
+	import flash.display.Graphics;
+	import flash.events.TimerEvent;
+	import flash.utils.Timer;
+	
+	import mx.collections.ArrayCollection;
+	import mx.controls.AdvancedDataGrid;
+	import mx.controls.Label;
+	import mx.controls.dataGridClasses.*;
+	import mx.styles.StyleManager;
+	
+	[Style(name="backgroundColor", type="uint", format="Color", inherit="no")]
+	
+	public class SellCellRenderer extends Label {
+		private var isUpdate:Boolean = false;
+		private var moneyFormatter:EZCurrencyFormatter = new EZCurrencyFormatter();
+		private var mwBO:MarketWatchBO;
+		
+//		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+//		{
+//			super.updateDisplayList(unscaledWidth, unscaledHeight);
+//
+//			var g:Graphics = graphics;
+//			g.clear();
+//			var modelManager:ModelManager = ModelManager.getInstance();
+//			var arr:ArrayCollection = modelManager.marketWatchModel.marketWatch[WindowManager.getInstance().viewManager.marketWatch.selectedIndex];
+//			if (isUpdate)
+//			{
+//				if (arr[listData.rowIndex].SELL != null)
+//				{
+//					this.text = moneyFormatter.format(arr[listData.rowIndex].SELL);
+//				}
+//				if (DataGridListData(listData).dataField != null)
+//				{
+//					if (arr[listData.rowIndex].SELL_OLD != null)
+//					{
+//						paintFields(arr[listData.rowIndex].SELL, arr[listData.rowIndex].SELL_OLD);
+//						arr[listData.rowIndex].SELL_OLD = arr[listData.rowIndex].SELL; 
+//					}
+//				}
+//			}
+//		}
+		
+		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+		{
+			super.updateDisplayList(unscaledWidth, unscaledHeight);
+			
+			var g:Graphics = graphics;
+			g.clear();
+			var modelManager:ModelManager = ModelManager.getInstance();
+			var arr:ArrayCollection = modelManager.marketWatchModel.marketWatch[WindowManager.getInstance().viewManager.marketWatch.selectedIndex];
+			if (isUpdate)
+			{
+				if (mwBO.SELL != null)
+				{
+					this.text = moneyFormatter.format(mwBO.SELL);
+				}
+				if (DataGridListData(listData).dataField != null)
+				{
+					if (mwBO.SELL_OLD != null)
+					{
+						paintFields(mwBO.SELL, mwBO.SELL_OLD);
+						mwBO.SELL_OLD = mwBO.SELL; 
+					}
+				}
+			}
+		}
+
+		
+		private function paintFields(newValue:String, oldValue:String):void
+		{
+			var g:Graphics = graphics;
+			var timer:Timer = new Timer(3000, 1);
+			if (newValue > oldValue)
+			{
+				g.beginFill(0x94DE96);
+				timer.addEventListener(TimerEvent.TIMER, clearFields);
+				timer.start();
+				g.drawRect(0, 0, unscaledWidth, unscaledHeight);
+				g.endFill();
+			}
+			else if (newValue < oldValue)
+			{
+				g.beginFill(0xF1F586);
+				timer.addEventListener(TimerEvent.TIMER, clearFields);
+				timer.start();
+				g.drawRect(0, 0, unscaledWidth, unscaledHeight);
+				g.endFill();
+			}
+		}
+		
+		private function clearFields(evt:TimerEvent):void
+		{
+			var g:Graphics = graphics;
+			g.clear();
+		}
+		
+		override public function set data(value:Object):void
+		{
+			if( value && value.SELL )
+			{
+				super.data = value;
+				mwBO = value as MarketWatchBO;
+				isUpdate = true;
+			}
+			else
+			{
+				isUpdate = false;
+				this.text = "";
+			}
+		}
+	}
+}

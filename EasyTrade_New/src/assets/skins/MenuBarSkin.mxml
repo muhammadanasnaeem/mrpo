@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		xmlns:mx="library://ns.adobe.com/flex/mx"
+		width="1"
+		height="25">
+	<!-- host component -->
+	<fx:Metadata>
+		[HostComponent("assets.skins.MenuBarView")]
+	</fx:Metadata>
+	<s:Rect width="1"
+			height="25">
+		<s:fill>
+			<s:LinearGradient rotation="90">
+				<s:GradientEntry color="#1e1e1e"
+								 ratio="100%"
+								 alpha="100%"/>
+				<s:GradientEntry color="#e4e4e4"
+								 ratio="100%"
+								 alpha="100%"/>
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+</s:Skin>

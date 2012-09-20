@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%"
+		 height="100%"
+		 initialize="group1_initializeHandler(event)"
+		 xmlns:common="common.*"
+		 xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			import com.as3xls.xls.Cell;
+			import com.as3xls.xls.Sheet;
+			
+			import components.FormPrintView;
+			
+			import model.MarketSummaryModel;
+			
+			import mx.events.DataGridEvent;
+			import mx.printing.FlexPrintJob;
+			
+			import spark.events.IndexChangeEvent;
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/MarketSummary.as"
+
+			[Bindable]
+			private var fields:Array=new Array();
+			
+			[Bindable]
+			[Embed(source="images/xls.png")]
+			public var ImgXls:Class;
+
+			[Bindable]
+			public var modelManager:ModelManager=ModelManager.getInstance();
+
+			protected function adgMarketSummary_headerReleaseHandler(event:DataGridEvent):void
+			{
+				var modelManager:ModelManager=ModelManager.getInstance();
+				event.preventDefault();
+				if (modelManager.marketSummaryModel.sortColumnName == event.dataField)
+					modelManager.marketSummaryModel.decending=!modelManager.marketSummaryModel.decending;
+				else
+					modelManager.marketSummaryModel.decending=false;
+
+				modelManager.marketSummaryModel.sortColumnName=event.dataField;
+				modelManager.marketSummaryModel.sortMarketSummary();
+			}
+			
+			
+			
+			protected function btnExport_clickHandler(event:MouseEvent):void
+			{
+				//				var sheet:Sheet = new Sheet();				
+				//				var dataProviderCollection:ArrayCollection = adgMarketSummary.dataProvider as ArrayCollection;  
+				//				var rowCount:int = dataProviderCollection.length;  
+				//				sheet.resize(rowCount + 1,adgRemainingOrders.columnCount);  
+				//				var columns:Array = adgMarketSummary.columns;  
+				//				var i:int = 0;  
+				//				for each (var field:DataGridColumn in columns){  
+				//					fields.push(field.dataField.toString());  
+				//					sheet.setCell(0,i,field.dataField.toString());  
+				//					i++;  
+				//				}  
+				//				
+				//				for(var r:int=0; r < rowCount; r++)  
+				//				{  
+				//					var record:Object = dataProviderCollection.getItemAt(r);  
+				//					/*insert record starting from row no 2 else  
+				//					headers will be overwritten*/  
+				//					insertRecordInSheet(r+1,sheet,record);  
+				//				}  
+				//				var xls:ExcelFile = new ExcelFile();  
+				//				xls.sheets.addItem(sheet);  
+				//				
+				//				var bytes: ByteArray = xls.saveToByteArray();				
+				//				fr.save(bytes,"RemainingOrders.xls");				 
+			}
+			
+			private function fileIOError_Handler(event:IOErrorEvent):void
+			{
+				Alert.show(ResourceManager.getInstance().getString('marketwatch','fileIOErr'), ResourceManager.getInstance().getString('marketwatch','error'));
+			}
+			
+			private function fileSaved_Handler(event:Event):void
+			{
+				Alert.show(ResourceManager.getInstance().getString('marketwatch','fileSuccessMsg'));
+			}
+			
+			private function insertRecordInSheet(row:int, sheet:Sheet, record:Object):void
+			{
+				var colCount:int=adgMarketSummary.columnCount;
+				for (var c:int; c < colCount; c++)
+				{
+					var i:int=0;
+					for each (var field:String in fields)
+					{
+						//Alert.show(record[field]);
+//						if (record[field] is Date)
+//						{
+//							sheet.setCell(row, i, record[field]);
+//							var cell:Cell=sheet.getCell(row, i);
+//							cell.format="D-MMM-YY";
+//							cell.dateMode=1;
+//							//cell.
+//						}
+//						else
+							sheet.setCell(row, i, record[field]);
+						i++;
+					}
+				}
+			}
+			// Created on 16/07/2012 by Anas for the print functionality
+			protected function image1_clickHandler(event:MouseEvent):void
+			{
+				setTimeout(launchAlert2, 3000);
+				
+				function launchAlert2():void
+				{
+					trace('eee');
+				}
+				
+				const printJob:FlexPrintJob = new FlexPrintJob(); 
+				
+				if ( printJob.start() ) 
+				{ 
+					var printDataGrid:FormPrintView = new FormPrintView(); 
+					printDataGrid.myDataGrid.setStyle('wordWrap',true);
+					printDataGrid.myDataGrid.setStyle('fontSize',14);
+					printDataGrid.myDataGrid.width = printJob.pageWidth+550; 
+					printDataGrid.myDataGrid.height = printJob.pageHeight; 
+					printDataGrid.myDataGrid.dataProvider = ModelManager.getInstance().marketSummaryModel.symbols;
+					printDataGrid.myDataGrid.columns = adgMarketSummary.columns;
+					printDataGrid.myDataGrid.showHeaders = true;
+					addElement(printDataGrid.myDataGrid); 
+					while (printDataGrid.myDataGrid.validNextPage) 
+					{ 
+						printJob.addObject(printDataGrid.myDataGrid); 
+					} 
+					removeElement(printDataGrid.myDataGrid); 
+					printJob.send(); 
+				} 
+				Alert.show('Printed Successfully','Information');	
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter"
+						  formatString="DD/MM/YYYY LL:NN:SS A"/>
+		<components:EZCurrencyFormatter id="moneyFormatter"/>
+		<components:EZNumberFormatter id="numberFormatter"/>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%"
+					   height="30"
+					   horizontalCenter="0"
+					   top="0">
+		<s:Label text="{resourceManager.getString('marketwatch','exchange')}:"
+				 top="7"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-79':'-132'}" 
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"/>
+		<components:EZDropDownTextInput width="49"
+										top="2"
+										height="20"
+										id="txtExchange"
+										editable="false"
+										click="txtExchange_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-132':'-79'}"/>
+		<s:Label text="{resourceManager.getString('marketwatch','market')}:"
+				 top="7"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'17':'-27'}" 
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"/>
+		<components:EZDropDownTextInput width="49"
+										top="2"
+										height="20"
+										id="txtMarket"
+										editable="false"
+										click="txtMarket_MarketSumm_clickHandler(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-27':'17'}" />
+
+	</s:BorderContainer>
+	<mx:DataGrid right="1"
+				 left="1"
+				 bottom="1"
+				 top="30"
+				 id="adgMarketSummary"
+				 width="100%"
+				 height="100%"
+				 dataProvider="{ModelManager.getInstance().marketSummaryModel.symbols}"
+				 headerRelease="adgMarketSummary_headerReleaseHandler(event)">
+		<mx:columns>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','market')}"
+							   dataField="isSummary"
+							   sortable="false">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{(data.isSummary==true) ? outerDocument.modelManager.exchangeModel.getMarketCode(outerDocument.internalExchangeID, outerDocument.internalMarketID)  : ' '}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','symbol')}"
+							   dataField="SYMBOL"
+							   width="75"
+							   draggable="false">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{data.SYMBOL}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','volume')}"
+							   dataField="TOTAL_SIZE_TRADED"
+							   draggable="false">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.TOTAL_SIZE_TRADED)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','value')}"
+							   dataField="VALUE"
+							   sortable="false">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.VALUE)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','prevClose')}"
+							   dataField="LAST_DAY_CLOSE_PRICE">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.LAST_DAY_CLOSE_PRICE)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','high')}"
+							   dataField="HIGH">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.HIGH)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','low')}"
+							   dataField="LOW">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.LOW)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','open')}"
+							   dataField="OPEN">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.OPEN)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','close')}"
+							   dataField="CLOSE">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.CLOSE)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','average')}"
+							   dataField="AVERAGE">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.AVERAGE)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="{resourceManager.getString('marketwatch','trades')}"
+							   dataField="TRADES">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.TRADES == '0') ? '' : outerDocument.numberFormatter.format(data.TRADES)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="%Vol"
+							   dataField="PERCENTAGE_VOLUME">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.PERCENTAGE_VOLUME)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="%Val"
+							   dataField="VALUE">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.VALUE)}"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+	<s:Button label="{resourceManager.getString('marketwatch','refresh')}"
+			  width="75"
+			  height="20"
+			  id="btnRefresh"
+			  top="2"
+			  horizontalCenter="85"
+			  click="btnRefresh_clickHandler(event)"/>
+
+</s:Group>

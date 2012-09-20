@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- http://blog.flexexamples.com/2009/03/22/setting-a-background-image-on-an-fxapplication-in-flex-gumbo/ -->
+<s:Skin name="CustomApplicationSkin"
+		xmlns:fx="http://ns.adobe.com/mxml/2009"
+		xmlns:s="library://ns.adobe.com/flex/spark"
+		alpha.disabled="0.5"
+		width="101"
+		height="17">
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="disabled"/>
+		<s:State name="disabledWithPrompt"/>
+		<s:State name="normalWithPrompt"/>
+	</s:states>
+	<fx:Metadata>
+		<![CDATA[ 
+		[HostComponent("spark.components.TextInput")]
+		]]>
+	</fx:Metadata>
+	<s:layout>
+		<s:BasicLayout/>
+	</s:layout>
+	<s:BorderContainer width="101"
+					   height="17"
+					   styleName="orderBorders">
+
+		<s:Rect id="bg"
+				width="101"
+				height="17">
+			<s:fill>
+				<s:SolidColor color="#d9dfb3"/>
+			</s:fill>
+			<s:stroke>
+				<s:SolidColorStroke color="0xffffff"/>
+			</s:stroke>
+			<!--<s:LinearGradient rotation="-270" >
+				<s:entries>
+					<s:GradientEntry color="0xd9dfb3" ratio="0.00" />
+					<s:GradientEntry color="0xfcfdc1" ratio="1.0" />
+				</s:entries>
+			</s:LinearGradient>-->
+		</s:Rect>
+
+	</s:BorderContainer>
+</s:Skin>

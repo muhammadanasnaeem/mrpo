@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" height="20" width="100%"
+		   horizontalScrollPolicy="off" verticalScrollPolicy="off" xmlns:utils="ui.utils.*"
+		   rollOver="handleRollOver(event)" rollOut="handleRollOut(event)" 
+		   cacheAsBitmap="true" xmlns:s="library://ns.adobe.com/flex/spark"
+		   styleName="bgNewsTapeTicker"
+		   >
+	<mx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import mx.events.ItemClickEvent;
+			
+			static public const IMAGE_SIDE_LEFT:Number = 0;
+			static public const IMAGE_SIDE_RIGHT:Number = 1;
+			
+			private var data_:TickerItemData = null;
+			private var isRolledOver_:Boolean = false;
+			private var bgInvalid_:Boolean = true;
+			
+			[Bindable]
+			override public function get data():Object
+			{
+				return itemData;
+			}                       
+			override public function set data(value:Object):void
+			{
+				itemData = TickerItemData(value);
+			}
+			
+			[Bindable]
+			public function get itemData():TickerItemData
+			{
+				return data_;
+			}
+			public function set itemData(value:TickerItemData):void
+			{
+				data_ = value;
+				alpha = 1.0;
+				bgInvalid_ = true;
+				invalidateDisplayList();
+			}
+
+			private function handleRollOver(event:Event):void
+			{
+				isRolledOver_ = true;
+				bgInvalid_ = true;
+				invalidateDisplayList();
+			}
+
+			private function handleRollOut(event:Event):void
+			{
+				isRolledOver_ = false;
+				bgInvalid_ = true;
+				invalidateDisplayList();
+			}
+			
+			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+			{
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+
+				if (bgInvalid_)
+				{
+					graphics.clear();
+					if (data_ != null)
+					{
+						graphics.beginFill(1);
+						graphics.drawRect(0, 0, unscaledWidth, unscaledHeight);
+						graphics.endFill();
+					}
+					if (isRolledOver_)
+					{
+						var gradientMatrix:Matrix = new Matrix();
+						gradientMatrix.createGradientBox(unscaledWidth, unscaledHeight, Math.PI / 2, 0, 0);
+						graphics.beginGradientFill(GradientType.LINEAR, [0xCCCCCC, 0x999999], [0.2, 0.2], [0, 255], gradientMatrix);
+						graphics.drawRect(0, 0, unscaledWidth, unscaledHeight);
+						graphics.endFill();
+					}
+					bgInvalid_ = false;                             
+				}
+			}
+		]]>
+	</mx:Script>
+	<s:Label id="info"
+			 cacheAsBitmap="false"
+			 text="{itemData.info}"
+			 fontSize="14"
+			 color="black"
+			 toolTip="{itemData.info}"
+			 verticalAlign="bottom"
+			 height="100%" top="2" textAlign="left" horizontalCenter="1" width="100%"/>
+</mx:Canvas>

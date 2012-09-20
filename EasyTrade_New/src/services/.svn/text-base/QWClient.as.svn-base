@@ -1,0 +1,199 @@
+package services
+{
+	import businessobjects.CancelAllOrdersBO;
+	import businessobjects.YieldBO;
+	
+	import common.Constants;
+	import common.Messages;
+	
+	import controller.EasyTradeApp;
+	import controller.ModelManager;
+	
+	import flash.profiler.showRedrawRegions;
+	
+	import model.ExchangeModel;
+	
+	import mx.collections.ArrayCollection;
+	import mx.collections.Grouping;
+	import mx.collections.GroupingCollection2;
+	import mx.collections.HierarchicalData;
+	import mx.controls.Alert;
+	import mx.controls.advancedDataGridClasses.AdvancedDataGridColumn;
+	import mx.managers.CursorManager;
+	import mx.utils.ObjectProxy;
+
+	public class QWClient extends ServiceClient
+	{
+		import mx.rpc.soap.WebService;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.events.FaultEvent;
+
+		private static var instance:QWClient = new QWClient();
+
+		public function QWClient()
+		{
+			if( instance )
+			{
+				throw new Error( "QWClient can only be accessed through QWClient.getInstance()" );	
+			}
+		}
+
+		///////////////////////////////////////////////////////////////
+		public static function getInstance():QWClient
+		{
+			return instance;
+		}
+
+		public function getExchanges():void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().exchangeModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().exchangeModel.onFault);
+			webService.getExchanges();
+			CursorManager.setBusyCursor();
+		}
+
+		public function getBrokers():void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().brokerModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().brokerModel.onFault);
+			webService.getBrokers();
+			CursorManager.setBusyCursor();
+		}
+		
+		public function getExchangeStats(actualExchangeID:Number, internalExchangeID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().exchangeStatsModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().exchangeStatsModel.onFault);
+			webService.getExchangeStat(actualExchangeID, internalExchangeID);
+			CursorManager.setBusyCursor();
+		}
+
+		public function getBestOrders(exchangeID:Number, marketID:Number, symbolID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().bestOrdersModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().bestOrdersModel.onFault);
+			
+			webService.getBestOrders(exchangeID, marketID, symbolID);
+			CursorManager.setBusyCursor();
+		}
+		
+		public function getBestPrices(exchangeID:Number, marketID:Number, symbolID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().bestPricesModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().bestPricesModel.onFault);
+			
+			webService.getBestPrices(exchangeID, marketID, symbolID);
+			CursorManager.setBusyCursor();
+		}
+		
+		public function getBestMarketAndSymbolSummary(exchangeID:Number, marketID:Number, symbolId:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().bestMarketAndSymbolSummaryModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().bestMarketAndSymbolSummaryModel.onFault);
+			
+			webService.getBestMarketAndSymbolSummary(exchangeID, marketID, symbolId);
+		}
+		
+		public function getSymbolsBrowser(exchangeID:Number, marketID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().symbolBrowserModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().symbolBrowserModel.onFault);
+			
+			//modified on 20/12/2010
+			webService.getSymbolsBrowser(exchangeID, marketID);
+			//webService.getSymbolsBrowser();
+		}
+		
+		public function getSymbolSummary(exchangeID:Number, marketID:Number, symbolID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().symbolSummaryModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().symbolSummaryModel.onFault);
+			
+			webService.getSymbolSummary(exchangeID, marketID, symbolID);
+		}
+		
+		public function getMarketSummary(exchangeID:Number, marketID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().marketSummaryModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().marketSummaryModel.onFault);
+			
+			webService.getMarketSymbolsSummary(exchangeID, marketID);
+		}
+
+		public function getSymbolTradeHistory(exchangeID:Number, marketID:Number, symbolID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().symbolTradeHistoryModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().symbolTradeHistoryModel.onFault);
+
+			webService.getSymbolTradeHistory(exchangeID, marketID, symbolID);
+		}
+
+		public function getRemainingOrders(requesterUserId:Number,userID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().remainingOrdersModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().remainingOrdersModel.onFault);
+
+			webService.getRemainingOrders(requesterUserId,userID);
+		}
+		
+		public function getLastDayRemainingOrders(userID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().lastDayRemainingOrdersModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().lastDayRemainingOrdersModel.onFault);
+			
+			// this will be changed for last day remaining orders
+			//webService.getRemainingOrders(userID);
+			webService.getLastDayRemainingOrders();
+		}
+
+		
+		public function getUserTradeHistory(requesterUserId:Number,userID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().userTradeHistoryModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().userTradeHistoryModel.onFault);
+			
+			webService.getUserTradeHistory(requesterUserId,userID);
+		}
+		
+		public function getEventLog(requesterUserId:Number,userID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().eventLogModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().eventLogModel.onFault);
+			
+			webService.getEventLog(requesterUserId,userID);
+			CursorManager.setBusyCursor();
+		}
+		
+		public function getExchangesMarketsSchedules(exchangeID:Number):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().exchangeScheduleModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().exchangeScheduleModel.onFault);
+			
+			webService.getExchangesMarketsSchedules(exchangeID);
+		}
+
+		public function calculateYield(yield:YieldBO):void
+		{
+			var webService:WebService = createService(Constants.QW_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().yieldModel.onResult);
+			webService.addEventListener("fault", ModelManager.getInstance().yieldModel.onFault);
+			
+			webService.calculateYield(yield);
+		}
+	}
+}

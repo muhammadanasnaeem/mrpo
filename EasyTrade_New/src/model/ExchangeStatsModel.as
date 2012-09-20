@@ -1,0 +1,307 @@
+package model
+{
+	import businessobjects.AdvDecStatsBO;
+	import businessobjects.ExchangeStatsBO;
+	import businessobjects.IndexDetailBO;
+	import businessobjects.SectorDetailBO;
+	import businessobjects.SymbolStatBO;
+	
+	import common.Constants;
+	import common.Messages;
+	
+	import controller.ModelManager;
+	import controller.WindowManager;
+	
+	import mx.charts.PieChart;
+	import mx.collections.ArrayCollection;
+	import mx.collections.Sort;
+	import mx.controls.Alert;
+	import mx.managers.CursorManager;
+	import mx.resources.ResourceManager;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+	
+	import services.QWClient;
+	
+	import view.ExchangeStats;
+	import view.ExchangeStatsAdvDec;
+	import view.ExchangeStatsIndices;
+	import view.ExchangeStatsSectors;
+
+	public class ExchangeStatsModel implements IModel
+	{
+		/////////////////////////////////////////////////////////
+		private var isDirty_:Boolean=true;
+
+		public function get isDirty():Boolean
+		{
+			return isDirty_;
+		}
+
+		public function set isDirty(value:Boolean):void
+		{
+			isDirty_=value;
+		}
+		/////////////////////////////////////////////////////////
+
+		private var exchangeID_:Number=-1;
+
+		public function get exchangeID():Number
+		{
+			return exchangeID_;
+		}
+
+		public function set exchangeID(value:Number):void
+		{
+			exchangeID_=value;
+		}
+		/////////////////////////////////////////////////////////
+
+		private var exchangeStats_:ExchangeStatsBO=new ExchangeStatsBO();
+
+		[Bindable]
+		public function get exchangeStats():ExchangeStatsBO
+		{
+			return exchangeStats_;
+		}
+
+		public function set exchangeStats(value:ExchangeStatsBO):void
+		{
+			exchangeStats_=value;
+		}
+
+		/////////////////////////////////////////////////////////
+		private var total:Number=0;
+
+		public function ExchangeStatsModel()
+		{
+			exchangeStats.sectorsDetails.sort=new Sort();
+			exchangeStats.sectorsDetails.sort.compareFunction=compareSectors;
+		}
+
+		/////////////////////////////////////////////////////////
+
+		public function execute():void
+		{
+			if (exchangeID > -1)
+			{
+				QWClient.getInstance().getExchangeStats(ModelManager.getInstance().exchangeModel.getExchangeID(exchangeID), exchangeID);
+			}
+		}
+
+		/////////////////////////////////////////////////////////
+		//Anas Changes Start
+		public function onResult(event:ResultEvent):void
+		{
+			var exchangeStatistics:ExchangeStats=WindowManager.getInstance().viewManager.exchangeStats; //.dgExchangeStatsIndices.dataProvider = null;
+			var arr:Array=exchangeStatistics.tabNavigator.getChildren();
+			exchangeStatistics.sectors=new ExchangeStatsSectors();
+			exchangeStatistics.exchangeStatsAdv=new ExchangeStatsAdvDec();
+			try
+			{
+				if (exchangeStatistics.exchangeInds.dgExchangeStatsIndices.dataProvider || exchangeStatistics.sectors.pcSectors.dataProvider || exchangeStatistics.sectors.lgndSectors.dataProvider)
+				{
+
+
+					var arrCol:ArrayCollection=exchangeStatistics.exchangeInds.dgExchangeStatsIndices.dataProvider as ArrayCollection;
+					arrCol.source=null;
+
+					var arrCol1:ArrayCollection=exchangeStatistics.sectors.pcSectors.dataProvider as ArrayCollection;
+					arrCol1.source=null;
+
+					var arrCol2:PieChart=exchangeStatistics.sectors.lgndSectors.dataProvider as PieChart;
+					var variable:ArrayCollection=arrCol2.dataProvider as ArrayCollection;
+					variable.source=null;
+
+					var arrCol6:ArrayCollection=exchangeStatistics.exchangeStatsAdv.dgTopAdvances.dataProvider as ArrayCollection;
+					arrCol6.source=null;
+
+					var arrCol7:ArrayCollection=exchangeStatistics.exchangeStatsAdv.dgTopDecliners.dataProvider as ArrayCollection;
+					arrCol7.source=null;
+
+					var arrCol3:ArrayCollection=exchangeStatistics.exchangeStatsAdv.pcAdvDec.dataProvider as ArrayCollection;
+					arrCol3.source=null;
+
+					var arrCol5:PieChart=exchangeStatistics.exchangeStatsAdv.lgndAdvDec.dataProvider as PieChart;
+					var variable2:ArrayCollection=arrCol5.dataProvider as ArrayCollection;
+					variable2.source=null;
+				}
+			}
+			catch (e:Error)
+			{
+				trace(e.errorID + '' + e.message);
+			}
+
+			if (!event.result)
+			{
+				return;
+			}
+			exchangeStats.actualID_=event.result.actualID_;
+			exchangeStats.ADVANCED=event.result.ACVANCED;
+			exchangeStats.DECLINED=event.result.DECLINED;
+			exchangeStats.internalID_=event.result.internalID_;
+			exchangeStats.SYMBOL_COUNT=event.result.SYMBOL_COUNT;
+			exchangeStats.TOTAL_VOLUME=event.result.TOTAL_VOLUME;
+			exchangeStats.TRADED=event.result.TRADED;
+			exchangeStats.UNCHANGED=event.result.UNCHANGED;
+
+			var symbolStatBO:SymbolStatBO=new SymbolStatBO();
+
+			//index details
+			for each (var o:Object in event.result.INDEXES)
+			{
+				var indexDetailBO:IndexDetailBO=new IndexDetailBO();
+				indexDetailBO=fillIndexDetailBO(o, indexDetailBO);
+				exchangeStats.indexesDetails.addItem(indexDetailBO);
+			}
+
+			exchangeStatistics.exchangeInds.dgExchangeStatsIndices.dataProvider=ModelManager.getInstance().exchangeStatsModel.exchangeStats.indexesDetails;
+
+			//sector details
+			for each (o in event.result.SECTORS)
+			{
+				var sectorDetailBO:SectorDetailBO=new SectorDetailBO()
+				sectorDetailBO=fillSectorDetailBO(o, sectorDetailBO);
+				exchangeStats.sectorsDetails.addItem(sectorDetailBO);
+			}
+			updateTooltips();
+			exchangeStats.sectorsDetails.refresh();
+
+			//advanced symbols
+			for each (o in event.result.ADVANCEDSYMBOLS)
+			{
+				var symbolStatBo1:SymbolStatBO=new SymbolStatBO();
+				symbolStatBo1=ModelManager.getInstance().symbolSummaryModel.fillSymbolStatBO(o, symbolStatBo1);
+				symbolStatBo1.INTERNAL_EXCHANGE_ID=event.result.internalID_;
+				symbolStatBo1.SYMBOL_CODE=ModelManager.getInstance().exchangeModel.getSymbolCode(symbolStatBo1.INTERNAL_EXCHANGE_ID, symbolStatBo1.INTERNAL_MARKET_ID, symbolStatBo1.internalSymbolID);
+				exchangeStats.advancedSymbols.addItem(symbolStatBo1);
+			}
+			exchangeStats.advancedSymbols.refresh();
+
+			//declined symbols
+			for each (o in event.result.DECLINEDSYMBOLS)
+			{
+				var symbolStatBO2:SymbolStatBO=new SymbolStatBO();
+				symbolStatBO2=ModelManager.getInstance().symbolSummaryModel.fillSymbolStatBO(o, symbolStatBO2);
+				symbolStatBO2.INTERNAL_EXCHANGE_ID=event.result.internalID_;
+				symbolStatBO2.SYMBOL_CODE=ModelManager.getInstance().exchangeModel.getSymbolCode(symbolStatBO2.INTERNAL_EXCHANGE_ID, symbolStatBO2.INTERNAL_MARKET_ID, symbolStatBO2.internalSymbolID);
+				exchangeStats.declinedSymbols.addItem(symbolStatBO2);
+			}
+			exchangeStats.declinedSymbols.refresh();
+
+			//unchanged symbols
+			for each (o in event.result.UNCHANGEDSYMBOLS)
+			{
+				symbolStatBO=ModelManager.getInstance().symbolSummaryModel.fillSymbolStatBO(o, symbolStatBO);
+				exchangeStats.unChangedSymbols.addItem(symbolStatBO);
+			}
+			exchangeStats.unChangedSymbols.refresh();
+			//Anas Changes End
+			if (exchangeStats.TRADED > 0)
+			{
+				var statLegend:String=Constants.EXCHANGE_STATS_ADVANCED + " " + " (" + (exchangeStats.ADVANCED / exchangeStats.TRADED * 100).toFixed(2) + " %)";
+				exchangeStats.advdecStats.addItem(new AdvDecStatsBO(statLegend, exchangeStats.ADVANCED));
+
+				statLegend=Constants.EXCHANGE_STATS_DECLINED + " " + " (" + (exchangeStats.DECLINED / exchangeStats.TRADED * 100).toFixed(2) + " %)";
+				exchangeStats.advdecStats.addItem(new AdvDecStatsBO(statLegend, exchangeStats.DECLINED));
+
+				statLegend=Constants.EXCHANGE_STATS_UNCHANGED + " " + " (" + (exchangeStats.UNCHANGED / exchangeStats.TRADED * 100).toFixed(2) + " %)";
+				exchangeStats.advdecStats.addItem(new AdvDecStatsBO(statLegend, exchangeStats.UNCHANGED));
+
+				var zeroVolume:Number=exchangeStats.TRADED - exchangeStats.ADVANCED - exchangeStats.DECLINED - exchangeStats.UNCHANGED;
+
+				statLegend=Constants.EXCHANGE_STATS_ZERO_VOLUME + " " + " (" + (zeroVolume / exchangeStats.TRADED * 100).toFixed(2) + " %)";
+				exchangeStats.advdecStats.addItem(new AdvDecStatsBO(statLegend, zeroVolume));
+			}
+
+			CursorManager.removeBusyCursor();
+		}
+
+		/////////////////////////////////////////////////////////
+
+		public function onFault(event:FaultEvent):void
+		{
+			isDirty=true;
+			Alert.show(event.fault.faultDetail, ResourceManager.getInstance().getString('marketwatch','error'));
+			CursorManager.removeBusyCursor();
+		}
+
+		/////////////////////////////////////////////////////////
+		//Anas Changes Start
+		private function fillIndexDetailBO(o:Object, indexDetail:IndexDetailBO):IndexDetailBO
+		{
+			indexDetail.CHANGE=o.CHANGE;
+			indexDetail.DESC=o.DESC;
+			indexDetail.HIGH=o.HIGH;
+			indexDetail.INDEX=o.INDEX;
+			indexDetail.INDEX_CODE=o.INDEX_CODE;
+			indexDetail.INDEX_ID=o.INDEX_ID;
+			indexDetail.LAST_DAY_INDEX=o.LAST_DAY_INDEX;
+			indexDetail.LOW=o.LOW;
+			indexDetail.VALUE=o.VALUE;
+			indexDetail.VOLUME=o.VOULME as Number;
+
+			return indexDetail;
+		}
+
+		//Anas Changes Ended
+		/////////////////////////////////////////////////////////
+
+		private function fillSectorDetailBO(o:Object, sectorDetail:SectorDetailBO):SectorDetailBO
+		{
+			sectorDetail.DESC=o.DESC;
+			sectorDetail.SECTOR_CODE=o.SECTOR_CODE;
+			sectorDetail.SECTOR_ID=o.SECTOR_ID;
+			sectorDetail.SECTOR_NAME=o.SECTOR_NAME;
+			sectorDetail.VALUE=o.VALUE;
+
+			total+=sectorDetail.VALUE;
+
+			return sectorDetail;
+		}
+
+		/////////////////////////////////////////////////////////
+
+		private function updateTooltips():void
+		{
+			for each (var ss:SectorDetailBO in exchangeStats.sectorsDetails)
+			{
+				ss.LEGEND_TIP=ss.SECTOR_NAME + " " + ss.VALUE + " (" + (ss.VALUE / total * 100).toFixed(2) + " %)";
+			}
+
+		}
+
+		/////////////////////////////////////////////////////////
+
+		private function compareSectors(a:Object, b:Object, fields:Array=null):int
+		{
+			if (a == null && b == null)
+			{
+				return 0;
+			}
+
+			if (a == null)
+			{
+				return 1;
+			}
+
+			if (b == null)
+			{
+				return -1;
+			}
+
+			if (a.VALUE < b.VALUE)
+			{
+				return 1;
+			}
+
+			if (a.VALUE > b.VALUE)
+			{
+				return -1;
+			}
+			return 0;
+		}
+
+
+	}
+}

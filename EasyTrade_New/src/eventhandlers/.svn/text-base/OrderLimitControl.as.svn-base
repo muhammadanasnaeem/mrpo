@@ -1,0 +1,174 @@
+import businessobjects.SymbolBO;
+import businessobjects.SymbolOrderLimitBO;
+
+import common.Messages;
+import common.Type;
+
+import components.ComboBoxItem;
+import components.EZNumberFormatter;
+
+import controller.ModelManager;
+
+import mx.controls.Alert;
+import mx.events.FlexEvent;
+
+import view.ExchangeStatsIndices;
+
+protected function group1_initializeHandler(event:FlexEvent):void
+{
+	for (var i:int = 0; i < ModelManager.getInstance().exchangeModel.exchanges.length; ++i)
+	{
+		var obj:Object = ModelManager.getInstance().exchangeModel.exchanges.getItemAt(i);
+		var cbi:ComboBoxItem = new ComboBoxItem(obj.INTERNAL_EXCHANGE_ID.toString(), obj.EXCHANGE_CODE);
+		exchangeList.addItem(cbi);
+	}
+	internalExchangeID = -1;
+}
+
+protected function btnSubmit_clickHandler(event:MouseEvent):void
+{
+	var modelManager:ModelManager = ModelManager.getInstance();
+	var sol:SymbolOrderLimitBO = new SymbolOrderLimitBO();
+
+	sol.INTERNAL_EXCHANGE_ID = internalExchangeID;
+	sol.INTERNAL_MARKET_ID = internalMarketID;
+	sol.INTERNAL_SYMBOL_ID = internalSymbolID;
+
+	sol.EXCHANGE_ID = modelManager.exchangeModel.getExchangeID(internalExchangeID);
+	sol.MARKET_ID = modelManager.exchangeModel.getMarketID(internalExchangeID, internalMarketID);
+	sol.SYMBOL_ID = modelManager.exchangeModel.getSymbolID(internalExchangeID, internalMarketID, internalSymbolID);
+
+	sol.LIMIT_TYPE = rdoLimitType.selectedValue.toString();
+	sol.UPPER_LIMIT = new Number(txtUpperLimit.text);
+	sol.LOWER_LIMIT = new Number(txtLowerLimit.text);
+
+	if (isNaN(sol.UPPER_LIMIT) || isNaN(sol.LOWER_LIMIT))
+	{
+		Alert.show(Messages.INVALID_INPUT, Messages.TITLE_ERROR);
+		return;
+	}
+	
+	if(rdoLimitType.selectedValue == 'PRICE' )
+	{
+		if(sol.UPPER_LIMIT > 999999.9999 || sol.LOWER_LIMIT > 999999.9999)
+		{
+			Alert.show(Messages.INVALID_INPUT, Messages.TITLE_ERROR);
+			return;
+		}
+		
+	}
+	else if( rdoLimitType.selectedValue == 'VALUE')
+	{
+		if(sol.UPPER_LIMIT > 9999999999.9999 || sol.LOWER_LIMIT > 9999999999.9999)
+		{
+			Alert.show(Messages.INVALID_INPUT, Messages.TITLE_ERROR);
+			return;
+		}
+	}
+		
+	else if(rdoLimitType.selectedValue == 'VOLUME')
+	{
+		if(sol.UPPER_LIMIT > 9999999999 || sol.LOWER_LIMIT > 9999999999)
+		{
+			Alert.show(Messages.INVALID_INPUT, Messages.TITLE_ERROR);
+			return;
+		}
+	}
+	
+	if (sol.LOWER_LIMIT >= sol.UPPER_LIMIT)
+	{
+		Alert.show(Messages.INVALID_INPUT, Messages.TITLE_ERROR);
+		return;
+	}
+
+	sol.PERSISTENT = chkPersist.selected;
+	modelManager.SymbolOrderLimitChange(sol);
+}
+
+protected function btnReset_clickHandler(event:MouseEvent):void
+{
+	resetView();
+}
+
+protected function txtSymbol_focusOutHandler(event:FocusEvent):void
+{
+	if (txtSymbol.text.length == 0)
+	{
+		return;
+	}
+	
+	var modelManager:ModelManager = ModelManager.getInstance();
+	txtSymbol.text = txtSymbol.text.toUpperCase();
+	var obj:SymbolBO = modelManager.exchangeModel.getSymbolByCode(
+		internalExchangeID,
+		internalMarketID,
+		txtSymbol.text
+	) as SymbolBO ;
+	if(obj)
+	{
+		if (obj.INTERNAL_SYMBOL_ID < 0)
+		{
+			txtSymbol.text = "";
+			internalSymbolID = -1;
+			
+			txtLowerLimit.text = "";
+			txtUpperLimit.text = "";
+			return;
+		}
+		
+		internalSymbolID = obj.INTERNAL_SYMBOL_ID;
+		if(rdoLimitType.selectedValue == 'PRICE' )
+		{
+			txtLowerLimit.text = obj.LOWER_CIRCUIT_BREAKER_LIMIT.toString();
+			txtUpperLimit.text = obj.UPPER_CIRCUIT_BREAKER_LIMIT.toString();
+		}
+		else if( rdoLimitType.selectedValue == 'VALUE')
+		{
+			txtLowerLimit.text = obj.LOWER_ORDER_VALUE_LIMIT.toString();
+			txtUpperLimit.text = obj.UPPER_ORDER_VALUE_LIMIT.toString();
+		}
+		
+		else if(rdoLimitType.selectedValue == 'VOLUME')
+		{
+			txtLowerLimit.text = obj.LOWER_ORDER_VOLUME_LIMIT.toString();
+			txtUpperLimit.text = obj.UPPER_ORDER_VOLUME_LIMIT.toString();
+		}
+	}
+	else
+	{
+		txtSymbol.text = "";
+		internalSymbolID = -1;
+		
+		txtLowerLimit.text = "";
+		txtUpperLimit.text = "";
+	}
+}
+
+protected function txtSymbol_keyDownHandler(event:KeyboardEvent):void
+{
+	if ( event.keyCode == 13 )
+	{
+		event.stopImmediatePropagation();
+		txtSymbol_focusOutHandler(null);
+	}
+}
+
+protected function resetView():void
+{
+	internalExchangeID = -1;
+	txtExchange.text = "";
+	internalMarketID = -1;
+	txtMarket.text = "";
+	internalSymbolID = -1;
+	txtSymbol.text = "";
+	rdoLimitType.selectedValue = 'PRICE';
+	//rdoLimitType.selection = ;
+	txtLowerLimit.text = "";
+	txtUpperLimit.text = "";
+	chkPersist.selected = false;
+}
+
+public function applyFilter():void
+{
+}
+

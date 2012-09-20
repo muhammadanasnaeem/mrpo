@@ -1,0 +1,160 @@
+package services
+{
+	import businessobjects.CancelAllOrdersBO;
+	import businessobjects.OrderBO;
+	
+	import common.Constants;
+	import common.Messages;
+	
+	import components.SOAPHeaderUtil;
+	
+	import controller.EasyTradeApp;
+	import controller.ModelManager;
+	import controller.ProfileManager;
+	
+	import flash.profiler.showRedrawRegions;
+	import flash.system.Security;
+	
+	import mx.collections.ArrayCollection;
+	import mx.collections.Grouping;
+	import mx.collections.GroupingCollection2;
+	import mx.collections.HierarchicalData;
+	import mx.controls.Alert;
+	import mx.controls.advancedDataGridClasses.AdvancedDataGridColumn;
+	import mx.managers.CursorManager;
+	import mx.rpc.events.FaultEvent;
+	import mx.rpc.events.ResultEvent;
+	import mx.rpc.remoting.RemoteObject;
+	import mx.rpc.soap.SOAPHeader;
+	import mx.rpc.soap.WebService;
+	import mx.utils.Base64Encoder;
+	import mx.utils.ObjectProxy;
+	import mx.utils.SecurityUtil;
+	
+	public class OrdererClient extends ServiceClient
+	{
+		
+		
+		private static var instance:OrdererClient = new OrdererClient();
+		
+		//protected var webService:WebService = new WebService();
+		
+		public function OrdererClient()
+		{
+			if( instance )
+			{
+				throw new Error( "OrdererClient can only be accessed through OrdererClient.getInstance()" );	
+			}
+		}
+		
+		///////////////////////////////////////////////////////////////
+		public static function getInstance():OrdererClient
+		{
+			return instance;
+		}
+
+		private static const WSSE_SECURITY:QName = new QName( "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "Security" );
+	
+		public function submitOrder(orderBO:OrderBO):void
+		{
+			var webService:WebService = createService(Constants.ORDERER_WSDL_END_POINT);
+
+			if (orderBO.SIDE == "buy")
+			{
+				webService.addEventListener("result", ModelManager.getInstance().orderModel.onBuyOrderResult);
+			}
+			else
+			{
+				webService.addEventListener("result", ModelManager.getInstance().orderModel.onSellOrderResult);
+			}
+			webService.addEventListener("fault", ModelManager.getInstance().orderModel.onFault);
+			
+			// modified on 15/12/2010
+			//var header:SOAPHeader = SOAPHeaderUtil.returnWSSEHeaderWithNonceAndTimestamp("BABAR", "babar");
+			var header:SOAPHeader = SOAPHeaderUtil.returnWSSEHeaderWithNonceAndTimestamp(ProfileManager.getInstance().userName, ProfileManager.getInstance().password);
+			// modified on 7/1/2011 after discussion with Hashim
+			//header.mustUnderstand = true;
+			header.mustUnderstand = false;
+			webService.addHeader(header);
+
+			webService.submitOrder(orderBO);
+			CursorManager.setBusyCursor();
+			
+		}
+		
+		public function submitLastDayRemainingOrder(submittedOrders:ArrayCollection):void
+		{
+			var webService:WebService = createService(Constants.ORDERER_WSDL_END_POINT);
+			
+			webService.addEventListener("result", ModelManager.getInstance().orderModel.onLastDayRemainingOrderResult);
+			webService.addEventListener("fault", ModelManager.getInstance().orderModel.onFault);
+			
+			// modified on 15/12/2010
+			//var header:SOAPHeader = SOAPHeaderUtil.returnWSSEHeaderWithNonceAndTimestamp("BABAR", "babar");
+			var header:SOAPHeader = SOAPHeaderUtil.returnWSSEHeaderWithNonceAndTimestamp(ProfileManager.getInstance().userName, ProfileManager.getInstance().password);
+			// modified on 7/1/2011 after discussion with Hashim
+			//header.mustUnderstand = true;
+			header.mustUnderstand = false;
+			webService.addHeader(header);
+			 
+			webService.submitLastDayRemainingOrders(submittedOrders);
+			CursorManager.setBusyCursor();
+			
+		}
+
+		
+		public function changeOrder(orderBO:OrderBO):void
+		{
+			var webService:WebService = createService(Constants.ORDERER_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().orderModel.onChangeOrderResult);
+			webService.addEventListener("fault", ModelManager.getInstance().orderModel.onFault);
+			
+			// modified on 15/12/2010
+			//var header:SOAPHeader = SOAPHeaderUtil.returnWSSEHeaderWithNonceAndTimestamp("BABAR", "babar");
+			var header:SOAPHeader = SOAPHeaderUtil.returnWSSEHeaderWithNonceAndTimestamp(ProfileManager.getInstance().userName, ProfileManager.getInstance().password);
+			// modified on 7/1/2011 after discussion with Hashim
+			//header.mustUnderstand = true;
+			header.mustUnderstand = false;
+			webService.addHeader(header);
+			
+			webService.changeOrder(orderBO);
+			CursorManager.setBusyCursor();
+			
+		}
+		
+		public function cancelOrder(orderBO:OrderBO):void
+		{
+			var webService:WebService = createService(Constants.ORDERER_WSDL_END_POINT);
+			webService.addEventListener("result", ModelManager.getInstance().orderModel.onCancelOrderResult);
+			webService.addEventListener("fault", ModelManager.getInstance().orderModel.onFault);
+			
+			// modified on 15/12/2010
+			//var header:SOAPHeader = SOAPHeaderUtil.returnWSSEHeaderWithNonceAndTimestamp("BABAR", "babar");
+			var header:SOAPHeader = SOAPHeaderUtil.returnWSSEHeaderWithNonceAndTimestamp(ProfileManager.getInstance().userName, ProfileManager.getInstance().password);
+			// modified on 7/1/2011 after discussion with Hashim
+			//header.mustUnderstand = true;
+			header.mustUnderstand = false;
+			webService.addHeader(header);
+			
+			webService.cancelOrder(orderBO);
+			CursorManager.setBusyCursor();
+			
+		}
+		
+		public function cancelAllOrders(cao:CancelAllOrdersBO):void
+		{
+			cao.USER_ID = ModelManager.getInstance().userID;
+			var webService:WebService = createService(Constants.ORDERER_WSDL_END_POINT);
+			
+			webService.addEventListener("result", ModelManager.getInstance().onCancelAllOrdersResult);
+			webService.addEventListener("fault", ModelManager.getInstance().onCancelAllOrdersFault);
+			
+			var header:SOAPHeader = SOAPHeaderUtil.returnWSSEHeaderWithNonceAndTimestamp(ProfileManager.getInstance().userName, ProfileManager.getInstance().password);
+			header.mustUnderstand = false;
+			webService.addHeader(header);
+			
+			webService.cancelAllOrdersWM(cao);
+			CursorManager.setBusyCursor();
+		}
+	}
+}

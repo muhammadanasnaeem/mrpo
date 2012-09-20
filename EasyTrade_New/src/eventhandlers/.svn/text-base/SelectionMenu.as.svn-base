@@ -1,0 +1,21 @@
+import common.Constants;
+
+import flash.events.MouseEvent;
+
+import mx.events.FlexMouseEvent;
+import mx.managers.PopUpManager;
+
+protected function mouseDownOutsideHandler(event:FlexMouseEvent):void
+{
+	PopUpManager.removePopUp(this);
+}
+
+protected function clickHandler(event:MouseEvent):void
+{
+	if (!event.currentTarget.lstList.selectedItem)
+	{
+		return;
+	}
+	PopUpManager.removePopUp(this);
+	this.dispatchEvent( new Event( Constants.EVENT_MENU_CLOSE ) );
+}

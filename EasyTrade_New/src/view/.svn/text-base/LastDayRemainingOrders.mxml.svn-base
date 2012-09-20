@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%"
+		 initialize="group1_initializeHandler(event)" xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/LastDayRemainingOrders.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="LL:NN:SS A" />
+		<components:EZCurrencyFormatter id="moneyFormatter" />
+		<components:EZNumberFormatter id="numberFormatter" />
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<!-- mx:ButtonBar id="toolbar" name="toolbar" y="2" horizontalCenter="0">
+	<mx:dataProvider>
+	<fx:String>Expand All</fx:String>
+	<fx:String>Refresh</fx:String>
+	</mx:dataProvider>
+	</mx:ButtonBar -->
+	<s:BorderContainer visible="false" includeInLayout="false" width="100%" height="30" horizontalCenter="0" top="0">
+		<s:Label text="Exchange:" horizontalCenter="-165" top="7"/>
+		<components:EZDropDownTextInput width="49" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-110" top="2"/>
+		<s:Label text="Market:" horizontalCenter="-60" top="7"/>
+		<components:EZDropDownTextInput width="49" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" horizontalCenter="-14" top="2"/>
+		<s:Label text="Symbol:" horizontalCenter="37" top="7"/>
+		<s:TextInput width="49" height="20" id="txtSymbol" keyDown="txtSymbol_keyDownHandler(event)" horizontalCenter="87" top="2"/>
+	</s:BorderContainer>
+	
+	<components:EZDataGrid
+		id="adgRemainingOrders"
+		right="1" left="1" bottom="55" top="5"
+		width="100%" height="100%"		
+		dataProvider="{modelManager.lastDayRemainingOrdersModel.remainingOrders}" >
+		<components:columns>
+			<!--mx:AdvancedDataGridColumn headerText="Market" dataField="MARKET" /-->
+			
+			<mx:DataGridColumn width="30" sortable="false">
+				<mx:headerRenderer>
+					<fx:Component>
+						<mx:CheckBox selected="@{outerDocument.selectionFlag}" textAlign="center" click="{outerDocument.selectDeselectAll(event)}" />
+					</fx:Component>
+				</mx:headerRenderer>
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:CheckBox click="{outerDocument.changeSelection()}" selected="@{data.SELECTED}" textAlign="center" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Exchange">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.modelManager.exchangeModel.getExchangeByID(data.EXCHANGE_ID)}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Market">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.modelManager.exchangeModel.getMarketCodeBYId(data.EXCHANGE_ID,data.MARKET_ID)}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn headerText="Symbol" dataField="SYMBOL" />
+			
+		<!--	<mx:DataGridColumn headerText="Client ID" dataField="CLIENT_ID" /> -->
+			
+			<mx:DataGridColumn headerText="Order Number" dataField="ORDER_NO" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.ORDER_NO)}" width="100%" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			
+			<mx:DataGridColumn headerText="Bid/Offer" dataField="SIDE"  />
+			
+			<mx:DataGridColumn headerText="Price" dataField="PRICE" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.PRICE)}" width="100%" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			
+			<mx:DataGridColumn headerText="Remaining" dataField="VOLUME" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.numberFormatter.format(data.VOLUME)}" width="100%" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			
+			<mx:DataGridColumn headerText="Time" dataField="ENTRY_DATETIME"  >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.dateFormatter.format(data.ENTRY_DATETIME)}" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			
+			<mx:DataGridColumn headerText="Trigger Price" dataField="TRIGGER_PRICE" >
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.TRIGGER_PRICE)}" width="100%" textAlign="right" />
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+		</components:columns>
+	</components:EZDataGrid>
+	
+	
+	
+	<s:BorderContainer width="100%" height="30" bottom="25">
+		<s:Button label="Submit" width="75" height="20" id="btnSubmit" top="4" right="200" click="btnSubmit_clickHandler(event)"/>
+		<s:Button label="Cancel" width="75" height="20" id="btnCancel" top="4" right="115" click="btnCancel_clickHandler(event)"/>
+		<s:Button label="Refresh" width="75" height="20" id="btnRefresh" top="4" right="30" click="btnRefresh_clickHandler(event)"/>
+	</s:BorderContainer>
+</s:Group>

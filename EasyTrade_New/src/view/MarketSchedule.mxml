@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%"
+		 height="100%"
+		 xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			include "../eventhandlers/MarketMessage.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter"
+						  formatString="JJ:NN:SS A"/>
+	</fx:Declarations>
+	<components:EZAdvancedDataGrid id="adgMarketSchedule"
+								   designViewDataType="tree"
+								   folderClosedIcon="{null}"
+								   folderOpenIcon="{null}"
+								   defaultLeafIcon="{null}"
+								   horizontalCenter="0"
+								   verticalCenter="0"
+								   left="0"
+								   right="0"
+								   top="0"
+								   bottom="0"
+								   paddingLeft="0"
+								   paddingRight="0"
+								   paddingBottom="0"
+								   paddingTop="0">
+		<components:dataProvider>
+			<mx:HierarchicalData source="{modelManager.exchangeScheduleModel.allExchangeSchedule}"
+								 childrenField="SCHEDULE"/>
+		</components:dataProvider>
+		<components:columns>
+			<mx:AdvancedDataGridColumn headerText="{resourceManager.getString('marketwatch','exchange')}"
+									   dataField="CODE"/>
+			<mx:AdvancedDataGridColumn headerText="{resourceManager.getString('marketwatch','state')}"
+									   dataField="state_"/>
+			<mx:AdvancedDataGridColumn headerText="{resourceManager.getString('marketwatch','time')}"
+									   dataField="startDateTime_">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.dateFormatter.format(data.startDateTime_)}"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:AdvancedDataGridColumn>
+		</components:columns>
+	</components:EZAdvancedDataGrid>
+</s:Group>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" xmlns:common="common.*" initialize="group1_initializeHandler(event)" xmlns:components="components.*" >
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/SymbolStateControl.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<mx:DateFormatter id="dateFormatter" formatString="JJ:NN:SS" />
+	</fx:Declarations>
+	<s:BorderContainer x="0" y="0" width="100%" height="100%">
+		<s:Label text="Exchange:" horizontalCenter="-90" top="16"/>
+		<components:EZDropDownTextInput width="128" top="11" height="22" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="47"/>
+		<s:Label text="Market:" horizontalCenter="-99" top="41"/>
+		<components:EZDropDownTextInput width="128" top="36" height="22" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" horizontalCenter="47"/>
+		<s:Label text="Symbol:" top="66" horizontalCenter="-97"/>
+		<s:TextInput width="128" top="61" height="20" id="txtSymbol" horizontalCenter="47" keyDown="txtSymbol_keyDownHandler(event)" />
+		
+		<s:Label text="Current State:" horizontalCenter="-81" top="89"/>
+		<s:TextInput width="128" height="22" id="txtCurrentSymbolState" editable="false" horizontalCenter="47" top="84" />
+		
+		<s:Label text="Requested State:" horizontalCenter="-71" top="115"/>
+		<components:EZDropDownTextInput width="128" top="110" height="22" id="txtRequestedSymbolState" editable="false" horizontalCenter="47" click="txtRequestedSymbolState_clickHandler(event)"/>
+
+		<s:CheckBox label="Make Persistent" id="chkPersist" horizontalCenter="-59" top="132"/>
+		
+		<s:Button label="Update" id="btnUpdate" horizontalCenter="-38" top="156" click="btnUpdate_clickHandler(event)"/>
+		<s:Button label="Reset" id="btnReset" click="btnReset_clickHandler(event)" horizontalCenter="40" top="156"/>
+	</s:BorderContainer>
+</s:Group>

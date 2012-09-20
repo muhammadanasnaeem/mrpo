@@ -1,0 +1,55 @@
+package controller
+{
+	import mx.core.SoundAsset;
+
+	public class SoundManager
+	{
+		private static var instance:SoundManager = new SoundManager();
+		public function SoundManager()
+		{
+			if( instance )
+			{
+				throw new Error( "SoundManager can only be accessed through SoundManager.getInstance()" );	
+			}
+		}
+		///////////////////////////////////////////////////////////////
+		
+		public static function getInstance():SoundManager
+		{
+			return instance;
+		}
+		///////////////////////////////////////////////////////////////
+		
+		[Embed(source="assets/newemail.mp3")]
+		private var tradeSndCls:Class;
+		private var tradeSndAsset:SoundAsset = new tradeSndCls() as SoundAsset;
+		
+		public function playTradeSound():void
+		{
+			tradeSndAsset.play();
+		}
+		
+		///////////////////////////////////////////////////////////////
+		
+		[Embed(source="assets/ding.mp3")]
+		private var buySndCls:Class;
+		private var buySndAsset:SoundAsset = new buySndCls() as SoundAsset;
+		
+		public function playBuySound():void
+		{
+			buySndAsset.play();
+		}
+		
+		///////////////////////////////////////////////////////////////
+		
+		[Embed(source="assets/online.mp3")]
+		private var marketStateSndCls:Class;
+		private var marketStateSndAsset:SoundAsset = new marketStateSndCls() as SoundAsset;
+		
+		public function playMarketStateSound():void
+		{
+			marketStateSndAsset.play();
+		}
+
+	}
+}

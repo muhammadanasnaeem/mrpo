@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" xmlns:components="components.*"
+		 initialize="group1_initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/SymbolSummary.as"
+		]]>
+	</fx:Script>	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:Label text="Exchange:" top="7" horizontalCenter="-100"/>
+	<components:EZDropDownTextInput width="49" top="2" height="20" id="txtExchange" editable="false" click="txtExchange_clickHandler(event)" horizontalCenter="-47"/>
+	<s:Label text="Market:" top="7" horizontalCenter="5"/>
+	<components:EZDropDownTextInput width="49" top="2" height="20" id="txtMarket" editable="false" click="txtMarket_clickHandler(event)" horizontalCenter="49"/>
+	<s:Label text="Symbol:" top="7" horizontalCenter="102"/>
+	<s:TextInput width="49" top="2" height="20" id="txtSymbol" horizontalCenter="150" keyDown="txtSymbol_keyDownHandler(event)" />
+	<mx:DataGrid dataProvider="{ModelManager.getInstance().symbolBrowserModel.symbols}" 
+		right="1" left="1" bottom="1" top="30"
+		id="dgSymbolBrowser" 
+		width="100%" height="100%"
+		>
+		<mx:columns>
+			<!--mx:DataGridColumn headerText="Exchange" dataField="EXCHANGE_CODE" />
+			<mx:DataGridColumn headerText="Market" dataField="MARKET_CODE" /-->
+			<mx:DataGridColumn headerText="Symbol" dataField="SYMBOL_CODE" />
+			<mx:DataGridColumn headerText="Company Name" dataField="company"  />
+			<mx:DataGridColumn headerText="State" dataField="state"  />
+			<mx:DataGridColumn headerText="Is Spot" dataField="ispost"  />
+		</mx:columns>
+	</mx:DataGrid>
+</s:Group>

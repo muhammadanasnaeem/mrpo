@@ -1,0 +1,1820 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:controls="flexlib.controls.*"
+		 xmlns:flexlib="http://code.google.com/p/flexlib/"
+		 xmlns:containers="com.dougmccune.containers.*"
+		 width="402"
+		 height="265"
+		 left="1"
+		 top="1"
+		 creationComplete="creationCompleteHandler(event)" xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			import businessobjects.BestMarketAndSymbolSummaryBO;
+			import businessobjects.MarketWatchBO;
+			import businessobjects.OrderBO;
+			import businessobjects.QuickOrdersBO;
+			import businessobjects.SymbolBO;
+			
+			import common.Constants;
+			import common.Messages;
+			
+			import components.ComboBoxItem;
+			import components.EZCurrencyFormatter;
+			import components.EZNumberFormatter;
+			
+			import controller.ModelManager;
+			import controller.WindowManager;
+			
+			import model.OrderModel;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.DateField;
+			import mx.core.FlexGlobals;
+			import mx.effects.Effect;
+			import mx.effects.easing.*;
+			import mx.events.CloseEvent;
+			import mx.events.EffectEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.messaging.events.MessageAckEvent;
+			import mx.resources.IResourceManager;
+			import mx.resources.ResourceManager;
+			
+			import services.LSListener;
+			import services.OrdererClient;
+			
+			import spark.components.DropDownList;
+			import spark.events.IndexChangeEvent;
+
+			[Bindable]
+			public var selectedIndex:Number=0;
+
+			[Bindable]
+			public var sellText:String;
+
+			[Bindable]
+			public var internalExchangeID:Number=-1;
+			//public var marketID:Number = -1;
+			[Bindable]
+			public var internalMarketID:Number=-1;
+
+			private var modelManager:ModelManager=ModelManager.getInstance();
+			private var flag:Boolean=false;
+			private var flag2:Boolean=false;
+			private var flag3:Boolean=false;
+			private var flag4:Boolean=false;
+			private var isFirstSubmission:Boolean=true;
+			private var side:String="";
+			private var previousNumber:Number=0;
+			private var globalQuickOrdersBO:QuickOrdersBO;
+			private var globalQuickOrdersBO2:QuickOrdersBO;
+			private var globalQuickOrdersBO3:QuickOrdersBO;
+			private var globalQuickOrdersBO4:QuickOrdersBO;
+			private var isUpdate:Boolean=false;
+			private var isUpdate2:Boolean=false;
+			private var isUpdate3:Boolean=false;
+			private var moneyFormatter:EZCurrencyFormatter=new EZCurrencyFormatter();
+			private var animatingTargets:Object=new Object();
+			private var resourceManagerr:IResourceManager = ResourceManager.getInstance();
+			
+//			[Bindable] var splittedSellPrice2:Array;
+//			[Bindable] var splittedBuyPrice2:Array;
+			
+			[Bindable]
+			[Embed(source="images/alertIcon.png")]
+			public var alertImg:Class;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				mainBorder.setStyle("backgroundColor", 0x000000);
+			}
+
+			private var orderModel_:OrderModel=new OrderModel();
+
+			[Bindable]
+			public function get orderModel():OrderModel
+			{
+				return orderModel_;
+			}
+
+			public function set orderModel(value:OrderModel):void
+			{
+				orderModel_=value;
+			}
+			
+			private function animateHover(target:Object):void
+			{
+				if (animatingTargets[target.id] === undefined)
+				{
+					var effect:Effect;
+					effect=rotator;
+					effect.target=target;
+					animatingTargets[target.id]=effect;
+					effect.play();
+				}
+			}
+
+			protected function sellButtonClickHandler(event:MouseEvent):void
+			{
+				Alert.show("Do you want to sell this order", "Order Information");
+			}
+
+			protected function symbolDropDownchangeHandler(event:IndexChangeEvent):void
+			{
+				try
+				{
+				if (event.currentTarget.id == "firstSymbolDropDown" && event.currentTarget.dataProvider != null)
+				{
+					if(event.currentTarget.selectedIndex != secondSymbolDropDown.selectedIndex
+					&& event.currentTarget.selectedIndex != thirdSymbolDropDown.selectedIndex
+					&& event.currentTarget.selectedIndex != fourthSymbolDropDown.selectedIndex
+					)
+					{
+						var quickOrdersObject:QuickOrdersBO=event.currentTarget.selectedItem as QuickOrdersBO;
+						globalQuickOrdersBO=event.currentTarget.selectedItem as QuickOrdersBO;
+						var symbolSubscribed:Boolean=modelManager.quickOrdersModel.isSymbolSubscribed(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.SYMBOL);
+						if (symbolSubscribed)
+						{
+							quickOrdersObject=modelManager.quickOrdersModel.getQuickOrdersBO(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.SYMBOL);
+							if (quickOrdersObject)
+							{
+	//								updateBestMarketOrderFieldsByQOBO(quickOrdersObject);
+								modelManager.getBestMarketAndSymbolSummary(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.symbolID, quickOrdersObject.SYMBOL);
+							}
+							else
+							{
+	
+							}
+	//							var arr:Array = WindowManager.getInstance().viewManager.marketWatch.adgMarketWatch.columns;
+	//							firstSegmentLowLabel.text
+						}
+					} 
+					else
+					{
+						firstSymbolDropDown.selectedIndex = -1;
+						firstSegmentLowLabel.text = "";
+						firstHighValue.text = "";
+						firstChangeValue.text = "";
+						firstChangeValue.setStyle("backgroundColor",0xffffff);
+						firstBuyBeforeDecimal.text = "";
+						firstBuyAfterDecimal.text = "";
+						firstSellBeforeDecimal.text = "";
+						firstSellAfterDecimal.text = "";
+						Alert.show(ResourceManager.getInstance().getString('marketwatch','symAlreadySelected'), ResourceManager.getInstance().getString('marketwatch','error'));
+					}
+				}
+				else
+				{
+					Alert.show(Messages.NO_SYMBOL_ADDED_TO_DROPDOWN, ResourceManager.getInstance().getString('marketwatch','error'));
+				}
+				}catch(e:Error)
+				{
+					
+				}
+			}
+
+
+			protected function secondsymbolDropDownchangeHandler(event:IndexChangeEvent):void
+			{
+				if (event.currentTarget.id == "secondSymbolDropDown" && event.currentTarget.dataProvider != null)
+				{
+					if(event.currentTarget.selectedIndex != firstSymbolDropDown.selectedIndex
+						&& event.currentTarget.selectedIndex != thirdSymbolDropDown.selectedIndex
+						&& event.currentTarget.selectedIndex != fourthSymbolDropDown.selectedIndex
+					)
+					{
+						var quickOrdersObject:QuickOrdersBO=event.currentTarget.selectedItem as QuickOrdersBO;
+						globalQuickOrdersBO2=event.currentTarget.selectedItem as QuickOrdersBO;
+						var symbolSubscribed:Boolean=modelManager.quickOrdersModel.isSymbolSubscribed(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.SYMBOL);
+						if (symbolSubscribed)
+						{
+							quickOrdersObject=modelManager.quickOrdersModel.getQuickOrdersBO(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.SYMBOL);
+							if (quickOrdersObject)
+							{
+								//								updateBestMarketOrderFieldsByQOBO(quickOrdersObject);
+								modelManager.getBestMarketAndSymbolSummary(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.symbolID, quickOrdersObject.SYMBOL);
+							}
+							else
+							{
+							}
+								//							var arr:Array = WindowManager.getInstance().viewManager.marketWatch.adgMarketWatch.columns;
+								//							firstSegmentLowLabel.text
+						}
+					}
+					else
+					{
+						secondSymbolDropDown.selectedIndex = -1;
+						secondSegmentLowLabel.text = "";
+						secondHighValue.text = "";
+						secondChangeValue.text = "";
+						secondChangeValue.setStyle("backgroundColor",0xffffff);
+						secondBuyBeforeDecimal.text = "";
+						secondBuyAfterDecimal.text = "";
+						secondSellBeforeDecimal.text = "";
+						secondSellAfterDecimal.text = "";
+						Alert.show(ResourceManager.getInstance().getString('marketwatch','symAlreadySelected'), ResourceManager.getInstance().getString('marketwatch','error'));
+					}
+				}
+				else
+				{
+					Alert.show(Messages.NO_SYMBOL_ADDED_TO_DROPDOWN, ResourceManager.getInstance().getString('marketwatch','error'));
+				}
+			}
+
+			protected function thirdsymbolDropDownchangeHandler(event:IndexChangeEvent):void
+			{
+				if (event.currentTarget.id == "thirdSymbolDropDown" && event.currentTarget.dataProvider != null)
+				{
+					if(event.currentTarget.selectedIndex != firstSymbolDropDown.selectedIndex
+						&& event.currentTarget.selectedIndex != secondSymbolDropDown.selectedIndex
+						&& event.currentTarget.selectedIndex != fourthSymbolDropDown.selectedIndex
+					)
+					{
+						var quickOrdersObject:QuickOrdersBO=event.currentTarget.selectedItem as QuickOrdersBO;
+						globalQuickOrdersBO3=event.currentTarget.selectedItem as QuickOrdersBO;
+						var symbolSubscribed:Boolean=modelManager.quickOrdersModel.isSymbolSubscribed(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.SYMBOL);
+						if (symbolSubscribed)
+						{
+							quickOrdersObject=modelManager.quickOrdersModel.getQuickOrdersBO(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.SYMBOL);
+							if (quickOrdersObject)
+							{
+								//								updateBestMarketOrderFieldsByQOBO(quickOrdersObject);
+								modelManager.getBestMarketAndSymbolSummary(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.symbolID, quickOrdersObject.SYMBOL);
+							}
+							else
+							{
+							}
+								//							var arr:Array = WindowManager.getInstance().viewManager.marketWatch.adgMarketWatch.columns;
+								//							firstSegmentLowLabel.text
+						}
+					}
+					else
+					{
+						thirdSymbolDropDown.selectedIndex = -1;
+						thirdSegmentLowLabel.text = "";
+						thirdHighValue.text = "";
+						thirdChangeValue.text = "";
+						thirdChangeValue.setStyle("backgroundColor",0xffffff);
+						thirdBuyBeforeDecimal.text = "";
+						thirdBuyAfterDecimal.text = "";
+						fourthSellBeforeDecimal.text = "";
+						thirdSellAfterDecimal.text = "";
+						Alert.show(ResourceManager.getInstance().getString('marketwatch','symAlreadySelected'), ResourceManager.getInstance().getString('marketwatch','error'));
+					}
+				}
+				else
+				{
+					Alert.show(Messages.NO_SYMBOL_ADDED_TO_DROPDOWN, ResourceManager.getInstance().getString('marketwatch','error'));
+				}
+			}
+
+			protected function fourthsymbolDropDownchangeHandler(event:IndexChangeEvent):void
+			{
+				if (event.currentTarget.id == "fourthSymbolDropDown" && event.currentTarget.dataProvider != null)
+				{
+					if(event.currentTarget.selectedIndex != firstSymbolDropDown.selectedIndex
+						&& event.currentTarget.selectedIndex != secondSymbolDropDown.selectedIndex
+						&& event.currentTarget.selectedIndex != thirdSymbolDropDown.selectedIndex
+					)
+					{
+						var quickOrdersObject:QuickOrdersBO=event.currentTarget.selectedItem as QuickOrdersBO;
+						globalQuickOrdersBO4=event.currentTarget.selectedItem as QuickOrdersBO;
+						var symbolSubscribed:Boolean=modelManager.quickOrdersModel.isSymbolSubscribed(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.SYMBOL);
+						if (symbolSubscribed)
+						{
+							quickOrdersObject=modelManager.quickOrdersModel.getQuickOrdersBO(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.SYMBOL);
+							if (quickOrdersObject)
+							{
+								//								updateBestMarketOrderFieldsByQOBO(quickOrdersObject);
+								modelManager.getBestMarketAndSymbolSummary(quickOrdersObject.internalExchangeID, quickOrdersObject.internalMarketID, quickOrdersObject.symbolID, quickOrdersObject.SYMBOL);
+							}
+							else
+							{
+							}
+								//							var arr:Array = WindowManager.getInstance().viewManager.marketWatch.adgMarketWatch.columns;
+								//							firstSegmentLowLabel.text
+						}
+					}
+					else
+					{
+						fourthSymbolDropDown.selectedIndex = -1;
+						fourthSegmentLowLabel.text = "";
+						fourthHighValue.text = "";
+						fourthChangeValue.text = "";
+						fourthChangeValue.setStyle("backgroundColor",0xffffff);
+						fourthBuyBeforeDecimal.text = "";
+						fourthBuyAfterDecimal.text = "";
+						fourthSellBeforeDecimal.text = "";
+						fourthSellBeforeDecimal.text = "";
+						Alert.show(ResourceManager.getInstance().getString('marketwatch','symAlreadySelected'), ResourceManager.getInstance().getString('marketwatch','error'));
+					}
+				}
+				else
+				{
+					Alert.show(Messages.NO_SYMBOL_ADDED_TO_DROPDOWN, ResourceManager.getInstance().getString('marketwatch','error'));
+				}
+			}
+
+			protected function firstorderButtonClickHandler(event:MouseEvent):void
+			{
+				firstclientCode.text=firstclientCode.text;
+				firstNumericStepper.value=firstNumericStepper.value;
+				if (modelManager != null)
+					if (firstclientCode.text != "" && firstNumericStepper.value.toString() != "" && firstSymbolDropDown.selectedItem != null)
+					{
+						var localQuickOrdersBO:QuickOrdersBO=firstSymbolDropDown.selectedItem as QuickOrdersBO;
+						var exchangeId:Number=modelManager.exchangeModel.getExchangeID(localQuickOrdersBO.internalExchangeID);
+						var marketId:Number=modelManager.exchangeModel.getMarketID(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+						var symbolId:Number=(modelManager.exchangeModel.getSymbolByCode(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID, localQuickOrdersBO.SYMBOL) as SymbolBO).SYMBOL_ID;
+						var moneyFormatter:EZCurrencyFormatter=new EZCurrencyFormatter();
+						var delimRegExp:RegExp=/,/g;     
+						var volume:Number=new Number(firstNumericStepper.value.toString().replace(delimRegExp, ""));
+						
+						if (volume.toString() == "" && firstclientCode.text == "")
+						{
+							Alert.show(Messages.INVALID_INPUT, ResourceManager.getInstance().getString('marketwatch','error'));
+						}
+						if (exchangeId > -1 && marketId > -1 && symbolId > -1)
+						{
+							var key:String=exchangeId + "_" + marketId + "_" + symbolId;
+							var bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO=modelManager.bestMarketAndSymbolSummaryModel.bestMarketAndSymbolSummaryMap.getItem(key) as BestMarketAndSymbolSummaryBO;
+							var symbol:SymbolBO=modelManager.exchangeModel.getSymbolDetail(exchangeId, marketId, symbolId) as SymbolBO;
+							if (volume < symbol.LOWER_ORDER_VOLUME_LIMIT || volume > symbol.UPPER_ORDER_VOLUME_LIMIT)
+							{
+								Alert.show(ResourceManager.getInstance().getString('marketwatch','volLimitsAre')+' ' + symbol.LOWER_ORDER_VOLUME_LIMIT + " - " + symbol.UPPER_ORDER_VOLUME_LIMIT, ResourceManager.getInstance().getString('marketwatch','error'));
+								firstNumericStepper.setFocus();
+								return;
+							}
+							if (!((volume / symbol.BOARD_LOT) is uint))
+							{
+								Alert.show(ResourceManager.getInstance().getString('marketwatch','volLotSize')+' ' + symbol.BOARD_LOT, ResourceManager.getInstance().getString('marketwatch','error'));
+								firstNumericStepper.setFocus();
+								return;
+							}
+							var marketState:Number=modelManager.exchangeModel.getMarketState(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+							var unit:String='share';
+							var isBond:Boolean=modelManager.exchangeModel.isBondMarket(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+							var buyPrice:Number = parseFloat(firstBuyBeforeDecimal.text);
+							var sellPrice:Number = parseFloat(firstSellBeforeDecimal.text);
+							if (isBond)
+								unit="bond";
+							if (modelManager.bestMarketAndSymbolSummaryModel.bestMarketAndSymbolSummaryMap.hasKey(key))
+							{
+								orderModel_.orderBO.SIDE="";
+								if (bestMarketAndSymbolSummary)
+								{
+									if (event.currentTarget.id == "buyButton" && bestMarketAndSymbolSummary.bestMarket.buyOrderBO != null  && firstSellBeforeDecimal.text != "" )
+									{
+										orderModel_.orderBO.SIDE="buy";
+										orderModel_.orderBO.PRICE=sellPrice;
+										orderModel_.orderBO.VOLUME=volume;
+										orderModel_.orderBO.TRAILING_STOPLOSS_DIP=sellPrice;
+										if (orderModel_.orderBO.SIDE == "buy")
+										{
+											Alert.show(ResourceManager.getInstance().getString('marketwatch','buy')+' ' + firstNumericStepper.value.toString() + unit + "s  of " + localQuickOrdersBO.SYMBOL + ' '+ResourceManager.getInstance().getString('marketwatch','at')+ ' ' + orderModel_.orderBO.PRICE + ' '+ResourceManager.getInstance().getString('marketwatch','per')+' ' +unit+ResourceManager.getInstance().getString('marketwatch','?'), ResourceManager.getInstance().getString('marketwatch','error'),Alert.OK|Alert.CANCEL,this,subMissionFunction,alertImg,Alert.OK);
+										}
+									}
+									else if (event.currentTarget.id == "sellButton" && bestMarketAndSymbolSummary.bestMarket.sellOrderBO != null  && firstBuyBeforeDecimal.text != "")
+									{
+										orderModel_.orderBO.SIDE="sell";
+										orderModel_.orderBO.PRICE=buyPrice;
+										orderModel_.orderBO.TRAILING_STOPLOSS_DIP=buyPrice;
+										orderModel_.orderBO.VOLUME=volume;
+										if (orderModel_.orderBO.SIDE == "sell" )
+										{
+											Alert.show(ResourceManager.getInstance().getString('marketwatch','sell')+' ' + firstNumericStepper.value.toString() + unit + "s  of " + localQuickOrdersBO.SYMBOL + ' '+ResourceManager.getInstance().getString('marketwatch','buy')+' ' + orderModel_.orderBO.PRICE + ' '+ResourceManager.getInstance().getString('marketwatch','per')+' ' + unit+ResourceManager.getInstance().getString('marketwatch','?'), ResourceManager.getInstance().getString('marketwatch','error'),Alert.OK|Alert.CANCEL,this,subMissionFunction,alertImg,Alert.OK);
+										}
+									}
+									else
+									{
+										Alert.show(ResourceManager.getInstance().getString('marketwatch','noOrderPlaced')+ localQuickOrdersBO.SYMBOL,ResourceManager.getInstance().getString('marketwatch','error'));
+									}
+								}
+							}
+						}
+						// Alert.OK callback in case the user confirms the order
+						function subMissionFunction(eventObj:CloseEvent):void
+						{
+							if(eventObj.detail==Alert.OK)
+								
+							{
+								var numberFormatter:EZNumberFormatter=new EZNumberFormatter();
+								orderModel_.orderBO.ENTRY_DATETIME=new Date();
+								orderModel_.orderBO.IS_SHORT=false;
+								orderModel_.orderBO.EXCHANGE_ID=modelManager.exchangeModel.getExchangeID(localQuickOrdersBO.internalExchangeID);
+								orderModel_.orderBO.MARKET_ID=ModelManager.getInstance().exchangeModel.getMarketID(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+								orderModel_.orderBO.SYMBOL=localQuickOrdersBO.SYMBOL;
+								orderModel_.orderBO.INTERNAL_EXCHANGE_ID=localQuickOrdersBO.internalExchangeID;
+								orderModel_.orderBO.INTERNAL_MARKET_ID=localQuickOrdersBO.internalMarketID;
+								orderModel_.orderBO.INTERNAL_SYMBOL_ID=modelManager.exchangeModel.getInternalSymbolIDByCode(orderModel_.orderBO.INTERNAL_EXCHANGE_ID, orderModel_.orderBO.INTERNAL_MARKET_ID, orderModel_.orderBO.SYMBOL);
+								orderModel_.orderBO.SYMBOL_ID=modelManager.exchangeModel.getSymbolID(orderModel_.orderBO.INTERNAL_EXCHANGE_ID, orderModel_.orderBO.INTERNAL_MARKET_ID, orderModel_.orderBO.INTERNAL_SYMBOL_ID);
+		
+								orderModel_.orderBO.CLIENT_CODE=firstclientCode.text;
+								orderModel_.orderBO.BROKER_ID=modelManager.brokerID;
+								orderModel_.orderBO.SENDER_USER_ID=modelManager.userID;
+								orderModel_.orderBO.USER_ID=modelManager.userID;
+								orderModel_.orderBO.PUBLIC_ORDER_STATE="Submit";
+								orderModel_.orderBO.PRIVATE_ORDER_STATE="UnExecuted";
+								orderModel_.orderBO.PRICE_TYPE="limit";
+								orderModel_.orderBO.TIF=new Date();
+								flag=true;
+								OrdererClient.getInstance().submitQuickOrder(orderModel_.orderBO);
+							}
+							else if(eventObj.detail==Alert.CANCEL)
+								
+							{
+								
+							}
+						}
+					}
+					else
+					{
+						Alert.show(ResourceManager.getInstance().getString('marketwatch','plzCorrctInpt'), ResourceManager.getInstance().getString('marketwatch','information'));
+						firstclientCode.setFocus();
+					}
+			}
+
+			protected function secondorderButtonClickHandler(event:MouseEvent):void
+			{
+				secondclientCode.text=secondclientCode.text;
+				secondNumericStepper.value=secondNumericStepper.value;
+				if (modelManager != null)
+					if (secondclientCode.text != "" && secondNumericStepper.value.toString() != "" && secondSymbolDropDown.selectedItem != null)
+					{
+						var localQuickOrdersBO:QuickOrdersBO=secondSymbolDropDown.selectedItem as QuickOrdersBO;
+						var exchangeId:Number=modelManager.exchangeModel.getExchangeID(localQuickOrdersBO.internalExchangeID);
+						var marketId:Number=modelManager.exchangeModel.getMarketID(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+						var symbolId:Number=(modelManager.exchangeModel.getSymbolByCode(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID, localQuickOrdersBO.SYMBOL) as SymbolBO).SYMBOL_ID;
+
+						var moneyFormatter:EZCurrencyFormatter=new EZCurrencyFormatter();
+						var delimRegExp:RegExp=/,/g;
+						var volume:Number=new Number(secondNumericStepper.value.toString().replace(delimRegExp, ""));
+
+						if (volume.toString() == "" && secondclientCode.text == "")
+						{
+							Alert.show(Messages.INVALID_INPUT, ResourceManager.getInstance().getString('marketwatch','error'));
+						}
+						if (exchangeId > -1 && marketId > -1 && symbolId > -1)
+						{
+							var key:String=exchangeId + "_" + marketId + "_" + symbolId;
+
+							var symbol:SymbolBO=modelManager.exchangeModel.getSymbolDetail(exchangeId, marketId, symbolId) as SymbolBO;
+							if (volume < symbol.LOWER_ORDER_VOLUME_LIMIT || volume > symbol.UPPER_ORDER_VOLUME_LIMIT)
+							{
+								Alert.show(ResourceManager.getInstance().getString('marketwatch','volLimitsAre') + symbol.LOWER_ORDER_VOLUME_LIMIT + " - " + symbol.UPPER_ORDER_VOLUME_LIMIT, ResourceManager.getInstance().getString('marketwatch','error'));
+								secondNumericStepper.setFocus();
+								return;
+							}
+
+							if (!((volume / symbol.BOARD_LOT) is uint))
+							{
+								Alert.show(ResourceManager.getInstance().getString('marketwatch','volLotSize') + symbol.BOARD_LOT, ResourceManager.getInstance().getString('marketwatch','error'));
+								secondNumericStepper.setFocus();
+								return;
+							}
+
+							var marketState:Number=modelManager.exchangeModel.getMarketState(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+							var unit:String='share';
+							var isBond:Boolean=modelManager.exchangeModel.isBondMarket(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+							var buyPrice:Number = parseFloat(secondBuyBeforeDecimal.text);
+							var sellPrice:Number = parseFloat(secondSellBeforeDecimal.text);
+							if (isBond)
+								unit="bond";
+							if (modelManager.bestMarketAndSymbolSummaryModel.bestMarketAndSymbolSummaryMap.hasKey(key))
+							{
+								orderModel_.orderBO.SIDE="";
+								var bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO=modelManager.bestMarketAndSymbolSummaryModel.bestMarketAndSymbolSummaryMap.getItem(key) as BestMarketAndSymbolSummaryBO;
+								if (bestMarketAndSymbolSummary)
+								{
+									if (event.currentTarget.id == "secondBuyButton" && bestMarketAndSymbolSummary.bestMarket.buyOrderBO != null  && secondSellBeforeDecimal.text != "" )
+									{
+										orderModel_.orderBO.SIDE="buy";
+										orderModel_.orderBO.PRICE=sellPrice
+										orderModel_.orderBO.VOLUME=volume;
+										orderModel_.orderBO.TRAILING_STOPLOSS_DIP=sellPrice;
+										if (orderModel_.orderBO.SIDE == "buy")
+										{
+											Alert.show(ResourceManager.getInstance().getString('marketwatch','buy')+' ' + secondNumericStepper.value.toString() + unit + "s  of " + localQuickOrdersBO.SYMBOL + ' '+ResourceManager.getInstance().getString('marketwatch','at')+ ' ' + orderModel_.orderBO.PRICE + ' '+ResourceManager.getInstance().getString('marketwatch','per')+' ' + unit+ResourceManager.getInstance().getString('marketwatch','?'), ResourceManager.getInstance().getString('marketwatch','information'),Alert.OK|Alert.CANCEL,this,subMissionFunction,alertImg,Alert.OK);
+										}
+									}
+									else if (event.currentTarget.id == "secondSellButton" && bestMarketAndSymbolSummary.bestMarket.sellOrderBO != null && secondBuyBeforeDecimal.text != "" )
+									{
+										orderModel_.orderBO.SIDE="sell";
+										orderModel_.orderBO.PRICE=buyPrice;
+										orderModel_.orderBO.TRAILING_STOPLOSS_DIP=buyPrice;
+										orderModel_.orderBO.VOLUME=volume;
+										if (orderModel_.orderBO.SIDE == "sell")
+										{
+											Alert.show(ResourceManager.getInstance().getString('marketwatch','sell')+' ' + secondNumericStepper.value.toString() + unit + "s  of " + localQuickOrdersBO.SYMBOL + ' '+ResourceManager.getInstance().getString('marketwatch','at')+ ' ' + orderModel_.orderBO.PRICE + " per " +  unit+ResourceManager.getInstance().getString('marketwatch','?'), ResourceManager.getInstance().getString('marketwatch','information'),Alert.OK|Alert.CANCEL,this,subMissionFunction,alertImg,Alert.OK);
+										}
+									}
+									else
+									{
+										Alert.show(ResourceManager.getInstance().getString('marketwatch','noOrderPlaced')+ localQuickOrdersBO.SYMBOL,ResourceManager.getInstance().getString('marketwatch','error'));
+									}
+								}
+							}
+						}
+						function subMissionFunction(eventObj:CloseEvent):void
+						{
+							if(eventObj.detail==Alert.OK)
+								
+							{
+								var numberFormatter:EZNumberFormatter=new EZNumberFormatter();
+								orderModel_.orderBO.ENTRY_DATETIME=new Date();
+								orderModel_.orderBO.IS_SHORT=false;
+								orderModel_.orderBO.EXCHANGE_ID=modelManager.exchangeModel.getExchangeID(localQuickOrdersBO.internalExchangeID);
+								orderModel_.orderBO.MARKET_ID=ModelManager.getInstance().exchangeModel.getMarketID(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+								orderModel_.orderBO.SYMBOL=localQuickOrdersBO.SYMBOL;
+								orderModel_.orderBO.INTERNAL_EXCHANGE_ID=localQuickOrdersBO.internalExchangeID;
+								orderModel_.orderBO.INTERNAL_MARKET_ID=localQuickOrdersBO.internalMarketID;
+								orderModel_.orderBO.INTERNAL_SYMBOL_ID=modelManager.exchangeModel.getInternalSymbolIDByCode(orderModel_.orderBO.INTERNAL_EXCHANGE_ID, orderModel_.orderBO.INTERNAL_MARKET_ID, orderModel_.orderBO.SYMBOL);
+		
+								orderModel_.orderBO.SYMBOL_ID=modelManager.exchangeModel.getSymbolID(orderModel_.orderBO.INTERNAL_EXCHANGE_ID, orderModel_.orderBO.INTERNAL_MARKET_ID, orderModel_.orderBO.INTERNAL_SYMBOL_ID);
+		
+								orderModel_.orderBO.CLIENT_CODE=secondclientCode.text;
+								orderModel_.orderBO.BROKER_ID=modelManager.brokerID;
+								orderModel_.orderBO.SENDER_USER_ID=modelManager.userID;
+								orderModel_.orderBO.USER_ID=modelManager.userID;
+								orderModel_.orderBO.PUBLIC_ORDER_STATE="Submit";
+								orderModel_.orderBO.PRIVATE_ORDER_STATE="UnExecuted";
+								orderModel_.orderBO.PRICE_TYPE="limit";
+								orderModel.orderBO.TIF=new Date();
+								flag=true;
+								OrdererClient.getInstance().submitQuickOrder(orderModel_.orderBO);
+							}
+							else
+							{
+								
+							}
+						
+						}
+						
+					}
+					else
+					{
+						Alert.show(ResourceManager.getInstance().getString('marketwatch','plzCorrctInpt'), ResourceManager.getInstance().getString('marketwatch','information'));
+						secondclientCode.setFocus();
+					}
+			}
+			
+			public function quikcOrdersLiveValues(itemName:String, itemPos:Number, updatedFields:Array, index:Number):void
+			{
+//				var ezCurrencyFormatter:EZCurrencyFormatter=new EZCurrencyFormatter();
+//				splittedSellPrice2=ezCurrencyFormatter.format(LSListener.extractFieldData(updatedFields, 5, index)).toString().split(".");
+//				splittedBuyPrice2=ezCurrencyFormatter.format(LSListener.extractFieldData(updatedFields, 1, index)).toString().split(".");
+			}
+
+			protected function thirdorderButtonClickHandler(event:MouseEvent):void
+			{
+				thirdclientCode.text=thirdclientCode.text;
+				thirdNumericStepper.value=thirdNumericStepper.value;
+				if (modelManager != null)
+					if (thirdclientCode.text != "" && thirdNumericStepper.value.toString() != "" && thirdSymbolDropDown.selectedItem != null)
+					{
+						var localQuickOrdersBO:QuickOrdersBO=thirdSymbolDropDown.selectedItem as QuickOrdersBO;
+						var exchangeId:Number=modelManager.exchangeModel.getExchangeID(localQuickOrdersBO.internalExchangeID);
+						var marketId:Number=modelManager.exchangeModel.getMarketID(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+						var symbolId:Number=(modelManager.exchangeModel.getSymbolByCode(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID, localQuickOrdersBO.SYMBOL) as SymbolBO).SYMBOL_ID;
+
+						var moneyFormatter:EZCurrencyFormatter=new EZCurrencyFormatter();
+						var delimRegExp:RegExp=/,/g;
+						var volume:Number=new Number(thirdNumericStepper.value.toString().replace(delimRegExp, ""));
+
+						if (volume.toString() == "" && secondclientCode.text == "")
+						{
+							Alert.show(Messages.INVALID_INPUT, ResourceManager.getInstance().getString('marketwatch','error'));
+						}
+						if (exchangeId > -1 && marketId > -1 && symbolId > -1)
+						{
+							var key:String=exchangeId + "_" + marketId + "_" + symbolId;
+
+							var symbol:SymbolBO=modelManager.exchangeModel.getSymbolDetail(exchangeId, marketId, symbolId) as SymbolBO;
+							if (volume < symbol.LOWER_ORDER_VOLUME_LIMIT || volume > symbol.UPPER_ORDER_VOLUME_LIMIT)
+							{
+								Alert.show(ResourceManager.getInstance().getString('marketwatch','volLimitsAre') + symbol.LOWER_ORDER_VOLUME_LIMIT + " - " + symbol.UPPER_ORDER_VOLUME_LIMIT, ResourceManager.getInstance().getString('marketwatch','error'));
+								thirdNumericStepper.setFocus();
+								return;
+							}
+
+							if (!((volume / symbol.BOARD_LOT) is uint))
+							{
+								Alert.show(ResourceManager.getInstance().getString('marketwatch','volLotSize') + symbol.BOARD_LOT, ResourceManager.getInstance().getString('marketwatch','error'));
+								thirdNumericStepper.setFocus();
+								return;
+							}
+
+							var marketState:Number=modelManager.exchangeModel.getMarketState(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+							var unit:String='share';
+							var isBond:Boolean=modelManager.exchangeModel.isBondMarket(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+							var buyPrice:Number = parseFloat(thirdBuyBeforeDecimal.text);
+							var sellPrice:Number = parseFloat(thirdSellBeforeDecimal.text);
+							if (isBond)
+								unit="bond";
+							if (modelManager.bestMarketAndSymbolSummaryModel.bestMarketAndSymbolSummaryMap.hasKey(key))
+							{
+								orderModel_.orderBO.SIDE="";
+								var bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO=modelManager.bestMarketAndSymbolSummaryModel.bestMarketAndSymbolSummaryMap.getItem(key) as BestMarketAndSymbolSummaryBO;
+								if (bestMarketAndSymbolSummary)
+								{
+									if (event.currentTarget.id == "thirdBuyButton" && bestMarketAndSymbolSummary.bestMarket.buyOrderBO != null && thirdSellBeforeDecimal.text != "")
+									{
+										orderModel_.orderBO.SIDE="buy";
+										orderModel_.orderBO.PRICE=sellPrice;
+										orderModel_.orderBO.VOLUME=volume;
+										orderModel_.orderBO.TRAILING_STOPLOSS_DIP=sellPrice;
+										if (orderModel_.orderBO.SIDE == "buy")
+										{
+											Alert.show(ResourceManager.getInstance().getString('marketwatch','buy')+' '  + thirdNumericStepper.value.toString() + unit + "s  of " + localQuickOrdersBO.SYMBOL + ' '+ResourceManager.getInstance().getString('marketwatch','buy')+ ' ' + orderModel_.orderBO.PRICE + ' '+ResourceManager.getInstance().getString('marketwatch','per')+' ' + unit+ResourceManager.getInstance().getString('marketwatch','?'), ResourceManager.getInstance().getString('marketwatch','information'),Alert.OK|Alert.CANCEL,this,subMissionFunction,alertImg,Alert.OK);
+										}
+									}
+									else if (event.currentTarget.id == "thirdSellButton" && bestMarketAndSymbolSummary.bestMarket.sellOrderBO != null  && thirdBuyBeforeDecimal.text != "")
+									{
+										orderModel_.orderBO.SIDE="sell";
+										orderModel_.orderBO.PRICE=buyPrice;
+										orderModel_.orderBO.TRAILING_STOPLOSS_DIP=buyPrice;
+										orderModel_.orderBO.VOLUME=volume;
+										if (orderModel_.orderBO.SIDE == "sell")
+										{
+											Alert.show(ResourceManager.getInstance().getString('marketwatch','sell')+' ' + thirdNumericStepper.value.toString() + unit + "s  of " + localQuickOrdersBO.SYMBOL + ' '+ResourceManager.getInstance().getString('marketwatch','at')+' ' + orderModel_.orderBO.PRICE + ' '+ResourceManager.getInstance().getString('marketwatch','per')+' ' + unit+ResourceManager.getInstance().getString('marketwatch','?'), ResourceManager.getInstance().getString('marketwatch','information'),Alert.OK|Alert.CANCEL,this,subMissionFunction,alertImg,Alert.OK);
+										}
+									}
+									else
+									{
+										Alert.show(ResourceManager.getInstance().getString('marketwatch','noOrderPlaced')+ localQuickOrdersBO.SYMBOL,ResourceManager.getInstance().getString('marketwatch','error'));
+									}
+								}
+							}
+						}
+						function subMissionFunction(eventObj:CloseEvent):void
+						{
+							if(eventObj.detail==Alert.OK)
+								
+							{
+								var numberFormatter:EZNumberFormatter=new EZNumberFormatter();
+								orderModel_.orderBO.ENTRY_DATETIME=new Date();
+								orderModel_.orderBO.IS_SHORT=false;
+								orderModel_.orderBO.EXCHANGE_ID=modelManager.exchangeModel.getExchangeID(localQuickOrdersBO.internalExchangeID);
+								orderModel_.orderBO.MARKET_ID=ModelManager.getInstance().exchangeModel.getMarketID(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+								orderModel_.orderBO.SYMBOL=localQuickOrdersBO.SYMBOL;
+								orderModel_.orderBO.INTERNAL_EXCHANGE_ID=localQuickOrdersBO.internalExchangeID;
+								orderModel_.orderBO.INTERNAL_MARKET_ID=localQuickOrdersBO.internalMarketID;
+								orderModel_.orderBO.INTERNAL_SYMBOL_ID=modelManager.exchangeModel.getInternalSymbolIDByCode(orderModel_.orderBO.INTERNAL_EXCHANGE_ID, orderModel_.orderBO.INTERNAL_MARKET_ID, orderModel_.orderBO.SYMBOL);
+								orderModel_.orderBO.SYMBOL_ID=modelManager.exchangeModel.getSymbolID(orderModel_.orderBO.INTERNAL_EXCHANGE_ID, orderModel_.orderBO.INTERNAL_MARKET_ID, orderModel_.orderBO.INTERNAL_SYMBOL_ID);
+								orderModel_.orderBO.CLIENT_CODE=thirdclientCode.text;
+								orderModel_.orderBO.BROKER_ID=modelManager.brokerID;
+								orderModel_.orderBO.SENDER_USER_ID=modelManager.userID;
+								orderModel_.orderBO.USER_ID=modelManager.userID;
+								orderModel_.orderBO.PUBLIC_ORDER_STATE="Submit";
+								orderModel_.orderBO.PRIVATE_ORDER_STATE="UnExecuted";
+								orderModel_.orderBO.PRICE_TYPE="limit";
+								orderModel.orderBO.TIF=new Date();
+								flag=true;
+								OrdererClient.getInstance().submitQuickOrder(orderModel_.orderBO);
+							}
+						}
+					}
+					else
+					{
+						Alert.show(ResourceManager.getInstance().getString('marketwatch','plzCorrctInpt'), ResourceManager.getInstance().getString('marketwatch','information'));
+						thirdclientCode.setFocus();
+					}
+			}
+
+			protected function fourthorderButtonClickHandler(event:MouseEvent):void
+			{
+				fourthclientCode.text=fourthclientCode.text;
+				fourthNumericStepper.value=fourthNumericStepper.value;
+				if (modelManager != null)
+					if (fourthclientCode.text != "" && fourthNumericStepper.value.toString() != "" && fourthSymbolDropDown.selectedItem != null)
+					{
+						var localQuickOrdersBO:QuickOrdersBO=fourthSymbolDropDown.selectedItem as QuickOrdersBO;
+						var exchangeId:Number=modelManager.exchangeModel.getExchangeID(localQuickOrdersBO.internalExchangeID);
+						var marketId:Number=modelManager.exchangeModel.getMarketID(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+						var symbolId:Number=(modelManager.exchangeModel.getSymbolByCode(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID, localQuickOrdersBO.SYMBOL) as SymbolBO).SYMBOL_ID;
+
+						var moneyFormatter:EZCurrencyFormatter=new EZCurrencyFormatter();
+						var delimRegExp:RegExp=/,/g;
+						var volume:Number=new Number(fourthNumericStepper.value.toString().replace(delimRegExp, ""));
+
+						if (volume.toString() == "" && fourthclientCode.text == "")
+						{
+							Alert.show(Messages.INVALID_INPUT, ResourceManager.getInstance().getString('marketwatch','error'));
+						}
+						if (exchangeId > -1 && marketId > -1 && symbolId > -1)
+						{
+							var key:String=exchangeId + "_" + marketId + "_" + symbolId;
+
+							var symbol:SymbolBO=modelManager.exchangeModel.getSymbolDetail(exchangeId, marketId, symbolId) as SymbolBO;
+							if (volume < symbol.LOWER_ORDER_VOLUME_LIMIT || volume > symbol.UPPER_ORDER_VOLUME_LIMIT)
+							{
+								Alert.show(ResourceManager.getInstance().getString('marketwatch','volLimitsAre')+' ' + symbol.LOWER_ORDER_VOLUME_LIMIT + " - " + symbol.UPPER_ORDER_VOLUME_LIMIT, ResourceManager.getInstance().getString('marketwatch','error'));
+								fourthNumericStepper.setFocus();
+								return;
+							}
+
+							if (!((volume / symbol.BOARD_LOT) is uint))
+							{
+								Alert.show(ResourceManager.getInstance().getString('marketwatch','volLotSize')+' ' + symbol.BOARD_LOT, ResourceManager.getInstance().getString('marketwatch','error'));
+								fourthNumericStepper.setFocus();
+								return;
+							}
+
+							var marketState:Number=modelManager.exchangeModel.getMarketState(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+							var unit:String='share';
+							var isBond:Boolean=modelManager.exchangeModel.isBondMarket(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+							var buyPrice:Number = parseFloat(fourthBuyBeforeDecimal.text);
+							var sellPrice:Number = parseFloat(fourthSellBeforeDecimal.text);
+							if (isBond)
+								unit="bond";
+							if (modelManager.bestMarketAndSymbolSummaryModel.bestMarketAndSymbolSummaryMap.hasKey(key))
+							{
+								orderModel_.orderBO.SIDE="";
+								var bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO=modelManager.bestMarketAndSymbolSummaryModel.bestMarketAndSymbolSummaryMap.getItem(key) as BestMarketAndSymbolSummaryBO;
+								if (bestMarketAndSymbolSummary)
+								{ 
+									if (event.currentTarget.id == "fourthBuyButton" && bestMarketAndSymbolSummary.bestMarket.buyOrderBO != null && fourthSellBeforeDecimal.text != "" )
+									{
+										orderModel_.orderBO.SIDE="buy";
+										orderModel_.orderBO.PRICE=sellPrice;
+										orderModel_.orderBO.VOLUME=volume;
+										orderModel_.orderBO.TRAILING_STOPLOSS_DIP=sellPrice;
+										if (orderModel_.orderBO.SIDE == "buy")
+										{
+											Alert.show(ResourceManager.getInstance().getString('marketwatch','buy')+' ' + fourthNumericStepper.value.toString() + unit + "s  of " + localQuickOrdersBO.SYMBOL + ' '+ResourceManager.getInstance().getString('marketwatch','at')+' ' + orderModel_.orderBO.PRICE + ' '+ResourceManager.getInstance().getString('marketwatch','per')+' ' + unit+"?", ResourceManager.getInstance().getString('marketwatch','information'),Alert.OK|Alert.CANCEL,this,subMissionFunction,alertImg,Alert.OK);
+										}
+									}
+									else if (event.currentTarget.id == "fourthSellButton" && bestMarketAndSymbolSummary.bestMarket.sellOrderBO != null && fourthBuyBeforeDecimal.text != "" )
+									{
+										orderModel_.orderBO.SIDE="sell";
+										orderModel_.orderBO.PRICE=buyPrice;
+										orderModel_.orderBO.TRAILING_STOPLOSS_DIP=buyPrice;
+										orderModel_.orderBO.VOLUME=volume;
+										if (orderModel_.orderBO.SIDE == "sell")
+										{
+											Alert.show(ResourceManager.getInstance().getString('marketwatch','sell')+' ' + fourthNumericStepper.value.toString() + unit + "s  of " + localQuickOrdersBO.SYMBOL + ' '+ResourceManager.getInstance().getString('marketwatch','at')+' ' + orderModel_.orderBO.PRICE + ' '+ResourceManager.getInstance().getString('marketwatch','per')+' ' +  unit +"?", ResourceManager.getInstance().getString('marketwatch','information'),Alert.OK|Alert.CANCEL,this,subMissionFunction,alertImg,Alert.OK);
+										}
+									}
+									else
+									{
+										Alert.show(ResourceManager.getInstance().getString('marketwatch','noOrderPlaced')+ localQuickOrdersBO.SYMBOL,ResourceManager.getInstance().getString('marketwatch','error'));
+									}
+								}
+							}
+						}
+
+						function subMissionFunction(eventObj:CloseEvent):void
+						{
+							if(eventObj.detail==Alert.OK)
+							{
+								var numberFormatter:EZNumberFormatter=new EZNumberFormatter();
+								orderModel_.orderBO.ENTRY_DATETIME=new Date();
+								orderModel_.orderBO.IS_SHORT=false;
+								orderModel_.orderBO.EXCHANGE_ID=modelManager.exchangeModel.getExchangeID(localQuickOrdersBO.internalExchangeID);
+								orderModel_.orderBO.MARKET_ID=ModelManager.getInstance().exchangeModel.getMarketID(localQuickOrdersBO.internalExchangeID, localQuickOrdersBO.internalMarketID);
+								orderModel_.orderBO.SYMBOL=localQuickOrdersBO.SYMBOL;
+								orderModel_.orderBO.INTERNAL_EXCHANGE_ID=localQuickOrdersBO.internalExchangeID;
+								orderModel_.orderBO.INTERNAL_MARKET_ID=localQuickOrdersBO.internalMarketID;
+								orderModel_.orderBO.INTERNAL_SYMBOL_ID=modelManager.exchangeModel.getInternalSymbolIDByCode(orderModel_.orderBO.INTERNAL_EXCHANGE_ID, orderModel_.orderBO.INTERNAL_MARKET_ID, orderModel_.orderBO.SYMBOL);
+								orderModel_.orderBO.SYMBOL_ID=modelManager.exchangeModel.getSymbolID(orderModel_.orderBO.INTERNAL_EXCHANGE_ID, orderModel_.orderBO.INTERNAL_MARKET_ID, orderModel_.orderBO.INTERNAL_SYMBOL_ID);
+								orderModel_.orderBO.CLIENT_CODE=fourthclientCode.text;
+								orderModel_.orderBO.BROKER_ID=modelManager.brokerID;
+								orderModel_.orderBO.SENDER_USER_ID=modelManager.userID;
+								orderModel_.orderBO.USER_ID=modelManager.userID;
+								orderModel_.orderBO.PUBLIC_ORDER_STATE="Submit";
+								orderModel_.orderBO.PRIVATE_ORDER_STATE="UnExecuted";
+								orderModel_.orderBO.PRICE_TYPE="limit";
+								orderModel.orderBO.TIF=new Date();
+								flag=true;
+								OrdererClient.getInstance().submitQuickOrder(orderModel_.orderBO);
+							}
+						}
+					}
+					else
+					{
+						Alert.show(ResourceManager.getInstance().getString('marketwatch','plzCorrctInpt'), ResourceManager.getInstance().getString('marketwatch','information'));
+						fourthclientCode.setFocus();
+					}
+			}
+
+			public function updateBestMarketOrderFieldsByQOBO(qoBO:QuickOrdersBO):void
+			{
+				if (firstSegmentLowLabel)
+				{
+					firstSegmentLowLabel.text=qoBO.LOW;
+				}
+			}
+   
+			public function updateQuickOrderView(bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO, bestBuyPrice:Number, bestSellPrice:Number,flag:Boolean):void
+			{
+				try
+				{
+					if (flag == true && firstSymbolDropDown.selectedIndex != -1 &&
+						(firstSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName 
+						&&
+						(firstSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName 
+						&&
+						(firstSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName
+					)
+					{
+						var splittedBuyPrice:Array=bestBuyPrice.toString().split(".");
+						var splittedSellPrice:Array=bestSellPrice.toString().split(".");
+						var firstBuyPrice:String = bestBuyPrice.toString();
+						var firstSellPrice:String = bestSellPrice.toString();
+						var localQuickOrdersBO:QuickOrdersBO=firstSymbolDropDown.selectedItem as QuickOrdersBO;
+						if (bestMarketAndSymbolSummary.symbolName == localQuickOrdersBO.SYMBOL)
+						{
+							if (bestMarketAndSymbolSummary.symbolSummary)
+							{
+								if (splittedSellPrice || splittedBuyPrice)
+								{
+									firstBuyBeforeDecimal.text=(bestBuyPrice.toString() != null && !isNaN(bestBuyPrice) ? bestBuyPrice.toString() : "");
+//									firstBuyAfterDecimal.text="." + (splittedBuyPrice[1] != null && !isNaN(splittedBuyPrice[1]) ? splittedBuyPrice[1] : "");
+									firstSellBeforeDecimal.text=(bestSellPrice.toString() != null && !isNaN(bestSellPrice) ? bestSellPrice.toString() : "");
+//									firstSellAfterDecimal.text="." + (splittedSellPrice[1] != null && !isNaN(splittedSellPrice[1]) ? splittedSellPrice[1] : "");
+									firstSegmentLowLabel.text=(bestMarketAndSymbolSummary.symbolSummary.stats.low.toString() != null ? bestMarketAndSymbolSummary.symbolSummary.stats.low.toString().slice(0, 4) : "");
+									firstHighValue.text=(bestMarketAndSymbolSummary.symbolSummary.stats.high.toString() != null ? bestMarketAndSymbolSummary.symbolSummary.stats.high.toString().slice(0, 4) : "");
+									if (bestMarketAndSymbolSummary.symbolSummary.stats && bestMarketAndSymbolSummary.symbolSummary.stats.netChange < 0)
+									{
+										firstChangeValue.setStyle("backgroundColor", 0xdf241d);
+										firstChangeValue.text="" + bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+									if (bestMarketAndSymbolSummary.symbolSummary.stats && bestMarketAndSymbolSummary.symbolSummary.stats.netChange > 0)
+									{
+										firstChangeValue.setStyle("backgroundColor", 0x01e92a);
+										firstChangeValue.text="+" + bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+									if (bestMarketAndSymbolSummary.symbolSummary.stats && bestMarketAndSymbolSummary.symbolSummary.stats.netChange == previousNumber)
+									{
+										firstChangeValue.setStyle("backgroundColor", 0xffffff);
+										firstChangeValue.text=bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+//									previousNumber=bestMarketAndSymbolSummary.symbolSummary.stats.netChange;
+								}
+								else
+								{
+								}
+							}
+							else
+							{
+								firstBuyBeforeDecimal.text="";
+								firstBuyAfterDecimal.text="";
+								firstSellBeforeDecimal.text="";
+								firstSellAfterDecimal.text="";
+								firstSegmentLowLabel.text="";
+								firstHighValue.text="";
+							}
+						}
+					}
+					else
+					{
+						flag=true;
+					}
+				}
+				catch (e:Error)
+				{
+					trace(e.message.toString());
+				}
+			}
+
+			public function secondupdateQuickOrderView(bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO, bestBuyPrice:Number, bestSellPrice:Number,flag:Boolean):void
+			{
+				try
+				{
+					if (flag2 == true  && secondSymbolDropDown.selectedIndex != -1 &&
+						(secondSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName 
+						&&
+						(secondSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName 
+						&&
+						(secondSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName)
+					{
+						var splittedBuyPrice:Array=bestBuyPrice.toString().split(".");
+						var splittedSellPrice:Array=bestSellPrice.toString().split(".");
+						var localQuickOrdersBO:QuickOrdersBO=secondSymbolDropDown.selectedItem as QuickOrdersBO;
+						if (bestMarketAndSymbolSummary.symbolName == localQuickOrdersBO.SYMBOL)
+						{
+							if (bestMarketAndSymbolSummary.symbolSummary)
+							{
+								if (splittedSellPrice || splittedBuyPrice)
+								{
+									secondBuyBeforeDecimal.text=(bestBuyPrice.toString() != null && !isNaN(bestBuyPrice) ? bestBuyPrice.toString() : "");
+//									secondBuyAfterDecimal.text="." + (splittedBuyPrice[1] != null && !isNaN(splittedBuyPrice[1]) ? splittedBuyPrice[1] : "");
+									secondSellBeforeDecimal.text=(bestSellPrice.toString() != null && !isNaN(bestSellPrice) ? bestSellPrice.toString() : "");
+//									secondSellAfterDecimal.text="." + (splittedSellPrice[1] != null && !isNaN(splittedSellPrice[1]) ? splittedSellPrice[1] : "");
+									secondSegmentLowLabel.text=(bestMarketAndSymbolSummary.symbolSummary.stats.low.toString() != null ? bestMarketAndSymbolSummary.symbolSummary.stats.low.toString().slice(0, 4) : "");
+									secondHighValue.text=(bestMarketAndSymbolSummary.symbolSummary.stats.high.toString() != null ? bestMarketAndSymbolSummary.symbolSummary.stats.high.toString().slice(0, 4) : "");
+									if (bestMarketAndSymbolSummary.symbolSummary.stats && bestMarketAndSymbolSummary.symbolSummary.stats.netChange < 0)
+									{
+										secondChangeValue.setStyle("backgroundColor", 0xdf241d);
+										secondChangeValue.text="" + bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+									if (bestMarketAndSymbolSummary.symbolSummary.stats && bestMarketAndSymbolSummary.symbolSummary.stats.netChange > 0)
+									{
+										secondChangeValue.setStyle("backgroundColor", 0x01e92a);
+										secondChangeValue.text="+" + bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+									if (bestMarketAndSymbolSummary.symbolSummary.stats && bestMarketAndSymbolSummary.symbolSummary.stats.netChange == previousNumber)
+									{
+										secondChangeValue.setStyle("backgroundColor", 0xffffff);
+										secondChangeValue.text=bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+//									previousNumber=bestMarketAndSymbolSummary.symbolSummary.stats.netChange;
+								}
+								else
+								{
+								}
+							}
+							else
+							{
+								secondBuyBeforeDecimal.text="";
+								secondBuyAfterDecimal.text="";
+								secondSellBeforeDecimal.text="";
+								secondSellAfterDecimal.text="";
+								secondSegmentLowLabel.text="";
+								secondHighValue.text="";
+							}
+						}
+					}
+					else
+					{
+						flag2=true;
+					}
+				}
+				catch (e:Error)
+				{
+					trace(e.message.toString());
+				}
+			}
+
+			public function thirdupdateQuickOrderView(bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO, bestBuyPrice:Number, bestSellPrice:Number,flag:Boolean):void
+			{
+				try
+				{
+					if (flag3 == true && thirdSymbolDropDown.selectedIndex != -1 &&
+						(thirdSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName 
+						&&
+						(thirdSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName 
+						&&
+						(thirdSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName)
+					{
+						var splittedBuyPrice:Array=bestBuyPrice.toString().split(".");
+						var splittedSellPrice:Array=bestSellPrice.toString().split(".");
+						var localQuickOrdersBO:QuickOrdersBO=thirdSymbolDropDown.selectedItem as QuickOrdersBO;
+						if (bestMarketAndSymbolSummary.symbolName == localQuickOrdersBO.SYMBOL)
+						{
+							if (bestMarketAndSymbolSummary.symbolSummary)
+							{
+								if (splittedSellPrice || splittedBuyPrice)
+								{
+									thirdBuyBeforeDecimal.text=(bestBuyPrice.toString() != null && !isNaN(bestBuyPrice) ? bestBuyPrice.toString() : "");
+//									thirdBuyAfterDecimal.text="." + (splittedBuyPrice[1] != null && !isNaN(splittedBuyPrice[1]) ? splittedBuyPrice[1] : "");
+									thirdSellBeforeDecimal.text=(bestSellPrice.toString() != null && !isNaN(bestSellPrice) ? bestSellPrice.toString() : "");
+//									thirdSellAfterDecimal.text="." + (splittedSellPrice[1] != null && !isNaN(splittedSellPrice[1]) ? splittedSellPrice[1] : "");
+									thirdSegmentLowLabel.text=(bestMarketAndSymbolSummary.symbolSummary.stats.low.toString() != null ? bestMarketAndSymbolSummary.symbolSummary.stats.low.toString().slice(0, 4) : "--");
+									thirdHighValue.text=(bestMarketAndSymbolSummary.symbolSummary.stats.high.toString() != null ? bestMarketAndSymbolSummary.symbolSummary.stats.high.toString().slice(0, 4) : "--");
+									if (bestMarketAndSymbolSummary.symbolSummary.stats && bestMarketAndSymbolSummary.symbolSummary.stats.netChange < 0)
+									{
+										thirdChangeValue.setStyle("backgroundColor", 0xdf241d);
+										thirdChangeValue.text="" + bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+									if (bestMarketAndSymbolSummary.symbolSummary.stats && bestMarketAndSymbolSummary.symbolSummary.stats.netChange > 0)
+									{
+										thirdChangeValue.setStyle("backgroundColor", 0x01e92a);
+										thirdChangeValue.text="+" + bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+									if (bestMarketAndSymbolSummary.symbolSummary.stats && bestMarketAndSymbolSummary.symbolSummary.stats.netChange == previousNumber)
+									{
+										thirdChangeValue.setStyle("backgroundColor", 0xffffff);
+										thirdChangeValue.text=bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+//									previousNumber=bestMarketAndSymbolSummary.symbolSummary.stats.netChange;
+								}
+								else
+								{
+								}
+							}
+							else
+							{
+								thirdBuyBeforeDecimal.text="";
+								thirdBuyAfterDecimal.text="";
+								thirdSellBeforeDecimal.text="";
+								thirdSellAfterDecimal.text="";
+								thirdSegmentLowLabel.text="";
+								thirdHighValue.text="";
+							}
+						}
+					}
+					else
+					{
+						flag3=true;
+					}
+				}
+				catch (e:Error)
+				{
+					trace(e.message.toString());
+				}
+			}
+
+			public function fourthupdateQuickOrderView(bestMarketAndSymbolSummary:BestMarketAndSymbolSummaryBO, bestBuyPrice:Number, bestSellPrice:Number,flag:Boolean):void
+			{
+				try
+				{ 
+					if (flag4 == true &&  fourthSymbolDropDown.selectedIndex != -1 &&
+						(fourthSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName
+						&&
+						(fourthSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName 
+						&&
+						(fourthSymbolDropDown.selectedItem as QuickOrdersBO).SYMBOL 
+						== bestMarketAndSymbolSummary.symbolName)
+					{
+						var splittedBuyPrice:Array=bestBuyPrice.toString().split(".");
+						var splittedSellPrice:Array=bestSellPrice.toString().split(".");
+						var localQuickOrdersBO:QuickOrdersBO=fourthSymbolDropDown.selectedItem as QuickOrdersBO;
+						if (bestMarketAndSymbolSummary.symbolName == localQuickOrdersBO.SYMBOL)
+						{
+							if (bestMarketAndSymbolSummary.symbolSummary)
+							{
+								if (splittedSellPrice || splittedBuyPrice)
+								{
+									fourthBuyBeforeDecimal.text=(bestBuyPrice.toString() != null && !isNaN(bestBuyPrice) ? bestBuyPrice.toString() : "");
+//									fourthBuyAfterDecimal.text="." + (splittedBuyPrice[1] != null && !isNaN(splittedBuyPrice[1]) ? splittedBuyPrice[1] : "");
+									fourthSellBeforeDecimal.text=(bestSellPrice.toString() != null && !isNaN(bestSellPrice) ? bestSellPrice.toString() : "");
+//									fourthSellAfterDecimal.text="." + (splittedSellPrice[1] != null && !isNaN(splittedSellPrice[1]) ? splittedSellPrice[1] : "");
+									fourthSegmentLowLabel.text=(bestMarketAndSymbolSummary.symbolSummary.stats.low.toString() != null ? bestMarketAndSymbolSummary.symbolSummary.stats.low.toString().slice(0, 4) : "--");
+									fourthHighValue.text=(bestMarketAndSymbolSummary.symbolSummary.stats.high.toString() != null ? bestMarketAndSymbolSummary.symbolSummary.stats.high.toString().slice(0, 4) : "--");
+									if (bestMarketAndSymbolSummary.symbolSummary.stats.netChange && bestMarketAndSymbolSummary.symbolSummary.stats.netChange < 0)
+									{
+										fourthChangeValue.setStyle("backgroundColor", 0xdf241d);
+										fourthChangeValue.text="" + bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+									if (bestMarketAndSymbolSummary.symbolSummary.stats.netChange && bestMarketAndSymbolSummary.symbolSummary.stats.netChange > 0)
+									{
+										fourthChangeValue.setStyle("backgroundColor", 0x01e92a);
+										fourthChangeValue.text="+" + bestMarketAndSymbolSummary.symbolSummary.stats.netChange;
+									}
+									if (bestMarketAndSymbolSummary.symbolSummary.stats.netChange && bestMarketAndSymbolSummary.symbolSummary.stats.netChange == previousNumber)
+									{
+										fourthChangeValue.setStyle("backgroundColor", 0xffffff);
+										fourthChangeValue.text=bestMarketAndSymbolSummary.symbolSummary.stats.netChange.toString();
+									}
+//									previousNumber=bestMarketAndSymbolSummary.symbolSummary.stats.netChange;
+								}
+								else
+								{
+								}
+							}
+							else
+							{
+								fourthBuyBeforeDecimal.text="";
+								fourthBuyAfterDecimal.text="";
+								fourthSellBeforeDecimal.text="";
+								fourthSellAfterDecimal.text="";
+								fourthSegmentLowLabel.text="";
+								fourthHighValue.text="";
+							}
+						}
+					}
+					else
+					{
+						flag4=true;
+					}
+				}
+				catch (e:Error)
+				{
+					trace(e.message.toString());
+				}
+			}
+
+			protected function fourthSymbolDropDownCreationCompleteHandler(event:FlexEvent):void
+			{
+				try
+				{
+					
+					//					firstSymbolDropDown.selectedIndex=-1;
+					var quickOrders:ArrayCollection=modelManager.quickOrdersModel.quickOrders[selectedIndex];
+					for(var i:int = 0 ; i <= quickOrders.source.length ; i++)
+					{
+						if(quickOrders.source[i].SYMBOL != null)
+						{
+							quickOrders.refresh();
+							(event.target as DedupeComboBox).dataProvider=quickOrders;
+							(event.target as DedupeComboBox).labelField="SYMBOL";
+						}
+						else
+						{
+							(event.target as DedupeComboBox).dataProvider=null;
+						}
+					}
+					//					(event.target as ComboBox).dataProvider=null;
+				}
+				catch (e:Error)
+				{
+					trace(e.message);
+				}
+			}
+
+			protected function secondSymbolDropDownCreationCompleteHandler(event:FlexEvent):void
+			{
+				try
+				{
+					
+					//					firstSymbolDropDown.selectedIndex=-1;
+					var quickOrders:ArrayCollection=modelManager.quickOrdersModel.quickOrders[selectedIndex];
+					for(var i:int = 0 ; i <= quickOrders.source.length ; i++)
+					{
+						if(quickOrders.source[i].SYMBOL != null)
+						{
+							quickOrders.refresh();
+							(event.target as DedupeComboBox).dataProvider=quickOrders;
+							(event.target as DedupeComboBox).labelField="SYMBOL";
+						}
+						else
+						{
+							(event.target as DedupeComboBox).dataProvider=null;
+						}
+					}
+					//					(event.target as ComboBox).dataProvider=null;
+				}
+				catch (e:Error)
+				{
+					trace(e.message);
+				}
+			}
+
+			protected function thirdSymbolDropDownCreationCompleteHandler(event:FlexEvent):void
+			{
+				try
+				{
+					
+					//					firstSymbolDropDown.selectedIndex=-1;
+					var quickOrders:ArrayCollection=modelManager.quickOrdersModel.quickOrders[selectedIndex];
+					for(var i:int = 0 ; i <= quickOrders.source.length ; i++)
+					{
+						if(quickOrders.source[i].SYMBOL != null)
+						{
+							quickOrders.refresh();
+							(event.target as DedupeComboBox).dataProvider=quickOrders;
+							(event.target as DedupeComboBox).labelField="SYMBOL";
+						}
+						else
+						{
+							(event.target as DedupeComboBox).dataProvider=null;
+						}
+					}
+					//					(event.target as ComboBox).dataProvider=null;
+				}
+				catch (e:Error)
+				{
+					trace(e.message);
+				}
+			}
+
+			protected function firstSymbolDropDownCreationCompleteHandler(event:FlexEvent):void
+			{
+				try
+				{
+					
+//					firstSymbolDropDown.selectedIndex=-1;
+					var quickOrders:ArrayCollection=modelManager.quickOrdersModel.quickOrders[selectedIndex];
+					for(var i:int = 0 ; i <= quickOrders.source.length ; i++)
+					{
+						if(quickOrders.source[i].SYMBOL != null)
+						{
+							quickOrders.refresh();
+							(event.target as DedupeComboBox).dataProvider=quickOrders;
+							(event.target as DedupeComboBox).labelField="SYMBOL";
+						}
+						else
+						{
+							(event.target as DedupeComboBox).dataProvider=null;
+						}
+					}
+//					(event.target as ComboBox).dataProvider=null;
+				}
+				catch (e:Error)
+				{
+					trace(e.message);
+				}
+			}
+
+			protected function bordercontainer1_creationCompleteHandler(event:FlexEvent):void
+			{
+				firstBuyBeforeDecimal.setStyle("textAlign","left");
+				secondBuyBeforeDecimal.setStyle("textAlign","left");
+				thirdBuyBeforeDecimal.setStyle("textAlign","left");
+				fourthBuyBeforeDecimal.setStyle("textAlign","left");
+			}
+			
+			private function effectEndHandler(event:EffectEvent):void  
+			{
+				delete animatingTargets[event.effectInstance.target.id];
+			}
+			
+			protected function button12_clickHandler(event:MouseEvent):void
+			{
+				firstSymbolDropDown.visible = true;
+				firstSymbolDropDown.dispatchEvent(new  ListEvent(ListEvent.CHANGE, false, false));
+				symbolDropDownchangeHandler(null);
+			}
+			
+		]]>
+	</fx:Script>
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@namespace controls "flexlib.controls.*";
+		@namespace flexlib "http://code.google.com/p/flexlib/";
+		@namespace containers "com.dougmccune.containers.*";
+		@namespace components "components.*";
+		
+		/*components|DedupeComboBox {
+			openDuration: 1000;
+			openEasingFunction: PropertyReference("mx.effects.easing.Bounce.easeOut");
+			closeDuration: 1000;
+			closeEasingFunction: PropertyReference("mx.effects.easing.Bounce.easeIn");
+			
+		}*/
+	</fx:Style>
+	<fx:Declarations>
+		<!--<mx:StringValidator source="{firstclientCode}" property="text" id="clientCodeValidator" required="true"
+							/>-->
+		<s:Rotate3D id="rotator"
+					angleYFrom="90"
+					angleYTo="270"
+					autoCenterTransform="true"
+					effectEnd="effectEndHandler(event)"/>
+	</fx:Declarations>
+	<s:BorderContainer id="mainBorder"
+					   left="1"
+					   top="1"
+					   width="402"
+					   height="265"
+					   borderColor="#a0a0a2"
+					   borderVisible="true"
+					   borderWeight="1">
+		<s:BorderContainer left="2"
+						   top="3" creationComplete="bordercontainer1_creationCompleteHandler(event)"
+						   width="196"
+						   height="127">
+			<mx:Button id="button12" x="0" y="0" visible="false" width="195" height="18" label="Select" textAlign="left"
+					   click="button12_clickHandler(event)" styleName="grybtn">
+				
+			</mx:Button>
+			<components:DedupeComboBox left="0"      horizontalCenter="0"
+						 top="0" labelField="SYMBOL"
+						 height="18" toolTip="{resourceManagerr.getString('marketwatch','selectSymbolFromList')}"
+						 width="195"
+						 styleName="greyComboBox"
+						 prompt="{resourceManagerr.getString('marketwatch','select')}"
+						 useHandCursor="true"  skinClass="assets.skins.CustomDropDownListSkin"
+						 buttonMode="true" 
+						 id="firstSymbolDropDown" visible="true"
+						 creationComplete="firstSymbolDropDownCreationCompleteHandler(event)"
+						 change="symbolDropDownchangeHandler(event)"
+						 >
+			</components:DedupeComboBox>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'36':'7'}"
+					 top="28"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 text="{resourceManagerr.getString('marketwatch','low')+':'}"/>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'7':'36'}"
+					 top="28"
+					 id="firstSegmentLowLabel"/>
+			<s:Label left="70"
+					 top="27"
+					 textAlign="center"
+					 paddingTop="1"
+					 id="firstChangeValue"
+					 color="white"
+					 fontFamily="Verdana"
+					 width="43"
+					 height="12"/>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'151':'120'}"
+					 top="28"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 text="{resourceManagerr.getString('marketwatch','high')+':'}"/>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'120':'151'}"
+					 top="28"
+					 id="firstHighValue"/>
+			<mx:Button left="10"
+					   top="48"
+					   width="84"
+					   height="75"
+					   useHandCursor="true"
+					   buttonMode="true"
+					   id="buyButton"
+					   styleName="blueCustomButtonStyle"
+					   click="firstorderButtonClickHandler(event)"/>
+			<mx:Button left="96"
+					   top="48"
+					   width="84"
+					   height="75"
+					   useHandCursor="true"
+					   buttonMode="true"
+					   id="sellButton"
+					   styleName="pinkCustomButtonStyle"
+					   click="firstorderButtonClickHandler(event)"/>
+			<s:Label left="31"
+					 top="92"
+					 text="{resourceManagerr.getString('marketwatch','buy')}"
+					 color="white"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 fontSize="11"
+					 fontWeight="bold"/>
+			<s:Label left="136"
+					 top="92"
+					 text="{resourceManagerr.getString('marketwatch','sell')}"
+					 color="white"
+					 fontSize="11"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 fontWeight="bold"/>
+			<s:Label left="16"
+					 top="70"
+					 text="_____"
+					 color="#10feff"
+					 fontWeight="bold"/>
+			<s:Label left="129"
+					 top="70"
+					 text="_____"
+					 color="#ff7cae"
+					 fontWeight="bold"/>
+			<!--<s:Label left="81" top="54" text="0" color="white"/>-->
+			<s:Label left="165"
+					 top="55"
+					 text="0"
+					 color="white"
+					 visible="false"/>
+			<s:Label left="20"
+					 top="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14" textAlign="left"
+					 id="firstBuyBeforeDecimal"/>
+			<s:Label x="105"
+					 y="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14" textAlign="left" 
+					 id="firstSellBeforeDecimal"/>
+			<s:Label x="47" visible="false"
+					 y="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14"
+					 id="firstBuyAfterDecimal"/>
+			<s:Label x="132" visible="false"
+					 y="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14"
+					 id="firstSellAfterDecimal"/>
+			<mx:Box x="65"
+					y="79"
+					backgroundColor="#e0e0e0"
+					borderStyle="solid"
+					cornerRadius="2">
+				<mx:TextInput x="66" toolTip="{resourceManagerr.getString('marketwatch','clientCode')}"
+							  y="81"
+							  width="58"
+							  height="18"
+							  backgroundColor="#dfdee4"
+							  borderThickness="1"
+							  borderStyle="solid"
+							  borderColor="#8a8896"
+							  id="firstclientCode"/>
+				<mx:NumericStepper x="66" toolTip="{resourceManagerr.getString('marketwatch','enterVolume')}"
+								   y="98"
+								   height="18"
+								   maxChars="0"
+								   maximum="100000"
+								   width="57" 
+								   minimum="0" buttonMode="true"  useHandCursor="true"
+								   id="firstNumericStepper"/>
+			</mx:Box>
+		</s:BorderContainer>
+		<s:BorderContainer x="200"
+						   y="3"
+						   width="196"
+						   height="127"
+						   enabled="true">
+			<components:DedupeComboBox x="0"  horizontalCenter="0"
+						 y="0" toolTip="{resourceManagerr.getString('marketwatch','selectSymbolFromList')}"
+						 height="18" labelField="SYMBOL"
+						 width="195"  skinClass="assets.skins.CustomDropDownListSkin"
+						 styleName="greyComboBox"
+						 change="secondsymbolDropDownchangeHandler(event)"
+						 creationComplete="secondSymbolDropDownCreationCompleteHandler(event)"
+						 prompt="{resourceManagerr.getString('marketwatch','select')}"
+						 useHandCursor="true"
+						 buttonMode="true"
+						 id="secondSymbolDropDown">
+			</components:DedupeComboBox>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'36':'7'}"
+					 top="28"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 text="{resourceManagerr.getString('marketwatch','low')+':'}"/>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?7:36}"
+					 top="28"
+					 id="secondSegmentLowLabel"/>
+			<s:Label left="70"
+					 top="27"
+					 textAlign="center"
+					 paddingTop="1"
+					 id="secondChangeValue"
+					 color="white"
+					 fontFamily="Verdana"
+					 width="43"
+					 height="12"/>
+			<s:Label x="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?151:120}"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 y="28"
+					 text="{resourceManagerr.getString('marketwatch','high')+':'}"/>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?120:151}"
+					 top="28"
+					 id="secondHighValue"/>
+			<mx:Button x="10"
+					   y="48"
+					   width="84"
+					   height="75"
+					   useHandCursor="true"
+					   buttonMode="true"
+					   id="secondBuyButton"
+					   styleName="blueCustomButtonStyle"
+					   click="secondorderButtonClickHandler(event)"/>
+			<mx:Button x="96"
+					   y="48"
+					   width="84"
+					   height="75"
+					   useHandCursor="true"
+					   buttonMode="true"
+					   id="secondSellButton"
+					   styleName="pinkCustomButtonStyle"
+					   click="secondorderButtonClickHandler(event)"/>
+			<s:Label x="31"
+					 y="92"
+					 text="{resourceManagerr.getString('marketwatch','buy')}"
+					 color="white"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 fontSize="11"
+					 fontWeight="bold"/>
+			<s:Label x="136"
+					 y="92"
+					 text="{resourceManagerr.getString('marketwatch','sell')}"
+					 color="white"
+					 fontSize="11"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 fontWeight="bold"/>
+			<s:Label x="16"
+					 y="70"
+					 text="_____"
+					 color="#10feff"
+					 fontWeight="bold"/>
+			<s:Label x="129"
+					 y="70"
+					 text="_____"
+					 color="#ff7cae"
+					 fontWeight="bold"/>
+			<s:Label x="81"
+					 y="54"
+					 text="0"
+					 color="white"
+					 visible="false"/>
+			<s:Label x="165"
+					 y="55"
+					 text="0"
+					 color="white"
+					 visible="false"/>
+			<s:Label left="20"
+					 top="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14" textAlign="left"
+					 id="secondBuyBeforeDecimal"/>
+			<s:Label x="105"
+					 y="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14" textAlign="left"
+					 id="secondSellBeforeDecimal"/>
+			<s:Label x="47"
+					 y="57" visible="false"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14"
+					 id="secondBuyAfterDecimal"/>
+			<s:Label x="132"
+					 y="57" visible="false"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14"
+					 id="secondSellAfterDecimal"/>
+			<mx:Box x="65"
+					y="79"
+					backgroundColor="#e0e0e0"
+					borderStyle="solid"
+					cornerRadius="2">
+				<mx:TextInput x="66"  toolTip="{resourceManagerr.getString('marketwatch','clientCode')}"
+							  y="81"
+							  width="58"
+							  height="18"
+							  backgroundColor="#dfdee4"
+							  id="secondclientCode"
+							  borderThickness="1"
+							  borderStyle="solid"
+							  borderColor="#8a8896"/>
+				<mx:NumericStepper x="66" toolTip="{resourceManagerr.getString('marketwatch','enterVolume')}"
+								   y="98"
+								   id="secondNumericStepper"
+								   height="18"
+								   maxChars="0"
+								   maximum="100000"
+								   width="57" buttonMode="true"  useHandCursor="true"
+								   minimum="0"/>
+			</mx:Box>
+		</s:BorderContainer>
+		<s:BorderContainer x="2"
+						   y="132"
+						   width="196"
+						   height="127"
+						   enabled="true">
+			<components:DedupeComboBox x="0"  horizontalCenter="0"
+						 y="0" toolTip="{resourceManagerr.getString('marketwatch','selectSymbolFromList')}"
+						 height="18" labelField="SYMBOL"
+						 width="195"
+						 styleName="greyComboBox"
+						 change="thirdsymbolDropDownchangeHandler(event)"
+						 creationComplete="thirdSymbolDropDownCreationCompleteHandler(event)"
+						 prompt="{resourceManagerr.getString('marketwatch','select')}"
+						 useHandCursor="true"
+						 buttonMode="true" skinClass="assets.skins.CustomDropDownListSkin"
+						 id="thirdSymbolDropDown">
+			</components:DedupeComboBox>
+			<s:Label x="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?36:7}"
+					 y="28"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 text="{resourceManagerr.getString('marketwatch','low')+':'}"/>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?7:36}"
+					 top="28"
+					 id="thirdSegmentLowLabel"/>
+
+			<s:Label left="70"
+					 top="27"
+					 textAlign="center"
+					 paddingTop="1"
+					 id="thirdChangeValue"
+					 color="white"
+					 fontFamily="Verdana"
+					 width="43"
+					 height="12"/>
+			<s:Label x="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?151:120}"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 y="28"
+					 text="{resourceManagerr.getString('marketwatch','high')+':'}"/>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?120:151}"
+					 top="28"
+					 id="thirdHighValue"/>
+			<mx:Button x="10"
+					   y="48"
+					   width="84"
+					   height="75"
+					   useHandCursor="true"
+					   buttonMode="true"
+					   id="thirdBuyButton"
+					   styleName="blueCustomButtonStyle"
+					   click="thirdorderButtonClickHandler(event)"/>
+			<mx:Button x="96"
+					   y="48"
+					   width="84"
+					   height="75"
+					   useHandCursor="true"
+					   buttonMode="true"
+					   id="thirdSellButton"
+					   styleName="pinkCustomButtonStyle"
+					   click="thirdorderButtonClickHandler(event)"/>
+			<s:Label x="31"
+					 y="92"
+					 text="{resourceManagerr.getString('marketwatch','buy')}"
+					 color="white"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 fontSize="11"
+					 fontWeight="bold"/>
+			<s:Label x="136"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 y="92"
+					 text="{resourceManagerr.getString('marketwatch','sell')}"
+					 color="white"
+					 fontSize="11"
+					 fontWeight="bold"/>
+			<s:Label x="16"
+					 y="70"
+					 text="_____"
+					 color="#10feff"
+					 fontWeight="bold"/>
+			<s:Label x="129"
+					 y="70"
+					 text="_____"
+					 color="#ff7cae"
+					 fontWeight="bold"/>
+			<s:Label x="81"
+					 y="54"
+					 text="0"
+					 color="white"
+					 visible="false"/>
+			<s:Label x="165"
+					 y="55"
+					 text="0"
+					 color="white"
+					 visible="false"/>
+
+			<s:Label left="20"
+					 top="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14" textAlign="left"
+					 id="thirdBuyBeforeDecimal"/>
+			<s:Label x="105"
+					 y="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14" textAlign="left"
+					 id="thirdSellBeforeDecimal"/>
+
+			<s:Label x="47"
+					 y="57" visible="false"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14"
+					 id="thirdBuyAfterDecimal"/>
+
+			<s:Label x="132"
+					 y="57" visible="false"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14"
+					 id="thirdSellAfterDecimal"/>
+			<mx:Box x="65"
+					y="79"
+					backgroundColor="#e0e0e0"
+					borderStyle="solid"
+					cornerRadius="2">
+				<mx:TextInput x="66"  toolTip="{resourceManagerr.getString('marketwatch','clientCode')}"
+							  y="81"
+							  width="58"
+							  height="18"
+							  backgroundColor="#dfdee4"
+							  id="thirdclientCode"
+							  borderThickness="1"
+							  borderStyle="solid"
+							  borderColor="#8a8896"/>
+				<mx:NumericStepper x="66" toolTip="{resourceManagerr.getString('marketwatch','enterVolume')}"
+								   y="98"
+								   height="18"
+								   maxChars="0"
+								   maximum="100000"
+								   id="thirdNumericStepper"
+								   width="57" buttonMode="true"  useHandCursor="true"
+								   minimum="0"/>
+			</mx:Box>
+		</s:BorderContainer>
+		<s:BorderContainer x="200"
+						   y="132"
+						   width="196"
+						   height="127"
+						   enabled="true">
+			<components:DedupeComboBox x="0"  horizontalCenter="0"
+						 y="0" toolTip="{resourceManagerr.getString('marketwatch','selectSymbolFromList')}"
+						 height="18"
+						 width="195" labelField="SYMBOL"
+						 styleName="greyComboBox"
+						 prompt="{resourceManagerr.getString('marketwatch','select')}"
+						 change="fourthsymbolDropDownchangeHandler(event)"
+						 creationComplete="fourthSymbolDropDownCreationCompleteHandler(event)"
+						 useHandCursor="true"
+						 buttonMode="true" skinClass="assets.skins.CustomDropDownListSkin"
+						 id="fourthSymbolDropDown">
+			</components:DedupeComboBox>
+			<s:Label x="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?36:7}"
+					 y="28"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 text="{resourceManagerr.getString('marketwatch','low')+':'}"/>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?7:36}"
+					 top="28"
+					 id="fourthSegmentLowLabel"/>
+			<s:Label left="70"
+					 top="27"
+					 textAlign="center"
+					 paddingTop="1"
+					 id="fourthChangeValue"
+					 color="white"
+					 fontFamily="Verdana"
+					 width="43"
+					 height="12"/>
+			<s:Label x="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?151:120}"  
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 y="28"
+					 text="{resourceManagerr.getString('marketwatch','high')+':'}"/>
+			<s:Label left="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?120:151}"
+					 top="28"
+					 id="fourthHighValue"/>
+			<mx:Button x="10"
+					   y="48"
+					   width="84"
+					   height="75"
+					   useHandCursor="true"
+					   buttonMode="true"
+					   id="fourthBuyButton"
+					   styleName="blueCustomButtonStyle"
+					   click="fourthorderButtonClickHandler(event)"/>
+			<mx:Button x="96"
+					   y="48"
+					   width="84"
+					   height="75"
+					   useHandCursor="true"
+					   buttonMode="true"
+					   id="fourthSellButton"
+					   styleName="pinkCustomButtonStyle"
+					   click="fourthorderButtonClickHandler(event)"/>
+			<s:Label x="31"
+					 y="92"
+					 text="{resourceManagerr.getString('marketwatch','buy')}"
+					 color="white"
+					 fontSize="11"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 fontWeight="bold"/>
+			<s:Label x="136"
+					 y="92"
+					 text="{resourceManagerr.getString('marketwatch','sell')}"
+					 color="white"  direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 fontSize="11"
+					 fontWeight="bold"/>
+			<s:Label x="16"
+					 y="70"
+					 text="_____"
+					 color="#10feff"
+					 fontWeight="bold"/>
+			<s:Label x="129"
+					 y="70"
+					 text="_____"
+					 color="#ff7cae"
+					 fontWeight="bold"/>
+			<s:Label x="81"
+					 y="54"
+					 text="0"
+					 color="white"
+					 visible="false"/>
+			<s:Label x="165"
+					 y="55"
+					 text="0"
+					 color="white"
+					 visible="false"/>
+			<s:Label left="20"
+					 top="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14" textAlign="left"
+					 id="fourthBuyBeforeDecimal"/>
+			<s:Label x="105"
+					 y="57"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14"  textAlign="left"
+					 id="fourthSellBeforeDecimal"/>
+			<s:Label x="47"
+					 y="57" visible="false"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14"
+					 id="fourthBuyAfterDecimal"/>
+			<s:Label x="132"
+					 y="57" visible="false"
+					 color="white"
+					 fontFamily="Verdana"
+					 fontSize="14"
+					 id="fourthSellAfterDecimal"/>
+			<mx:Box x="65"
+					y="79"
+					backgroundColor="#e0e0e0"
+					borderStyle="solid"
+					cornerRadius="2">
+				<mx:TextInput x="66"   toolTip="{resourceManagerr.getString('marketwatch','clientCode')}"
+							  y="81"
+							  width="58"
+							  height="18"
+							  backgroundColor="#dfdee4"
+							  id="fourthclientCode"
+							  borderThickness="1"
+							  borderStyle="solid"
+							  borderColor="#8a8896"/>
+				<mx:NumericStepper x="66" toolTip="{resourceManagerr.getString('marketwatch','enterVolume')}"
+								   y="98"
+								   height="18"
+								   maxChars="0"
+								   maximum="100000"
+								   width="57"
+								   id="fourthNumericStepper" buttonMode="true"  useHandCursor="true"
+								   minimum="0"/>
+			</mx:Box>
+		</s:BorderContainer>
+	</s:BorderContainer>
+</s:Group>

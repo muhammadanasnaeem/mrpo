@@ -1,0 +1,41 @@
+package businessobjects
+{
+
+	public class SymbolStatBO
+	{
+		public var symbolID:Number=-1;
+		public var internalSymbolID:Number=-1;
+		public var marketID:Number=-1;
+		public var internalMarketID:Number=-1;
+
+		public var totalSizeTraded:Number=0;
+		public var totalNoOfTrades:Number=0;
+		public var lastTradeSize:Number=0;
+		public var fiftyTwoWeekHigh:Number=0;
+		public var fiftyTwoWeekLow:Number=0;
+		public var turnover:Number=0;
+		public var lastTradePrice:Number=0;
+		public var averagePrice:Number=0;
+		public var netChange:Number=0;
+		public var lastDayClosePrice:String = "";
+
+		public var open:Number=0;
+		public var high:Number=0;
+		public var low:Number=0;
+		public var close:Number=0;
+		
+
+		/*Required for client only*/
+		public var INTERNAL_EXCHANGE_ID:Number=-1;
+		public var INTERNAL_MARKET_ID:Number=-1;
+
+		public var EXCHANGE_CODE:String="";
+		public var MARKET_CODE:String="";
+		public var SYMBOL_CODE:String="";
+		/*Required for client only*/
+
+		public function SymbolStatBO()
+		{
+		}
+	}
+}

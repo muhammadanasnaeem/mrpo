@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="100%" height="100%" xmlns:components="components.*" >
+	<fx:Script>
+		<![CDATA[
+			import controller.ConfigurationManager;
+			import controller.ModelManager;
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<components:EZNumberFormatter id="numberFormatter" />
+	</fx:Declarations>
+	<fx:Binding
+		source="{numberFormatter.format(ModelManager.getInstance().exchangeStatsModel.exchangeStats.ADVANCED)}"
+		destination="txtAdvanced.text" />
+	<s:Label text="Advanced" top="6" horizontalCenter="-123"/>
+	<s:TextInput width="74" height="20" id="txtAdvanced"
+				 editable="false" paddingLeft="0" paddingRight="0" textAlign="right"
+				 paddingTop="0" paddingBottom="0" horizontalCenter="-123" top="19.55"/>
+	
+	<fx:Binding
+		source="{numberFormatter.format(ModelManager.getInstance().exchangeStatsModel.exchangeStats.DECLINED)}"
+		destination="txtDeclined.text" />
+	<s:Label text="Declined" top="6" horizontalCenter="-40"/>
+	<s:TextInput width="74" height="20" id="txtDeclined"
+				 editable="false" paddingLeft="0" paddingRight="0" textAlign="right"
+				 paddingTop="0" paddingBottom="0" horizontalCenter="-40" top="19.55"/>
+	
+	<fx:Binding
+		source="{numberFormatter.format(ModelManager.getInstance().exchangeStatsModel.exchangeStats.UNCHANGED)}"
+		destination="txtUnchanged.text" />
+	<s:Label text="Unchanged" top="6" horizontalCenter="43"/>
+	<s:TextInput width="74" height="20" id="txtUnchanged"
+				 editable="false" paddingLeft="0" paddingRight="0" textAlign="right"
+				 paddingTop="0" paddingBottom="0" horizontalCenter="43" top="19.55"/>
+	
+	<fx:Binding
+		source="{numberFormatter.format(ModelManager.getInstance().exchangeStatsModel.exchangeStats.TRADED)}"
+		destination="txtTraded.text" />
+	<s:Label text="Traded" top="6" horizontalCenter="126"/>
+	<s:TextInput width="74" height="20" id="txtTraded"
+				 editable="false" paddingLeft="0" paddingRight="0" textAlign="right"
+				 paddingTop="0" paddingBottom="0" horizontalCenter="126" top="19.55"/>
+	
+	<s:VGroup x="7" y="50" width="98%" height="98%">
+		<mx:DataGrid
+			id="dgExchangeStatsIndices" 
+			width="100%" height="99%"
+			rowCount="{ConfigurationManager.getInstance().exchangeStatsConf.ROW_COUNT_INDICES}"
+			>
+			<mx:columns>
+				<mx:DataGridColumn headerText="Index" dataField="INDEX_CODE" />
+				<mx:DataGridColumn headerText="High" dataField="HIGH" />
+				<mx:DataGridColumn headerText="Low" dataField="LOW" />
+				<mx:DataGridColumn headerText="Volume" dataField="VOLUME" />
+				<mx:DataGridColumn headerText="Value" dataField="VALUE" />
+				<mx:DataGridColumn headerText="Current" dataField="INDEX" />
+				<mx:DataGridColumn headerText="Change" dataField="CHANGE" />
+			</mx:columns>
+		</mx:DataGrid>
+	</s:VGroup>
+</s:Group>

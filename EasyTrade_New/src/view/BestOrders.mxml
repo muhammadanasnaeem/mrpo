@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="100%"
+		 height="100%"
+		 initialize="group1_initializeHandler(event)"
+		 xmlns:common="common.*"
+		 xmlns:components="components.*">
+	<fx:Script>
+		<![CDATA[
+			include "../components/SelectionMenu.as"
+			include "../eventhandlers/BestOrders.as"
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<components:EZCurrencyFormatter id="moneyFormatter"/>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:BorderContainer width="100%"
+					   height="62"
+					   horizontalCenter="0"
+					   top="0">
+		<s:Label text="{resourceManager.getString('marketwatch','exchange')}:"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-110':'-163'}"
+				 top="7"/>
+		<components:EZDropDownTextInput width="49"
+										height="20"
+										id="txtExchange"
+										editable="false"
+										click="txtExchange_clickHandler_BestOrders(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-163':'-110'}"
+										top="2"/>
+		<s:Label text="{resourceManager.getString('marketwatch','market')}:"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-14':'-60'}"
+				 top="7"/>
+		<components:EZDropDownTextInput width="49"
+										height="20"
+										id="txtMarket"
+										editable="false"
+										click="txtMarket_clickHandler_BestOrders(event)"
+										horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-60':'-14'}"
+										top="2"/>
+		<s:Label text="{resourceManager.getString('marketwatch','symbol')}:"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'119':'37'}"
+				 top="7"/>
+		<s:TextInput width="110"
+					 height="20"
+					 id="txtSymbol"
+					 keyDown="txtSymbol_keyDownHandler(event)"
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'37':'119'}"
+					 top="2"/>
+		<s:Button label="{resourceManager.getString('marketwatch','refresh')}"
+				  width="75"
+				  height="20"
+				  id="btnRefresh"
+				  top="2"
+				  horizontalCenter="219"
+				  click="btnRefresh_clickHandler(event)"/>
+
+		<s:Label text="{resourceManager.getString('marketwatch','totalBuy')}:"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-50':'-120'}"
+				 top="38"/>
+		<s:TextInput id="txtTotalBuy"
+					 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+					 width="80"
+					 text="{ModelManager.getInstance().bestOrdersModel.totalBuy}"
+					 enabled="false"
+					 editable="false"
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'-120':'-50'}"
+					 top="33"/>
+		<s:Label text="{resourceManager.getString('marketwatch','totalSell')}:"
+				 direction="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'rtl':'ltr'}"
+				 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'88':'20'}"
+				 top="38"/>
+		<s:TextInput id="txtTotalSell"
+					 width="80"
+					 text="{ModelManager.getInstance().bestOrdersModel.totalSell}"
+					 enabled="false"
+					 editable="false"
+					 horizontalCenter="{(FlexGlobals.topLevelApplication.parameters.LOCALE == 'ar_SA')?'20':'88'}"
+					 top="33"/>
+	</s:BorderContainer>
+	<mx:DataGrid id="adgBestOrders"
+				 right="1"
+				 left="1"
+				 bottom="1"
+				 top="62"
+				 rowCount="{Constants.ROW_COUNT_BEST_ORDERS}"
+				 dataProvider="{ModelManager.getInstance().bestOrdersModel.bestOrders}"
+				 editable="false"
+				 sortableColumns="false">
+		<mx:columns>
+			<mx:DataGridColumn dataField="BUY_FLAGS"
+							   headerText="{resourceManager.getString('marketwatch','flag')}"
+							   backgroundColor="{Constants.BUY_COLOR_INT}"/>
+			<mx:DataGridColumn dataField="BUY_VOLUME"
+							   headerText="{resourceManager.getString('marketwatch','volume')}"
+							   backgroundColor="{Constants.BUY_COLOR_INT}"/>
+			<mx:DataGridColumn dataField="BUY_PRICE"
+							   headerText="{resourceManager.getString('marketwatch','price')}"
+							   backgroundColor="{Constants.BUY_COLOR_INT}">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.BUY_PRICE)}"
+								  width="100%"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn dataField="SELL_PRICE"
+							   headerText="{resourceManager.getString('marketwatch','price')}"
+							   backgroundColor="{Constants.SELL_COLOR_INT}">
+				<mx:itemRenderer>
+					<fx:Component>
+						<mx:Label text="{outerDocument.moneyFormatter.format(data.SELL_PRICE)}"
+								  width="100%"
+								  textAlign="right"/>
+					</fx:Component>
+				</mx:itemRenderer>
+			</mx:DataGridColumn>
+			<mx:DataGridColumn dataField="SELL_VOLUME"
+							   headerText="{resourceManager.getString('marketwatch','volume')}"
+							   backgroundColor="{Constants.SELL_COLOR_INT}"/>
+			<mx:DataGridColumn dataField="SELL_FLAGS"
+							   headerText="{resourceManager.getString('marketwatch','flags')}"
+							   backgroundColor="{Constants.SELL_COLOR_INT}"/>
+		</mx:columns>
+	</mx:DataGrid>
+</s:Group>

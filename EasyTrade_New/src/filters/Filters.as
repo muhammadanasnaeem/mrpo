@@ -1,0 +1,204 @@
+package filters
+{
+	import businessobjects.OrderBO;
+
+	import controller.WindowManager;
+
+	public class Filters
+	{
+		public function Filters()
+		{
+		}
+
+		public static function marketWatchFilter(item:Object):Boolean
+		{
+			if ((!item.pageNumber) || (item.pageNumber == WindowManager.getInstance().viewManager.marketWatch.selectedIndex))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public static function remainingOrdersFilter(item:Object):Boolean
+		{
+			var retVal:Boolean=false;
+			if (WindowManager.getInstance().viewManager.remainingOrders.internalExchangeID == -1)
+			{
+				retVal=true;
+			}
+			if (item.INTERNAL_EXCHANGE_ID == WindowManager.getInstance().viewManager.remainingOrders.internalExchangeID)
+			{
+				if (WindowManager.getInstance().viewManager.remainingOrders.internalMarketID == -1)
+				{
+					retVal=true;
+				}
+				else if (item.INTERNAL_MARKET_ID == WindowManager.getInstance().viewManager.remainingOrders.internalMarketID)
+				{
+					if ((WindowManager.getInstance().viewManager.remainingOrders.internalSymbolID == -1) || (item.INTERNAL_SYMBOL_ID == WindowManager.getInstance().viewManager.remainingOrders.internalSymbolID))
+					{
+						retVal=true;
+					}
+				}
+			}
+			return retVal;
+		}
+		
+		public static function riskInformationFilter(item:Object):Boolean
+		{
+			var retVal:Boolean=false;
+			if (WindowManager.getInstance().viewManager.riskInfo.internalExchangeID == -1)
+			{
+				retVal=true;
+			}
+			if (item.INTERNAL_EXCHANGE_ID == WindowManager.getInstance().viewManager.riskInfo.internalExchangeID)
+			{
+				if (WindowManager.getInstance().viewManager.riskInfo.internalMarketID == -1)
+				{
+					retVal=true;
+				}
+				else if (item.INTERNAL_MARKET_ID == WindowManager.getInstance().viewManager.riskInfo.internalMarketID)
+				{
+					if ((WindowManager.getInstance().viewManager.riskInfo.internalSymbolID == -1) || (item.INTERNAL_SYMBOL_ID == WindowManager.getInstance().viewManager.riskInfo.internalSymbolID))
+					{
+						retVal=true;
+					}
+				}
+			}
+			return retVal;
+		}
+
+
+		public static function lastDayremainingOrdersFilter(item:Object):Boolean
+		{
+			var retVal:Boolean=false;
+			if (WindowManager.getInstance().viewManager.lastDayRemainingOrders.internalExchangeID == -1)
+			{
+				retVal=true;
+			}
+			if (item.INTERNAL_EXCHANGE_ID == WindowManager.getInstance().viewManager.lastDayRemainingOrders.internalExchangeID)
+			{
+				if (WindowManager.getInstance().viewManager.lastDayRemainingOrders.internalMarketID == -1)
+				{
+					retVal=true;
+				}
+				else if (item.INTERNAL_MARKET_ID == WindowManager.getInstance().viewManager.lastDayRemainingOrders.internalMarketID)
+				{
+					if ((WindowManager.getInstance().viewManager.lastDayRemainingOrders.internalSymbolID == -1) || (item.INTERNAL_SYMBOL_ID == WindowManager.getInstance().viewManager.lastDayRemainingOrders.internalSymbolID))
+					{
+						retVal=true;
+					}
+				}
+			}
+			return retVal;
+		}
+
+		public static function userTradeHistoryFilter(item:Object):Boolean
+		{
+			var retVal:Boolean=false;
+			if (WindowManager.getInstance().viewManager.userTradeHistory.internalExchangeID == -1)
+			{
+				retVal=true;
+			}
+			if (item.INTERNAL_EXCHANGE_ID == WindowManager.getInstance().viewManager.userTradeHistory.internalExchangeID)
+			{
+				if (WindowManager.getInstance().viewManager.userTradeHistory.internalMarketID == -1)
+				{
+					retVal=true;
+				}
+				else if (item.INTERNAL_MARKET_ID == WindowManager.getInstance().viewManager.userTradeHistory.internalMarketID)
+				{
+					if ((WindowManager.getInstance().viewManager.userTradeHistory.internalSymbolID == -1) || (item.INTERNAL_SYMBOL_ID == WindowManager.getInstance().viewManager.userTradeHistory.internalSymbolID))
+					{
+						retVal=true;
+					}
+				}
+			}
+			return retVal;
+		}
+
+		public static function eventLogFilter(item:Object):Boolean
+		{
+			var retVal:Boolean=false;
+			if (WindowManager.getInstance().viewManager.eventLog.internalExchangeID == -1)
+			{
+				retVal=true;
+			}
+			if (item.INTERNAL_EXCHANGE_ID == WindowManager.getInstance().viewManager.eventLog.internalExchangeID)
+			{
+				if (WindowManager.getInstance().viewManager.eventLog.internalMarketID == -1)
+				{
+					retVal=true;
+				}
+				else if (item.INTERNAL_MARKET_ID == WindowManager.getInstance().viewManager.eventLog.internalMarketID)
+				{
+					if ((WindowManager.getInstance().viewManager.eventLog.internalSymbolID == -1) || (item.INTERNAL_SYMBOL_ID == WindowManager.getInstance().viewManager.eventLog.internalSymbolID))
+					{
+						retVal=true;
+					}
+				}
+			}
+			return retVal;
+		}
+
+		public static function symbolBrowserFilter(item:Object):Boolean
+		{
+//			var retVal:Boolean = false;
+//			
+//			var internalExchangeID:Number = WindowManager.getInstance().viewManager.symbolBrowser.internalExchangeID;
+//			var internalMarketID:Number = WindowManager.getInstance().viewManager.symbolBrowser.internalMarketID;
+//			var internalSymbolID:Number =  WindowManager.getInstance().viewManager.symbolBrowser.internalSymbolID;
+//
+//			if (internalExchangeID == -1 || internalMarketID == -1)
+//			{
+//				retVal = true;
+//			}
+//
+//			else if( item.INTERNAL_EXCHANGE_ID == internalExchangeID &&
+//				item.INTERNAL_MARKET_ID == internalMarketID &&
+//				( (internalSymbolID == -1) ||
+//					(item.INTERNAL_SYMBOL_ID == internalSymbolID) )
+//			)
+//			{
+//				retVal = true;
+//			}
+//			return retVal;
+
+			var retVal:Boolean=false;
+
+			var internalExchangeID:Number=WindowManager.getInstance().viewManager.symbolBrowser.internalExchangeID;
+			var internalMarketID:Number=WindowManager.getInstance().viewManager.symbolBrowser.internalMarketID;
+			var internalSymbolID:Number=WindowManager.getInstance().viewManager.symbolBrowser.internalSymbolID;
+
+			if ((item.INTERNAL_EXCHANGE_ID == internalExchangeID) && (internalExchangeID > -1) && item.INTERNAL_MARKET_ID == internalMarketID && (internalMarketID > -1) && ((internalSymbolID == -1) || (item.INTERNAL_SYMBOL_ID == internalSymbolID)))
+			{
+				retVal=true;
+			}
+			return retVal;
+
+		}
+
+		public static function symbolSummaryFilter(item:Object):Boolean
+		{
+			var retVal:Boolean=false;
+
+			var internalExchangeID:Number=WindowManager.getInstance().viewManager.symbolSummary.internalExchangeID;
+			var internalMarketID:Number=WindowManager.getInstance().viewManager.symbolSummary.internalMarketID;
+			var internalSymbolID:Number=WindowManager.getInstance().viewManager.symbolSummary.internalSymbolID;
+
+			if (internalExchangeID == -1 || internalMarketID == -1)
+			{
+				retVal=true;
+			}
+
+			else if (item.browser.INTERNAL_EXCHANGE_ID == internalExchangeID && item.browser.INTERNAL_MARKET_ID == internalMarketID && ((internalSymbolID == -1) || (item.browser.INTERNAL_SYMBOL_ID == internalSymbolID)))
+			{
+				retVal=true;
+			}
+			return retVal;
+		}
+
+	}
+}

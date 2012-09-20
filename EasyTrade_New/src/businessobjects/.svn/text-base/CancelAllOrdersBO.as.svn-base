@@ -1,0 +1,11 @@
+package businessobjects
+{
+	public class CancelAllOrdersBO
+	{
+		public var USER_ID:Number;
+		public var EXCHANGE_ID:Number;
+		public var MARKET_ID:Number;
+		public var SYMBOL_ID:Number;
+		public var BROKER_ID:Number;
+	}
+}
